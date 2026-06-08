@@ -1,34 +1,121 @@
 import os
 import re
+import base64
+import json
+import urllib.request
+import urllib.parse
 from PIL import Image
-import pytesseract
 from difflib import SequenceMatcher
+from io import BytesIO
 
+# Windows local only
 if os.name == "nt":
-    pytesseract.pytesseract.tesseract_cmd = (
-        r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-    )
+    try:
+        import pytesseract
+        pytesseract.pytesseract.tesseract_cmd = (
+            r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+        )
+        USE_TESSERACT = True
+    except Exception:
+        USE_TESSERACT = False
+else:
+    USE_TESSERACT = False
 
 
+# ── OCR.space API ──────────────────────────────────────
+def ocr_space_api(image):
+    try:
+        buffered = BytesIO()
+        image.save(buffered, format="PNG")
+        img_base64 = base64.b64encode(
+            buffered.getvalue()
+        ).decode("utf-8")
+
+        # Try engine 2 first, then engine 1
+        for engine in [2, 1]:
+            try:
+                payload = urllib.parse.urlencode({
+                    "base64Image": (
+                        f"data:image/png;base64,{img_base64}"
+                    ),
+                    "apikey": "helloworld",
+                    "language": "eng",
+                    "isOverlayRequired": False,
+                    "OCREngine": engine,
+                    "scale": True,
+                    "isTable": False
+                }).encode("utf-8")
+
+                req = urllib.request.Request(
+                    "https://api.ocr.space/parse/image",
+                    data=payload,
+                    method="POST"
+                )
+                req.add_header(
+                    "Content-Type",
+                    "application/x-www-form-urlencoded"
+                )
+
+                with urllib.request.urlopen(
+                    req, timeout=30
+                ) as response:
+                    result = json.loads(
+                        response.read().decode("utf-8")
+                    )
+
+                print(f"[OCR] Engine {engine} result:", result)
+
+                if result.get("ParsedResults"):
+                    text = result[
+                        "ParsedResults"
+                    ][0]["ParsedText"]
+                    if text and text.strip():
+                        return text
+
+            except Exception as e:
+                print(
+                    f"[OCR Engine {engine} ERROR] {str(e)}"
+                )
+                continue
+
+        return ""
+
+    except Exception as e:
+        print(f"[OCR.space ERROR] {str(e)}")
+        return ""
+
+
+# ── Extract text from image ────────────────────────────
 def extract_text(image_path):
     try:
         print(f"\n[OCR] Reading: {image_path}")
+
         image = Image.open(image_path)
 
-        max_size = 1500
+        # Resize large images to save memory
+        max_size = 1000
         if image.width > max_size or image.height > max_size:
-            image.thumbnail((max_size, max_size), Image.LANCZOS)
+            image.thumbnail(
+                (max_size, max_size),
+                Image.LANCZOS
+            )
 
+        # Convert to grayscale
         image = image.convert("L")
 
-        custom_config = r"--oem 1 --psm 6"
-        text = pytesseract.image_to_string(
-            image, config=custom_config
-        )
+        if USE_TESSERACT:
+            import pytesseract
+            config = r"--oem 1 --psm 6"
+            text = pytesseract.image_to_string(
+                image, config=config
+            )
+        else:
+            # Use OCR.space API on server
+            text = ocr_space_api(image)
 
-        print("[OCR] Result:")
+        print("[OCR] Extracted text:")
         print("-" * 40)
-        print(text)
+        print(text[:300] if text else "EMPTY")
         print("-" * 40)
 
         return text if text else ""
@@ -38,6 +125,7 @@ def extract_text(image_path):
         return ""
 
 
+# ── Parse key fields from text ─────────────────────────
 def parse_fields(text):
     fields = {}
 
@@ -58,7 +146,9 @@ def parse_fields(text):
         for key, pattern in patterns.items():
             if key in fields:
                 continue
-            match = re.search(pattern, line, re.IGNORECASE)
+            match = re.search(
+                pattern, line, re.IGNORECASE
+            )
             if match:
                 value = match.group(1).strip()
                 if value:
@@ -67,6 +157,7 @@ def parse_fields(text):
     return fields
 
 
+# ── Compare two label texts ────────────────────────────
 def compare_labels(approval_text, sample_text):
     approval_fields = parse_fields(approval_text)
     sample_fields = parse_fields(sample_text)
@@ -74,7 +165,10 @@ def compare_labels(approval_text, sample_text):
     print("\n[FIELDS] Approval:", approval_fields)
     print("[FIELDS] Sample:  ", sample_fields)
 
-    all_keys = set(approval_fields.keys()) | set(sample_fields.keys())
+    all_keys = (
+        set(approval_fields.keys()) |
+        set(sample_fields.keys())
+    )
 
     results = []
     match_count = 0
@@ -87,6 +181,7 @@ def compare_labels(approval_text, sample_text):
 
         if sample_value == "" and approval_value != "":
             missing_fields.append(key)
+
         if approval_value == "" and sample_value != "":
             extra_fields.append(key)
 
@@ -96,7 +191,10 @@ def compare_labels(approval_text, sample_text):
             sample_value.lower().strip()
         ).ratio()
 
-        status = "MATCH" if similarity >= 0.90 else "MISMATCH"
+        status = (
+            "MATCH" if similarity >= 0.90
+            else "MISMATCH"
+        )
 
         if status == "MATCH":
             match_count += 1
@@ -110,7 +208,10 @@ def compare_labels(approval_text, sample_text):
         })
 
     total = len(all_keys)
-    accuracy = round((match_count / total) * 100, 2) if total > 0 else 0
+    accuracy = (
+        round((match_count / total) * 100, 2)
+        if total > 0 else 0
+    )
 
     return {
         "accuracy": accuracy,
@@ -122,7 +223,11 @@ def compare_labels(approval_text, sample_text):
     }
 
 
-def compare_label_images(approval_image_path, sample_image_path):
+# ── Main entry point ───────────────────────────────────
+def compare_label_images(
+    approval_image_path,
+    sample_image_path
+):
     print(f"\n{'='*50}")
     print(f"Approval : {approval_image_path}")
     print(f"Sample   : {sample_image_path}")
@@ -131,6 +236,10 @@ def compare_label_images(approval_image_path, sample_image_path):
     approval_text = extract_text(approval_image_path)
     sample_text = extract_text(sample_image_path)
 
+    print("\n[TEXT] Approval:\n", approval_text[:200])
+    print("\n[TEXT] Sample:\n", sample_text[:200])
+
+    # If both empty return zero result
     if not approval_text and not sample_text:
         return {
             "accuracy": 0,
