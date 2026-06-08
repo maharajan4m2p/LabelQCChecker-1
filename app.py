@@ -9,14 +9,7 @@ from label_compare import compare_label_images
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
 
-ALLOWED_EXTENSIONS = {
-    "png",
-    "jpg",
-    "jpeg",
-    "bmp",
-    "tif",
-    "tiff"
-}
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "bmp", "tif", "tiff"}
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -38,96 +31,23 @@ def index():
 
 @app.route("/compare", methods=["POST"])
 def compare():
-
     try:
-
         approval = request.files.get("approval")
         samples = request.files.getlist("sample")
 
         if not approval or approval.filename == "":
             return "Approval file missing", 400
 
-        if (
-            not samples
-            or len(samples) == 0
-            or all(s.filename == "" for s in samples)
-        ):
+        if not samples or all(s.filename == "" for s in samples):
             return "Sample file missing", 400
 
         if not allowed_file(approval.filename):
             return "Unsupported approval file type", 400
 
-        approval_filename = (
-            str(uuid.uuid4())
-            + "_"
-            + secure_filename(approval.filename)
-        )
-
-        approval_path = os.path.join(
-            app.config["UPLOAD_FOLDER"],
-            approval_filename
-        )
-
+        approval_filename = str(uuid.uuid4()) + "_" + secure_filename(approval.filename)
+        approval_path = os.path.join(app.config["UPLOAD_FOLDER"], approval_filename)
         approval.save(approval_path)
 
         sample_results = []
-
-        for sample in samples:
-
-            if not sample:
-                continue
-
-            if sample.filename == "":
-                continue
-
-            if not allowed_file(sample.filename):
-                continue
-
-            sample_filename = (
-                str(uuid.uuid4())
-                + "_"
-                + secure_filename(sample.filename)
-            )
-
-            sample_path = os.path.join(
-                app.config["UPLOAD_FOLDER"],
-                sample_filename
-            )
-
-            sample.save(sample_path)
-
-            result = compare_label_images(
-                approval_path,
-                sample_path
-            )
-
-            result["filename"] = sample.filename
-
-            sample_results.append(result)
-
-        if len(sample_results) == 0:
-            return "No valid sample files uploaded", 400
-
-        comparison = {
-            "approval_filename": approval.filename,
-            "samples": sample_results
-        }
-
-        return render_template(
-            "results.html",
-            comparison=comparison
-        )
-
     except Exception as e:
-
-        print("ERROR:", str(e))
-
-        return f"Internal Error: {str(e)}", 500
-
-
-if __name__ == "__main__":
-    app.run(
-        host="0.0.0.0",
-        port=5000,
-        debug=True
-    )
+        return f"Error: {str(e)}", 500
