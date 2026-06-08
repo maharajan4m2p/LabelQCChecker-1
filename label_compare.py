@@ -3,17 +3,21 @@ import pytesseract
 from PIL import Image
 from difflib import SequenceMatcher
 
-pytesseract.pytesseract.tesseract_cmd = os.environ.get(
-    "TESSERACT_CMD",
-    r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-)
+tesseract_cmd = os.environ.get("TESSERACT_CMD")
+if tesseract_cmd:
+    pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
+else:
+    for default_cmd in ["/usr/bin/tesseract", "/usr/local/bin/tesseract"]:
+        if os.path.exists(default_cmd):
+            pytesseract.pytesseract.tesseract_cmd = default_cmd
+            break
 
 
 def extract_text(image_path):
-
-    img = Image.open(image_path)
-
-    text = pytesseract.image_to_string(img)
+    with Image.open(image_path) as img:
+        if img.mode not in ("RGB", "L"):
+            img = img.convert("RGB")
+        text = pytesseract.image_to_string(img)
 
     return text
 

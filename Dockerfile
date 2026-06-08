@@ -2,26 +2,19 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y \
     tesseract-ocr \
-    libtesseract-dev \
-    libleptonica-dev \
-    pkg-config \
-    gcc \
-    python3-dev && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    tesseract-ocr-eng \
+    libgl1 \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
+COPY requirements.txt .
 
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
 
 COPY . .
 
-ENV TESSERACT_CMD=/usr/bin/tesseract
+ENV PORT=10000
 
-EXPOSE 10000
-
-CMD ["sh", "-c", "gunicorn app:app --bind 0.0.0.0:$PORT"]
+CMD gunicorn app:app --bind 0.0.0.0:$PORT

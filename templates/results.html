@@ -1,64 +1,237 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Results</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QC Report</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0f0f0f; color:#f0f0f0;
+         font-family:'DM Mono',monospace; padding:32px 24px; }
+  .hdr { display:flex; justify-content:space-between;
+         align-items:flex-start; border-bottom:1px solid #2a2a2a;
+         padding-bottom:20px; margin-bottom:28px;
+         flex-wrap:wrap; gap:12px; }
+  h1 { font-family:'Syne',sans-serif; font-size:1.8rem;
+       font-weight:800; color:#e8ff47; letter-spacing:-1px; }
+  .sub { color:#888; font-size:0.75rem; margin-top:4px; }
+  .verdict-ok  { background:#00e676; color:#000; padding:10px 18px;
+                 font-family:'Syne',sans-serif; font-weight:700;
+                 font-size:0.85rem; border-radius:4px; }
+  .verdict-err { background:#ff4444; color:#fff; padding:10px 18px;
+                 font-family:'Syne',sans-serif; font-weight:700;
+                 font-size:0.85rem; border-radius:4px;
+                 animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.75} }
+  .stats { display:grid; grid-template-columns:repeat(3,1fr);
+           gap:12px; margin-bottom:20px; }
+  .stat { background:#1a1a1a; border:1px solid #2a2a2a;
+          border-radius:8px; padding:18px; text-align:center; }
+  .stat-num { font-family:'Syne',sans-serif; font-size:2.2rem;
+              font-weight:800; line-height:1; }
+  .stat-lbl { font-size:0.65rem; color:#888; margin-top:6px;
+              text-transform:uppercase; letter-spacing:1px; }
+  .g{color:#00e676} .o{color:#ff9900} .r{color:#ff4444}
+  .lang-bar { display:grid; grid-template-columns:1fr 1fr;
+              gap:12px; margin-bottom:28px; }
+  .lang-card { background:#1a1a1a; border:1px solid #2a2a2a;
+               border-radius:8px; padding:14px 18px;
+               font-size:0.75rem; }
+  .lang-card b { color:#e8ff47; }
+  .fix-box { background:rgba(255,68,68,0.07);
+             border:1px solid rgba(255,68,68,0.3);
+             border-radius:8px; padding:20px; margin-bottom:28px; }
+  .fix-title { font-family:'Syne',sans-serif; color:#ff4444;
+               font-size:0.85rem; letter-spacing:1px;
+               margin-bottom:16px; }
+  .fix-hdr { display:grid; grid-template-columns:160px 1fr 1fr;
+             gap:12px; font-size:0.65rem; color:#888;
+             text-transform:uppercase; letter-spacing:1px;
+             padding-bottom:8px;
+             border-bottom:1px solid rgba(255,68,68,0.2);
+             margin-bottom:8px; }
+  .fix-row { display:grid; grid-template-columns:160px 1fr 1fr;
+             gap:12px; padding:10px 0;
+             border-bottom:1px solid rgba(255,68,68,0.1);
+             font-size:0.78rem; align-items:start; }
+  .fix-row:last-child { border-bottom:none; }
+  .cv { background:rgba(0,230,118,0.08);
+        border:1px solid rgba(0,230,118,0.2);
+        border-radius:4px; padding:5px 8px;
+        color:#00e676; word-break:break-word; }
+  .mv { background:rgba(255,68,68,0.12);
+        border:1px dashed rgba(255,68,68,0.5);
+        border-radius:4px; padding:5px 8px;
+        color:#ff4444; word-break:break-word; }
+  .sec { font-family:'Syne',sans-serif; font-size:0.7rem;
+         font-weight:700; letter-spacing:2px;
+         text-transform:uppercase; color:#888;
+         margin-bottom:10px; }
+  table { width:100%; border-collapse:collapse;
+          font-size:0.78rem; margin-bottom:28px; }
+  th { background:#222; padding:11px 14px; text-align:left;
+       font-size:0.65rem; letter-spacing:1.5px;
+       text-transform:uppercase; color:#888;
+       border-bottom:1px solid #2a2a2a; }
+  td { padding:11px 14px; border-bottom:1px solid #2a2a2a;
+       vertical-align:middle; word-break:break-word; }
+  .b-ok  { display:inline-block; padding:3px 10px;
+           border-radius:20px; font-size:0.68rem;
+           background:rgba(0,230,118,0.12); color:#00e676;
+           border:1px solid rgba(0,230,118,0.3); }
+  .b-warn{ display:inline-block; padding:3px 10px;
+           border-radius:20px; font-size:0.68rem;
+           background:rgba(255,153,0,0.12); color:#ff9900;
+           border:1px solid rgba(255,153,0,0.3); }
+  .b-err { display:inline-block; padding:3px 10px;
+           border-radius:20px; font-size:0.68rem;
+           background:rgba(255,68,68,0.12); color:#ff4444;
+           border:1px solid rgba(255,68,68,0.3); }
+  .r-warn{ background:rgba(255,153,0,0.05); }
+  .r-err { background:rgba(255,68,68,0.05); }
+  .back-btn { display:inline-block; margin-bottom:28px;
+              background:#1a1a1a; border:1px solid #2a2a2a;
+              color:#e8ff47; padding:10px 20px;
+              border-radius:6px; text-decoration:none;
+              font-size:0.8rem; font-weight:500; }
+  .back-btn:hover { border-color:#e8ff47; }
+  .error-box { background:rgba(255,68,68,0.1);
+               border:1px solid rgba(255,68,68,0.4);
+               border-radius:8px; padding:20px;
+               color:#ff4444; font-size:0.85rem; }
+  .note { background:#1a1a1a; border-left:3px solid #e8ff47;
+          padding:14px 18px; border-radius:0 6px 6px 0;
+          font-size:0.75rem; color:#888; line-height:1.7; }
+</style>
 </head>
 <body>
 
-<h1>Label QC Report</h1>
+<a href="/" class="back-btn">← Check Another Label</a>
 
-<h2>Approval file: {{ comparison.approval_filename }}</h2>
+{% if error %}
+  <div class="error-box">❌ Error: {{ error }}</div>
 
-{% for sample in comparison.samples %}
-    <section style="margin-bottom: 2rem; padding: 1rem; border: 1px solid #ccc;">
-        <h3>Sample: {{ sample.filename }}</h3>
-        <p>Status: {{ sample.status }}</p>
-        <p>Accuracy: {{ sample.score }}%</p>
-        <p>Matched Fields: {{ sample.matched }} / {{ sample.total_fields }}</p>
+{% else %}
+  {% set verdict_class = 'verdict-ok' if results.verdict == 'APPROVED' else 'verdict-err' %}
+  {% set verdict_icon  = '✅' if results.verdict == 'APPROVED' else '🚫' %}
 
-        <h4>Missing Fields</h4>
-        <ul>
-        {% if sample.missing_fields %}
-            {% for item in sample.missing_fields %}
-            <li>{{ item }}</li>
-            {% endfor %}
+  <div class="hdr">
+    <div>
+      <h1>LABEL QC REPORT</h1>
+      <div class="sub">Approval vs Sample · Auto Language Detection</div>
+    </div>
+    <div class="{{ verdict_class }}">
+      {{ verdict_icon }}
+      {{ results.verdict }} —
+      {{ results.missing + results.mismatched }} Issues
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num g">{{ results.matched }}</div>
+      <div class="stat-lbl">Fields Matched</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num o">{{ results.mismatched }}</div>
+      <div class="stat-lbl">Mismatches</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num r">{{ results.missing }}</div>
+      <div class="stat-lbl">Missing Fields</div>
+    </div>
+  </div>
+
+  <!-- Language Bar -->
+  <div class="lang-bar">
+    <div class="lang-card">
+      🌍 <b>Approval Label Languages:</b><br>
+      <span style="color:#ccc">
+        {{ results.approval_langs | join(', ') }}
+      </span>
+    </div>
+    <div class="lang-card">
+      🌍 <b>Sample Label Languages:</b><br>
+      <span style="color:#ccc">
+        {{ results.sample_langs | join(', ') }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Issues Fix Box -->
+  {% if results.issues %}
+  <div class="fix-box">
+    <div class="fix-title">
+      🔧 WHAT NEEDS TO BE FIXED — Missing &amp; Incorrect Values
+    </div>
+    <div class="fix-hdr">
+      <span>Field</span>
+      <span>✅ Should Be</span>
+      <span>❌ Sample Has / Missing</span>
+    </div>
+    {% for row in results.issues %}
+    <div class="fix-row">
+      <div style="color:#e8ff47">{{ row.field }}</div>
+      <div><span class="cv">{{ row.approved_val }}</span></div>
+      <div>
+        {% if not row.sample_val %}
+          <span class="mv">⛔ COMPLETELY MISSING</span>
         {% else %}
-            <li>None</li>
+          <span class="mv">{{ row.sample_val }} ← incorrect</span>
         {% endif %}
-        </ul>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 
-        <h4>Extra Fields</h4>
-        <ul>
-        {% if sample.extra_fields %}
-            {% for item in sample.extra_fields %}
-            <li>{{ item }}</li>
-            {% endfor %}
+  <!-- Full Comparison Table -->
+  <div class="sec">Complete Field-by-Field Comparison</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:20%">Field</th>
+        <th style="width:30%">✅ Approval Label</th>
+        <th style="width:30%">🔍 Sample Label</th>
+        <th style="width:20%">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in results.rows %}
+        {% if row.status == 'MATCH' %}
+          <tr>
+            <td style="color:#e8ff47">{{ row.field }}</td>
+            <td class="g">{{ row.approved_val }}</td>
+            <td class="g">{{ row.sample_val }}</td>
+            <td><span class="b-ok">✓ MATCH</span></td>
+          </tr>
+        {% elif row.status == 'MISMATCH' %}
+          <tr class="r-warn">
+            <td style="color:#e8ff47">{{ row.field }}</td>
+            <td class="g">{{ row.approved_val }}</td>
+            <td><span class="mv">{{ row.sample_val }} ← incorrect</span></td>
+            <td><span class="b-warn">⚠ MISMATCH</span></td>
+          </tr>
         {% else %}
-            <li>None</li>
+          <tr class="r-err">
+            <td style="color:#e8ff47">{{ row.field }}</td>
+            <td class="g">{{ row.approved_val }}</td>
+            <td><span class="mv">⛔ NOT PRESENT</span></td>
+            <td><span class="b-err">✗ MISSING</span></td>
+          </tr>
         {% endif %}
-        </ul>
+      {% endfor %}
+    </tbody>
+  </table>
 
-        <table border="1" style="width:100%; border-collapse: collapse;">
-        <tr>
-            <th>Field</th>
-            <th>Approval</th>
-            <th>Sample</th>
-            <th>Status</th>
-        </tr>
-        {% for row in sample.results %}
-        <tr>
-            <td>{{ row.field }}</td>
-            <td>{{ row.approval }}</td>
-            <td>{{ row.sample }}</td>
-            <td>{{ row.status }}</td>
-        </tr>
-        {% endfor %}
-        </table>
-    </section>
-{% endfor %}
-
-<br>
-<a href="/">Back</a>
+  <div class="note">
+    <strong style="color:#e8ff47">ℹ️ Note:</strong>
+    Fields prefixed <em>[Auto]</em> were detected generically.
+    For best accuracy use high-resolution, watermark-free images.
+  </div>
+{% endif %}
 
 </body>
 </html>

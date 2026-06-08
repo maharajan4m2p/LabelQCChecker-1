@@ -1,41 +1,104 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Label QC Checker</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Label QC Checker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0f0f0f; color:#f0f0f0;
+         font-family:'DM Mono',monospace;
+         min-height:100vh; display:flex;
+         align-items:center; justify-content:center; padding:24px; }
+  .card { background:#1a1a1a; border:1px solid #2a2a2a;
+          border-radius:12px; padding:40px; width:100%; max-width:560px; }
+  h1 { font-family:'Syne',sans-serif; font-size:1.8rem;
+       font-weight:800; color:#e8ff47; letter-spacing:-1px;
+       margin-bottom:6px; }
+  p.sub { color:#888; font-size:0.78rem; margin-bottom:32px; }
+  .upload-box { background:#111; border:2px dashed #333;
+                border-radius:8px; padding:24px; margin-bottom:20px;
+                text-align:center; cursor:pointer;
+                transition:border-color 0.2s; }
+  .upload-box:hover { border-color:#e8ff47; }
+  .upload-box label { display:block; cursor:pointer; }
+  .upload-box .icon { font-size:2rem; margin-bottom:8px; }
+  .upload-box .title { color:#e8ff47; font-size:0.85rem;
+                       font-weight:500; margin-bottom:4px; }
+  .upload-box .hint  { color:#555; font-size:0.72rem; }
+  .upload-box input  { display:none; }
+  .file-name { color:#00e676; font-size:0.75rem;
+               margin-top:8px; display:block; }
+  .btn { width:100%; background:#e8ff47; color:#0f0f0f;
+         border:none; padding:14px; border-radius:8px;
+         font-family:'Syne',sans-serif; font-weight:800;
+         font-size:1rem; cursor:pointer; margin-top:8px;
+         transition:opacity 0.2s; letter-spacing:0.5px; }
+  .btn:hover { opacity:0.85; }
+  .btn:disabled { opacity:0.4; cursor:not-allowed; }
+  .loading { display:none; text-align:center;
+             color:#888; font-size:0.8rem; margin-top:16px; }
+</style>
 </head>
 <body>
+<div class="card">
+  <h1>LABEL QC CHECKER</h1>
+  <p class="sub">Upload approval + sample label → get instant comparison report</p>
 
-<h1>Label QC Checker</h1>
+  <form method="POST" action="/compare" enctype="multipart/form-data"
+        id="uploadForm">
 
-<form
-action="/compare"
-method="POST"
-enctype="multipart/form-data">
+    <!-- Approval Label Upload -->
+    <div class="upload-box">
+      <label for="approval">
+        <div class="icon">✅</div>
+        <div class="title">APPROVAL LABEL</div>
+        <div class="hint">The correct reference label</div>
+        <input type="file" id="approval" name="approval"
+               accept=".png,.jpg,.jpeg,.bmp,.tif,.tiff"
+               onchange="showName(this,'approvalName')" required>
+        <span class="file-name" id="approvalName">No file selected</span>
+      </label>
+    </div>
 
-    <p>Approval Label</p>
+    <!-- Sample Label Upload -->
+    <div class="upload-box">
+      <label for="sample">
+        <div class="icon">🔍</div>
+        <div class="title">SAMPLE LABEL</div>
+        <div class="hint">The label you want to verify</div>
+        <input type="file" id="sample" name="sample"
+               accept=".png,.jpg,.jpeg,.bmp,.tif,.tiff"
+               onchange="showName(this,'sampleName')" required>
+        <span class="file-name" id="sampleName">No file selected</span>
+      </label>
+    </div>
 
-    <input
-    type="file"
-    name="approval"
-    required>
-
-    <br><br>
-
-    <p>Sample Labels</p>
-
-    <input
-    type="file"
-    name="sample"
-    multiple
-    required>
-
-    <br><br>
-
-    <button type="submit">
-        Compare Labels
+    <button type="submit" class="btn" id="submitBtn">
+      🔬 RUN QC CHECK
     </button>
 
-</form>
+    <div class="loading" id="loading">
+      ⏳ Processing labels... this may take 30-60 seconds
+    </div>
+  </form>
+</div>
 
+<script>
+  function showName(input, spanId) {
+    const span = document.getElementById(spanId);
+    span.textContent = input.files[0]
+      ? '📄 ' + input.files[0].name
+      : 'No file selected';
+  }
+
+  document.getElementById('uploadForm')
+    .addEventListener('submit', function() {
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('submitBtn').textContent = '⏳ Processing...';
+      document.getElementById('loading').style.display = 'block';
+    });
+</script>
 </body>
 </html>
