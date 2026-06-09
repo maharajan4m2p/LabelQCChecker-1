@@ -1,5 +1,4 @@
 import os
-<<<<<<< HEAD
 import re
 import json
 import base64
@@ -431,7 +430,6 @@ def compare_label_images(
         "approval_text": approval_text,
         "sample_text": sample_text
     }
-=======
 
 import pandas as pd
 
@@ -508,4 +506,4 @@ def compare_label_files(file_a: str, file_b: str) -> dict:
         "mismatch_count": len(mismatches),
         "mismatches": mismatches,
     }
->>>>>>> 018d8f107f87750f6fb7eec948efb60c62d2e72e
+
