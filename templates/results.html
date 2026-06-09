@@ -1,5 +1,3 @@
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +6,6 @@
 <title>QC Results</title>
 
 <style>
-
 *{
     box-sizing:border-box;
     margin:0;
@@ -150,10 +147,9 @@ pre{
     max-height:300px;
     overflow:auto;
 }
-
 </style>
-</head>
 
+</head>
 <body>
 
 <div class="container">
@@ -190,47 +186,47 @@ OCR Based Label Comparison Report
 
 <div class="card">
 
-<h2>📄 {{ sample.filename }}</h2>
+<h2>📄 {{ sample['filename'] }}</h2>
 
 <div class="summary">
 
-<span class="badge {% if sample.status == 'PASS' %}pass{% else %}fail{% endif %}">
-Status: {{ sample.status }}
+<span class="badge {% if sample['status'] == 'PASS' %}pass{% else %}fail{% endif %}">
+Status: {{ sample['status'] }}
 </span>
 
 <span class="badge match">
-Matched: {{ sample.total_found }}
+Matched: {{ sample['total_found'] }}
 </span>
 
 <span class="badge missing">
-Missing: {{ sample.missing_data|length }}
+Missing: {{ sample['missing_data']|length }}
 </span>
 
 <span class="badge extra">
-Extra: {{ sample.extra_data|length }}
+Extra: {{ sample['extra_data']|length }}
 </span>
 
 </div>
 
 <div class="accuracy
-{% if sample.match_percentage >= 80 %}
+{% if sample['match_percentage'] >= 80 %}
 high
-{% elif sample.match_percentage >= 50 %}
+{% elif sample['match_percentage'] >= 50 %}
 medium
 {% else %}
 low
 {% endif %}
 ">
-{{ sample.match_percentage }}%
+{{ sample['match_percentage'] }}%
 </div>
 
 <div class="section">
 
 <h3>⚠ Missing Data</h3>
 
-{% if sample.missing_data %}
+{% if sample['missing_data'] %}
 <ul>
-{% for item in sample.missing_data %}
+{% for item in sample['missing_data'] %}
 <li>{{ item }}</li>
 {% endfor %}
 </ul>
@@ -244,9 +240,9 @@ low
 
 <h3>➕ Extra Data</h3>
 
-{% if sample.extra_data %}
+{% if sample['extra_data'] %}
 <ul>
-{% for item in sample.extra_data %}
+{% for item in sample['extra_data'] %}
 <li>{{ item }}</li>
 {% endfor %}
 </ul>
@@ -260,9 +256,9 @@ low
 
 <h3>✅ Matched Data</h3>
 
-{% if sample.matched_data %}
+{% if sample['matched_data'] %}
 <ul>
-{% for item in sample.matched_data %}
+{% for item in sample['matched_data'] %}
 <li>{{ item }}</li>
 {% endfor %}
 </ul>
@@ -276,7 +272,7 @@ low
 
 <h3>📋 Approval OCR Text</h3>
 
-<pre>{{ sample.approval_text|join('\n') }}</pre>
+<pre>{{ sample['approval_text']|join('\n') }}</pre>
 
 </div>
 
@@ -284,7 +280,7 @@ low
 
 <h3>📄 Sample OCR Text</h3>
 
-<pre>{{ sample.sample_text|join('\n') }}</pre>
+<pre>{{ sample['sample_text']|join('\n') }}</pre>
 
 </div>
 
@@ -301,41 +297,6 @@ No results found.
 {% endif %}
 
 </div>
-
-</body>
-</html>
-```
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Results</title>
-</head>
-<body>
-
-<h1>Label QC Report</h1>
-
-<h2>
-Accuracy :
-{{ result.accuracy }} %
-</h2>
-
-<h3>Approval OCR</h3>
-
-<pre>
-{{ result.approval_text }}
-</pre>
-
-<h3>Sample OCR</h3>
-
-<pre>
-{{ result.sample_text }}
-</pre>
-
-<br>
-
-<a href="/">
-Back
-</a>
 
 </body>
 </html>
