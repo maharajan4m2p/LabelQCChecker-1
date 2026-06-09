@@ -2,6 +2,9 @@ Flask
 gunicorn
 opencv-python-headless
 numpy
+pandas
+easyocr
 Pillow
+scikit-image
+imutils
 setuptools
-wheel
