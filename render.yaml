@@ -5,8 +5,3 @@ services:
     dockerfilePath: ./Dockerfile
     plan: free
     healthCheckPath: /
-    envVars:
-      - key: PYTHON_VERSION
-        value: "3.10"
-      - key: FLASK_ENV
-        value: production
