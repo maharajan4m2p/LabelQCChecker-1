@@ -1,10 +1,7 @@
-Flask
-gunicorn
-opencv-python-headless
-numpy
-pandas
-easyocr
-Pillow
-scikit-image
-imutils
-setuptools
+flask==2.3.3
+werkzeug==2.3.7
+pytesseract==0.3.10
+Pillow==10.0.0
+opencv-python-headless==4.8.0.76
+langdetect==1.0.9
+gunicorn==21.2.0

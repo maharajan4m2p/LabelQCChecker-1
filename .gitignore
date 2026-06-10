@@ -1,25 +1,36 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
 
+# Virtual environment
 .venv/
 venv/
+env/
 
-.env
-
+# Uploads (don't push user images)
 uploads/
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.tif
+*.tiff
 
-*.log
+# Environment files
+.env
+*.env
 
+# IDE
+.vscode/
+.idea/
+
+# OS
 .DS_Store
 Thumbs.db
-
-.git
-.gitignore
-
-.vscode
-.idea
-
-pytest_cache/
-.mypy_cache/

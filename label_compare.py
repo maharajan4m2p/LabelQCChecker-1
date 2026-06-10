@@ -1,531 +1,578 @@
-import os
+# ============================================================
+# label_compare.py — Complete Fixed Version
+# ============================================================
+
+import cv2
 import re
-import json
-import base64
-import urllib.request
-import urllib.parse
+import pytesseract
+from PIL        import Image
+from langdetect import detect, DetectorFactory
 
-from io import BytesIO
-from PIL import Image
-from difflib import SequenceMatcher
+DetectorFactory.seed = 0
 
+# ============================================================
+# PART A — LANGUAGE MAPS
+# ============================================================
 
-# --------------------------------------------------
-# Tesseract (Windows only)
-# --------------------------------------------------
+LANG_MAP = {
+    'en'   : 'eng',
+    'cs'   : 'ces',
+    'sk'   : 'slk',
+    'hu'   : 'hun',
+    'de'   : 'deu',
+    'fr'   : 'fra',
+    'es'   : 'spa',
+    'it'   : 'ita',
+    'pt'   : 'por',
+    'pl'   : 'pol',
+    'nl'   : 'nld',
+    'sv'   : 'swe',
+    'no'   : 'nor',
+    'da'   : 'dan',
+    'fi'   : 'fin',
+    'ro'   : 'ron',
+    'bg'   : 'bul',
+    'hr'   : 'hrv',
+    'sr'   : 'srp',
+    'uk'   : 'ukr',
+    'ru'   : 'rus',
+    'ar'   : 'ara',
+    'hi'   : 'hin',
+    'zh-cn': 'chi_sim',
+    'zh-tw': 'chi_tra',
+    'ja'   : 'jpn',
+    'ko'   : 'kor',
+    'tr'   : 'tur',
+    'vi'   : 'vie',
+    'th'   : 'tha',
+    'id'   : 'ind',
+}
 
-USE_TESSERACT = False
+LANG_NAMES = {
+    'eng'    : 'English',
+    'ces'    : 'Czech',
+    'slk'    : 'Slovak',
+    'hun'    : 'Hungarian',
+    'deu'    : 'German',
+    'fra'    : 'French',
+    'spa'    : 'Spanish',
+    'ita'    : 'Italian',
+    'por'    : 'Portuguese',
+    'pol'    : 'Polish',
+    'nld'    : 'Dutch',
+    'swe'    : 'Swedish',
+    'nor'    : 'Norwegian',
+    'dan'    : 'Danish',
+    'fin'    : 'Finnish',
+    'ron'    : 'Romanian',
+    'bul'    : 'Bulgarian',
+    'hrv'    : 'Croatian',
+    'srp'    : 'Serbian',
+    'ukr'    : 'Ukrainian',
+    'rus'    : 'Russian',
+    'ara'    : 'Arabic',
+    'hin'    : 'Hindi',
+    'chi_sim': 'Chinese (Simplified)',
+    'chi_tra': 'Chinese (Traditional)',
+    'jpn'    : 'Japanese',
+    'kor'    : 'Korean',
+    'tur'    : 'Turkish',
+    'vie'    : 'Vietnamese',
+    'tha'    : 'Thai',
+    'ind'    : 'Indonesian',
+}
 
-if os.name == "nt":
-    try:
-        import pytesseract
+# ============================================================
+# PART B — IMAGE PREPROCESSING
+# ============================================================
 
-        pytesseract.pytesseract.tesseract_cmd = (
-            r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-        )
+def preprocess_image(path):
+    img = cv2.imread(path)
+    if img is None:
+        raise ValueError(f"Cannot read image at path: {path}")
 
-        USE_TESSERACT = True
+    # Resize 2x for better OCR accuracy
+    img = cv2.resize(
+        img, None, fx=2, fy=2,
+        interpolation=cv2.INTER_CUBIC
+    )
 
-    except Exception:
-        USE_TESSERACT = False
+    # Convert to grayscale
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
+    # Enhance contrast with CLAHE
+    clahe    = cv2.createCLAHE(
+        clipLimit=2.0, tileGridSize=(8, 8)
+    )
+    enhanced = clahe.apply(gray)
 
-# --------------------------------------------------
-# OCR SPACE
-# --------------------------------------------------
+    # Threshold — pure black and white
+    _, thresh = cv2.threshold(
+        enhanced, 150, 255, cv2.THRESH_BINARY
+    )
 
-OCR_API_KEY = "K86258847888957"
-import easyocr
+    return thresh
 
-reader = easyocr.Reader(
-    ['en'],
-    gpu=False
-)
+# ============================================================
+# PART C — LANGUAGE DETECTION
+# ============================================================
 
+def detect_languages(path):
+    processed = preprocess_image(path)
+    pil_img   = Image.fromarray(processed)
 
-def ocr_space_api(image):
+    # First pass — English only to get raw text
+    raw_text = pytesseract.image_to_string(
+        pil_img,
+        config=r'--oem 3 --psm 6 -l eng'
+    )
 
-    try:
+    # Always include English
+    detected = set(['eng'])
 
-        buffered = BytesIO()
+    # Method 1 — line by line language detection
+    for line in raw_text.splitlines():
+        line = line.strip()
+        if len(line) > 8:
+            try:
+                code = detect(line)
+                tl   = LANG_MAP.get(code)
+                if tl:
+                    detected.add(tl)
+            except Exception:
+                pass
 
-        image = image.convert("RGB")
+    # Method 2 — Unicode script detection
+    if re.search(r'[\u0400-\u04FF]', raw_text):
+        detected.add('rus')
+    if re.search(r'[\u0600-\u06FF]', raw_text):
+        detected.add('ara')
+    if re.search(r'[\u0900-\u097F]', raw_text):
+        detected.add('hin')
+    if re.search(r'[\u4E00-\u9FFF]', raw_text):
+        detected.add('chi_sim')
+    if re.search(r'[\u3040-\u309F]', raw_text):
+        detected.add('jpn')
+    if re.search(r'[\uAC00-\uD7AF]', raw_text):
+        detected.add('kor')
+    if re.search(r'[\u0E00-\u0E7F]', raw_text):
+        detected.add('tha')
 
-        image.save(
-            buffered,
-            format="JPEG",
-            quality=90
-        )
+    # Method 3 — keyword detection
+    keyword_langs = [
+        (r'UCHOVÁVEJTE|měsíce|Vyrobeno',  'ces'),
+        (r'UCHOVÁVAJTE|mesiaca|Vyrobené', 'slk'),
+        (r'TŰZTŐL|TARTANDÓ|hónap',        'hun'),
+        (r'Fabriqué|flammes|conserver',   'fra'),
+        (r'Hergestellt|Feuer|fernhalten', 'deu'),
+        (r'Fabricado|fuego|alejar',       'spa'),
+        (r'Prodotto|fuoco|tenere',        'ita'),
+        (r'Feito|fogo|longe',             'por'),
+        (r'Przechowywać|ognia|dzieci',    'pol'),
+        (r'Houd|vuur|verwijderd',         'nld'),
+    ]
+    for pattern, lang in keyword_langs:
+        if re.search(pattern, raw_text, re.IGNORECASE):
+            detected.add(lang)
 
-        img_base64 = base64.b64encode(
-            buffered.getvalue()
-        ).decode("utf-8")
+    return list(detected), raw_text
 
-        payload = urllib.parse.urlencode({
-            "apikey": OCR_API_KEY,
-            "base64Image":
-                f"data:image/jpeg;base64,{img_base64}",
-            "language": "eng",
-            "OCREngine": 2,
-            "scale": True
-        }).encode()
+# ============================================================
+# PART D — FULL OCR WITH ALL DETECTED LANGUAGES
+# ============================================================
 
-        request_obj = urllib.request.Request(
-            "https://api.ocr.space/parse/image",
-            data=payload
-        )
+def extract_text(path):
+    detected_langs, _ = detect_languages(path)
 
-        with urllib.request.urlopen(
-            request_obj,
-            timeout=60
-        ) as response:
+    # Combine all languages e.g. "eng+ces+slk+hun"
+    lang_str  = '+'.join(detected_langs)
 
-            result = json.loads(
-                response.read().decode("utf-8")
-            )
+    processed = preprocess_image(path)
+    pil_img   = Image.fromarray(processed)
 
-        print("\nOCR RESPONSE:")
-        print(result)
+    text = pytesseract.image_to_string(
+        pil_img,
+        config=f'--oem 3 --psm 6 -l {lang_str}'
+    )
 
-        parsed = result.get(
-            "ParsedResults",
-            []
-        )
+    lang_names = [
+        LANG_NAMES.get(l, l) for l in detected_langs
+    ]
 
-        if parsed:
-            return parsed[0].get(
-                "ParsedText",
-                ""
-            )
+    return text, lang_names
 
-        return ""
-
-    except Exception as e:
-
-        print("OCR API ERROR:", str(e))
-        return ""
-
-
-# --------------------------------------------------
-# OCR TEXT EXTRACTION
-# --------------------------------------------------
-
-def extract_text(image_path):
-
-    try:
-
-        print(f"\nReading image: {image_path}")
-
-        results = reader.readtext(image_path)
-
-        lines = []
-
-        for item in results:
-
-            text = item[1].strip()
-
-            if text:
-                lines.append(text)
-
-        extracted_text = "\n".join(lines)
-
-        if extracted_text.strip():
-
-            print("\nOCR TEXT START")
-            print(extracted_text)
-            print("OCR TEXT END\n")
-
-            return extracted_text
-
-        image = Image.open(image_path)
-        image = image.convert("L")
-
-        return ocr_space_api(image)
-
-    except Exception as e:
-
-        print("EasyOCR ERROR:", str(e))
-
-        try:
-
-            image = Image.open(image_path)
-            image = image.convert("L")
-
-            return ocr_space_api(image)
-
-        except Exception as e:
-
-            print("OCR ERROR:", str(e))
-            return ""
-
-
-# --------------------------------------------------
-# FIELD EXTRACTION
-# --------------------------------------------------
-
-def normalize_text(text):
-    text = re.sub(r"[\r\n]+", " ", text)
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()
-
-
-def normalize_key(key):
-    key = re.sub(r"[^\w\s]", " ", key)
-    key = re.sub(r"\s+", " ", key)
-    return key.strip().upper()
-
-
-def normalize_value(value):
-    value = re.sub(r"\s+", " ", value)
-    return value.strip()
-
+# ============================================================
+# PART E — UNIVERSAL FIELD PARSER
+# ============================================================
 
 def parse_fields(text):
-
     fields = {}
+    lines  = [
+        l.strip()
+        for l in text.splitlines()
+        if l.strip()
+    ]
 
-    lines = text.splitlines()
-
+    # ── EAN / Barcode numbers ──────────────────────────────
     for line in lines:
+        uk = re.search(
+            r'UK\s*EAN[:\s]*([\d]{8,14})',
+            line, re.IGNORECASE
+        )
+        ce = re.search(
+            r'CE\s*EAN[:\s]*([\d]{8,14})',
+            line, re.IGNORECASE
+        )
+        ean = re.search(
+            r'\bEAN[:\s]*([\d]{8,14})',
+            line, re.IGNORECASE
+        )
+        upc = re.search(
+            r'\bUPC[:\s]*([\d]{8,14})',
+            line, re.IGNORECASE
+        )
+        if uk:
+            fields['UK EAN'] = uk.group(1)
+        if ce:
+            fields['CE EAN'] = ce.group(1)
+        if ean and 'UK EAN' not in fields:
+            fields['EAN'] = ean.group(1)
+        if upc:
+            fields['UPC'] = upc.group(1)
 
-        line = line.strip()
+    # ── Size ───────────────────────────────────────────────
+    size = re.search(
+        r'(up\s*to\s*[\w\s]+(?:m|cm|yr|year|month))',
+        text, re.IGNORECASE
+    )
+    if size:
+        fields['Size'] = size.group(1).strip()
 
-        if not line:
-            continue
+    # ── Body Measurements ─────────────────────────────────
+    for label, key in [
+        ('Height', 'Height'),
+        ('Weight', 'Weight'),
+        ('Waist',  'Waist'),
+        ('Chest',  'Chest'),
+        ('Length', 'Length'),
+        ('Hip',    'Hip'),
+    ]:
+        m = re.search(
+            rf'{label}[:\s]*([\d.]+\s*'
+            rf'(?:cm|kg|g)[^\n]{{0,20}})',
+            text, re.IGNORECASE
+        )
+        if m:
+            fields[key] = m.group(1).strip()
 
-        line = normalize_text(line)
+    # ── Article / SKU ──────────────────────────────────────
+    art = re.search(r'\b(\d{3,4}[-]\d{3,6})\b', text)
+    if art:
+        fields['Article No.'] = art.group(1)
 
-        key = None
-        value = None
+    sku = re.search(
+        r'(?:SKU|Style|Ref)[:\s#]*([\w\d\-]+)',
+        text, re.IGNORECASE
+    )
+    if sku:
+        fields['SKU/Style'] = sku.group(1).strip()
 
-        if ":" in line:
-            parts = line.split(":", 1)
-            key = parts[0].strip()
-            value = parts[1].strip()
+    # ── Brand ─────────────────────────────────────────────
+    for line in lines:
+        if (
+            re.match(r'^[A-Z][A-Z&\s]{1,15}$', line)
+            and len(line) <= 15
+        ):
+            fields['Brand'] = line
+            break
 
-        elif "=" in line:
-            parts = line.split("=", 1)
-            key = parts[0].strip()
-            value = parts[1].strip()
+    # ── Safety Warnings English ───────────────────────────
+    if re.search(
+        r'KEEP\s*AWAY\s*FROM\s*FIRE',
+        text, re.IGNORECASE
+    ):
+        fields['Fire Warning (EN)'] = 'KEEP AWAY FROM FIRE'
 
-        elif "-" in line:
-            parts = line.split("-", 1)
-            key = parts[0].strip()
-            value = parts[1].strip()
+    if re.search(
+        r'KEEP\s*AWAY\s*FROM\s*HEAT',
+        text, re.IGNORECASE
+    ):
+        fields['Heat Warning (EN)'] = 'KEEP AWAY FROM HEAT'
 
-        elif len(line.split()) >= 2:
-            parts = line.split(None, 1)
-            key = parts[0].strip()
-            value = parts[1].strip()
+    if re.search(
+        r'choking\s*hazard',
+        text, re.IGNORECASE
+    ):
+        fields['Choking Hazard'] = 'CHOKING HAZARD PRESENT'
 
-        if not key or not value:
-            continue
+    if re.search(
+        r'not\s*suitable\s*for\s*children',
+        text, re.IGNORECASE
+    ):
+        m = re.search(
+            r'(not\s*suitable[^\n]+)',
+            text, re.IGNORECASE
+        )
+        if m:
+            fields['Age Warning'] = m.group(1).strip()
 
-        key = normalize_key(key)
-        value = normalize_value(value)
+    # ── Safety Warnings European ──────────────────────────
+    warn_patterns = [
+        (
+            r'UCHOVÁVEJTE\s*MIMO\s*DOSAH',
+            'Fire Warning (CZ)',
+            r'(UCHOVÁVEJTE[^\n]+)'
+        ),
+        (
+            r'UCHOVÁVAJTE\s*MIMO\s*DOSAH',
+            'Fire Warning (SK)',
+            r'(UCHOVÁVAJTE[^\n]+)'
+        ),
+        (
+            r'TŰZTŐL',
+            'Fire Warning (HU)',
+            r'(TŰZTŐL[^\n]+)'
+        ),
+        (
+            r'VON\s*FEUER\s*FERNHALTEN',
+            'Fire Warning (DE)',
+            r'(VON\s*FEUER[^\n]+)'
+        ),
+        (
+            r'TENIR\s*ÉLOIGNÉ\s*DU\s*FEU',
+            'Fire Warning (FR)',
+            r'(TENIR[^\n]+)'
+        ),
+        (
+            r'MANTENER\s*ALEJADO',
+            'Fire Warning (ES)',
+            r'(MANTENER[^\n]+)'
+        ),
+        (
+            r'TENERE\s*LONTANO',
+            'Fire Warning (IT)',
+            r'(TENERE[^\n]+)'
+        ),
+        (
+            r'TRZYMAĆ\s*Z\s*DALA',
+            'Fire Warning (PL)',
+            r'(TRZYMAĆ[^\n]+)'
+        ),
+        (
+            r'HOUD\s*WEG\s*VAN\s*VUUR',
+            'Fire Warning (NL)',
+            r'(HOUD[^\n]+)'
+        ),
+        (
+            r'MANTER\s*AFASTADO',
+            'Fire Warning (PT)',
+            r'(MANTER[^\n]+)'
+        ),
+    ]
 
-        if key and value:
-            fields[key] = value
+    for pattern, key, extract in warn_patterns:
+        if re.search(pattern, text, re.IGNORECASE):
+            m = re.search(extract, text, re.IGNORECASE)
+            if m:
+                fields[key] = m.group(1).strip()
+
+    # ── Material / Fabric ─────────────────────────────────
+    fabric = re.search(
+        r'(\d+%\s*(?:cotton|polyester|wool|nylon|'
+        r'acrylic|viscose|elastane|spandex|linen|silk)'
+        r'[^\n]*)',
+        text, re.IGNORECASE
+    )
+    if fabric:
+        fields['Material'] = fabric.group(1).strip()
+
+    # ── Care Instructions ─────────────────────────────────
+    care_patterns = [
+        (r'machine\s*wash[^\n]*',    'Care - Wash'),
+        (r'hand\s*wash[^\n]*',       'Care - Hand Wash'),
+        (r'do\s*not\s*bleach',       'Care - Bleach'),
+        (r'do\s*not\s*tumble[^\n]*', 'Care - Tumble Dry'),
+        (r'dry\s*clean[^\n]*',       'Care - Dry Clean'),
+        (r'do\s*not\s*iron',         'Care - Iron'),
+        (r'iron\s*on\s*low[^\n]*',   'Care - Iron Temp'),
+        (r'do\s*not\s*wring',        'Care - Wringing'),
+    ]
+    for pattern, key in care_patterns:
+        m = re.search(pattern, text, re.IGNORECASE)
+        if m:
+            fields[key] = m.group(0).strip()
+
+    # ── Sustainability ────────────────────────────────────
+    recycled = re.search(
+        r'(\d+)%\s*of\s*the\s*polyester',
+        text, re.IGNORECASE
+    )
+    if recycled:
+        fields['Recycled Content'] = (
+            recycled.group(1) + '% polyester recycled'
+        )
+
+    organic = re.search(
+        r'(\d+)%\s*organic',
+        text, re.IGNORECASE
+    )
+    if organic:
+        fields['Organic Content'] = (
+            organic.group(1) + '% organic'
+        )
+
+    if re.search(r'recycl', text, re.IGNORECASE):
+        fields['Recycle Symbol'] = 'Present'
+
+    # ── Certifications ────────────────────────────────────
+    for cert in [
+        'OEKO-TEX', 'GOTS', 'FSC',
+        'ISO 9001', 'FCC', 'RoHS', 'REACH'
+    ]:
+        if re.search(cert, text, re.IGNORECASE):
+            fields[f'Cert: {cert}'] = 'Present'
+
+    # ── Country of Origin ─────────────────────────────────
+    origin = re.search(
+        r'Made\s*in\s+([A-Za-z\s]+)',
+        text, re.IGNORECASE
+    )
+    if origin:
+        fields['Made In'] = origin.group(1).strip()
+
+    # ── Legal Numbers ─────────────────────────────────────
+    rn = re.search(
+        r'RN[:\s#]*(\d+)',
+        text, re.IGNORECASE
+    )
+    if rn:
+        fields['RN No.'] = rn.group(1)
+
+    ca = re.search(
+        r'\bCA[:\s#]*(\d+)',
+        text, re.IGNORECASE
+    )
+    if ca:
+        fields['CA No.'] = ca.group(1)
+
+    # ── Batch / Expiry ────────────────────────────────────
+    batch = re.search(
+        r'(?:Batch|Lot)[:\s#]*([\w\d\-]+)',
+        text, re.IGNORECASE
+    )
+    if batch:
+        fields['Batch/Lot No.'] = batch.group(1).strip()
+
+    expiry = re.search(
+        r'(?:Expiry|Best Before|Use By)[:\s]*([\d/\-\.]+)',
+        text, re.IGNORECASE
+    )
+    if expiry:
+        fields['Expiry Date'] = expiry.group(1).strip()
+    # ── Net Weight / Volume ─────────────────────────────
+    net_wt = re.search(
+        r'(?:Net\s*Weight|Net\s*Wt)'
+        r'[:\s]*([\d.]+\s*(?:g|kg|oz|lb))',
+        text, re.IGNORECASE
+    )
+    if net_wt:
+        fields['Net Weight'] = net_wt.group(1).strip()
+    net_vol = re.search(
+        r'(?:Net\s*Volume|Vol)'
+        r'[:\s]*([\d.]+\s*(?:ml|l|fl\s*oz))',
+        text, re.IGNORECASE
+    )
+    if net_vol:
+        fields['Net Volume'] = net_vol.group(1).strip()
+    # ── Generic Key:Value Fallback ────────────────────────
+    for line in lines:
+        kv = re.match(
+            r'^([A-Za-z][A-Za-z\s]{2,25})[:\-]\s*(.+)$',
+            line
+        )
+        if kv:
+            k = kv.group(1).strip().title()
+            v = kv.group(2).strip()
+            if k not in fields and len(v) < 80:
+                fields[f'[Auto] {k}'] = v
 
     return fields
 
+# ============================================================
+# PART F — MAIN COMPARISON FUNCTION
+# Called by app.py
+# ============================================================
 
-# --------------------------------------------------
-# FIELD COMPARISON
-# --------------------------------------------------
+def compare_label_images(approval_path, sample_path):
+    try:
+        # Extract text from both labels
+        approval_text, approval_langs = extract_text(approval_path)
+        sample_text,   sample_langs   = extract_text(sample_path)
 
-def compare_fields(
-    approval_fields,
-    sample_fields
-):
+        # Parse fields from both labels
+        approval_fields = parse_fields(approval_text)
+        sample_fields   = parse_fields(sample_text)
 
-    results = []
-    match_count = 0
-    missing_fields = []
-    extra_fields = []
-    mismatch_fields = []
+        rows       = []
+        matched    = 0
+        mismatched = 0
+        missing    = 0
 
-    approval_keys = list(approval_fields.keys())
-    sample_keys = list(sample_fields.keys())
-    used_sample_keys = set()
+        # Compare every field
+        for field, approved_val in approval_fields.items():
+            sample_val = sample_fields.get(field, "")
 
-    def add_row(
-        field,
-        approval_value,
-        sample_value,
-        status,
-        key_similarity=0.0,
-        value_similarity=0.0,
-        note=""
-    ):
-        nonlocal match_count
+            if not sample_val:
+                status = "MISSING"
+                missing += 1
+            elif (
+                approved_val.strip().lower()
+                != sample_val.strip().lower()
+            ):
+                status = "MISMATCH"
+                mismatched += 1
+            else:
+                status = "MATCH"
+                matched += 1
 
-        if status == "MATCH":
-            match_count += 1
+            rows.append({
+                "field":        field,
+                "approved_val": approved_val,
+                "sample_val":   sample_val,
+                "status":       status,
+            })
 
-        results.append({
-            "field": f"{field}{note}",
-            "approval": approval_value or "-",
-            "sample": sample_value or "-",
-            "key_similarity": round(key_similarity * 100, 1),
-            "value_similarity": round(value_similarity * 100, 1),
-            "similarity": round(value_similarity * 100, 1),
-            "status": status
-        })
-
-    for approval_key in approval_keys:
-        approval_value = approval_fields[approval_key]
-        best_match = None
-
-        for sample_key in sample_keys:
-            if sample_key in used_sample_keys:
-                continue
-
-            key_similarity = SequenceMatcher(None, approval_key, sample_key).ratio()
-            sample_value = sample_fields[sample_key]
-            value_similarity = SequenceMatcher(
-                None,
-                approval_value.lower(),
-                sample_value.lower()
-            ).ratio() if sample_value else 0.0
-            combined_score = (key_similarity * 0.7) + (value_similarity * 0.3)
-
-            if best_match is None or combined_score > best_match[0]:
-                best_match = (combined_score, sample_key, key_similarity, value_similarity)
-
-        if best_match and best_match[0] >= 0.75:
-            _, sample_key, key_similarity, value_similarity = best_match
-            sample_value = sample_fields[sample_key]
-            used_sample_keys.add(sample_key)
-            note = ""
-
-            if key_similarity < 0.95:
-                note = f" (key fuzzy {round(key_similarity * 100, 1)}%)"
-
-            status = "MATCH" if value_similarity >= 0.90 else "MISMATCH"
-
-            if status == "MISMATCH":
-                mismatch_fields.append(
-                    f"{approval_key}: expected '{approval_value}' but got '{sample_value}'"
-                )
-
-            add_row(
-                approval_key,
-                approval_value,
-                sample_value,
-                status,
-                key_similarity=key_similarity,
-                value_similarity=value_similarity,
-                note=note
-            )
-
-        else:
-            missing_fields.append(f"{approval_key}: {approval_value}")
-            add_row(approval_key, approval_value, "", "MISSING")
-
-    for sample_key in sample_keys:
-        if sample_key in used_sample_keys:
-            continue
-
-        sample_value = sample_fields[sample_key]
-        extra_fields.append(f"{sample_key}: {sample_value}")
-        add_row(sample_key, "", sample_value, "EXTRA")
-
-    total = len(approval_keys) if approval_keys else len(results)
-    accuracy = round((match_count / total) * 100, 2) if total > 0 else 0
-
-    matched_data = [
-        row["field"]
-        for row in results
-        if row["status"] == "MATCH"
-    ]
-
-    return {
-        "status": "PASS" if accuracy >= 90 else "FAIL",
-        "match_percentage": accuracy,
-        "total_found": match_count,
-        "matched_data": matched_data,
-        "missing_data": missing_fields,
-        "extra_data": extra_fields,
-        "accuracy": accuracy,
-        "match_count": match_count,
-        "total_fields": total,
-        "results": results,
-        "mismatch_fields": mismatch_fields
-    }
-
-
-# --------------------------------------------------
-# MAIN FUNCTION
-# --------------------------------------------------
-
-def compare_label_images(
-    approval_image_path,
-    sample_image_path
-):
-
-    approval_text = extract_text(
-        approval_image_path
-    )
-
-    sample_text = extract_text(
-        sample_image_path
-    )
-
-    if not approval_text and not sample_text:
-        return {
-            "status": "FAIL",
-            "match_percentage": 0,
-            "total_found": 0,
-            "matched_data": [],
-            "missing_data": [],
-            "extra_data": [],
-            "accuracy": 0,
-            "match_count": 0,
-            "total_fields": 0,
-            "results": [],
-            "approval_text": [],
-            "sample_text": []
-        }
-
-    approval_fields = parse_fields(
-        approval_text
-    )
-
-    sample_fields = parse_fields(
-        sample_text
-    )
-
-    print("\nAPPROVAL FIELDS:")
-    print(approval_fields)
-
-    print("\nSAMPLE FIELDS:")
-    print(sample_fields)
-
-    if approval_fields or sample_fields:
-
-        result = compare_fields(
-            approval_fields,
-            sample_fields
+        # Final verdict
+        verdict = (
+            "NOT APPROVED"
+            if (missing + mismatched) > 0
+            else "APPROVED"
         )
 
-        result["approval_text"] = approval_text.splitlines()
-        result["sample_text"] = sample_text.splitlines()
+        return {
+            "verdict":        verdict,
+            "matched":        matched,
+            "mismatched":     mismatched,
+            "missing":        missing,
+            "rows":           rows,
+            "approval_langs": approval_langs,
+            "sample_langs":   sample_langs,
+            "issues": [
+                r for r in rows
+                if r["status"] != "MATCH"
+            ],
+        }
 
-        return result
-
-    similarity = SequenceMatcher(
-        None,
-        approval_text.lower(),
-        sample_text.lower()
-    ).ratio()
-
-    accuracy = round(
-        similarity * 100,
-        2
-    )
-
-    return {
-        "status": "PASS" if accuracy >= 90 else "FAIL",
-        "match_percentage": accuracy,
-        "total_found": 1,
-        "matched_data": ["FULL LABEL TEXT"] if accuracy >= 90 else [],
-        "missing_data": [],
-        "extra_data": [],
-        "accuracy": accuracy,
-        "match_count": 1,
-        "total_fields": 1,
-        "results": [
-            {
-                "field": "FULL LABEL TEXT",
-                "approval": approval_text[:500],
-                "sample": sample_text[:500],
-                "similarity": accuracy,
-                "status": "MATCH" if accuracy >= 90 else "MISMATCH"
-            }
-        ],
-        "mismatch_fields": [],
-        "approval_text": approval_text.splitlines(),
-        "sample_text": sample_text.splitlines()
-    }
-
-
-# --------------------------------------------------
-# FILE-BASED COMPARISON
-# --------------------------------------------------
-
-import pandas as pd
-
-ALLOWED_EXTENSIONS = {"csv", "xlsx", "xls"}
-
-
-def allowed_file(filename: str) -> bool:
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-def load_label_frame(file_path: str) -> pd.DataFrame:
-    extension = os.path.splitext(file_path)[1].lower().lstrip(".")
-
-    if extension == "csv":
-        frame = pd.read_csv(file_path)
-    else:
-        frame = pd.read_excel(file_path)
-
-    return frame
-
-
-def extract_label_value(row: pd.Series) -> str:
-    for candidate in ("label", "text", "value", "annotation"):
-        if candidate in row.index:
-            return str(row[candidate]).strip()
-
-    if len(row.index) > 0:
-        return str(row.iloc[-1]).strip()
-
-    return ""
-
-
-def compare_label_files(file_a: str, file_b: str) -> dict:
-    frame_a = load_label_frame(file_a)
-    frame_b = load_label_frame(file_b)
-
-    labels_a = [extract_label_value(row) for _, row in frame_a.iterrows()]
-    labels_b = [extract_label_value(row) for _, row in frame_b.iterrows()]
-
-    total_rows_a = len(labels_a)
-    total_rows_b = len(labels_b)
-    common_rows = min(total_rows_a, total_rows_b)
-
-    mismatches = []
-    for index in range(common_rows):
-        left = labels_a[index]
-        right = labels_b[index]
-        if left != right:
-            mismatches.append({
-                "row": index + 1,
-                "file_a": left,
-                "file_b": right,
-            })
-
-    if total_rows_a > total_rows_b:
-        for index in range(total_rows_b, total_rows_a):
-            mismatches.append({
-                "row": index + 1,
-                "file_a": labels_a[index],
-                "file_b": "<missing>",
-            })
-    elif total_rows_b > total_rows_a:
-        for index in range(total_rows_a, total_rows_b):
-            mismatches.append({
-                "row": index + 1,
-                "file_a": "<missing>",
-                "file_b": labels_b[index],
-            })
-
-    return {
-        "file_a_rows": total_rows_a,
-        "file_b_rows": total_rows_b,
-        "common_rows": common_rows,
-        "mismatch_count": len(mismatches),
-        "mismatches": mismatches,
-    }
+    except Exception as e:
+        # Returns error safely without crashing server
+        return {
+            "verdict":        "ERROR",
+            "matched":        0,
+            "mismatched":     0,
+            "missing":        0,
+            "rows":           [],
+            "approval_langs": [],
+            "sample_langs":   [],
+            "issues":         [],
+            "error":          str(e),
+        }

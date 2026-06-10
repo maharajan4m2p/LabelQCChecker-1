@@ -1,6 +1,12 @@
 services:
   - type: web
     name: labelqcchecker
-    env: docker
+    runtime: docker
     dockerfilePath: ./Dockerfile
     plan: free
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10"
+      - key: FLASK_ENV
+        value: production
