@@ -45,14 +45,14 @@ h1{
 
 .approved{
     color:green;
+    font-size:22px;
     font-weight:bold;
-    font-size:20px;
 }
 
 .rejected{
     color:red;
+    font-size:22px;
     font-weight:bold;
-    font-size:20px;
 }
 
 .stats{
@@ -66,24 +66,52 @@ h1{
 .stat-box{
     background:#f8f9fa;
     border:1px solid #ddd;
-    padding:10px 15px;
+    padding:12px;
     border-radius:5px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+table th{
+    background:#007bff;
+    color:white;
+    padding:12px;
+}
+
+table td{
+    border:1px solid #ddd;
+    padding:10px;
+}
+
+tr:nth-child(even){
+    background:#f8f8f8;
 }
 
 .match{
     color:green;
+    font-weight:bold;
 }
 
-.missing{
+.mismatch{
     color:red;
-}
-
-.extra{
-    color:orange;
+    font-weight:bold;
 }
 
 .section{
-    margin-top:20px;
+    margin-top:25px;
+}
+
+pre{
+    background:#f8f8f8;
+    border:1px solid #ddd;
+    padding:15px;
+    border-radius:5px;
+    white-space:pre-wrap;
+    word-wrap:break-word;
 }
 
 ul{
@@ -95,17 +123,6 @@ li{
     margin-bottom:5px;
 }
 
-pre{
-    background:#f8f8f8;
-    border:1px solid #ddd;
-    padding:15px;
-    border-radius:5px;
-    white-space:pre-wrap;
-    word-wrap:break-word;
-    max-height:300px;
-    overflow:auto;
-}
-
 .btn{
     display:inline-block;
     padding:12px 20px;
@@ -113,11 +130,7 @@ pre{
     color:white;
     text-decoration:none;
     border-radius:5px;
-    margin-top:20px;
-}
-
-.btn:hover{
-    background:#0056b3;
+    margin-top:25px;
 }
 
 </style>
@@ -128,9 +141,7 @@ pre{
 
 <div class="container">
 
-<h1>Label QC Comparison Results</h1>
-
-{% if results %}
+<h1>Label QC Detailed Report</h1>
 
 {% for result in results %}
 
@@ -165,6 +176,13 @@ Similarity:
 </div>
 
 <div class="stat-box">
+Logo:
+<strong>
+{{ result.logo_status }}
+</strong>
+</div>
+
+<div class="stat-box">
 Matched:
 <strong>
 {{ result.matched_count }}
@@ -185,29 +203,107 @@ Extra:
 </strong>
 </div>
 
-<div class="stat-box">
-Logo Status:
-<strong>
-{{ result.logo_status }}
-</strong>
 </div>
 
-</div>
+<h3>Field Comparison</h3>
+
+<table>
+
+<tr>
+<th>Field</th>
+<th>Approval</th>
+<th>Sample</th>
+<th>Status</th>
+</tr>
+
+<tr>
+<td>Brand Name</td>
+<td>{{ result.approval_brand }}</td>
+<td>{{ result.sample_brand }}</td>
+<td>
+{% if result.approval_brand == result.sample_brand %}
+<span class="match">MATCH</span>
+{% else %}
+<span class="mismatch">MISMATCH</span>
+{% endif %}
+</td>
+</tr>
+
+<tr>
+<td>Product Name</td>
+<td>{{ result.approval_product }}</td>
+<td>{{ result.sample_product }}</td>
+<td>
+{% if result.approval_product == result.sample_product %}
+<span class="match">MATCH</span>
+{% else %}
+<span class="mismatch">MISMATCH</span>
+{% endif %}
+</td>
+</tr>
+
+<tr>
+<td>Barcode</td>
+<td>{{ result.approval_barcode }}</td>
+<td>{{ result.sample_barcode }}</td>
+<td>
+{% if result.approval_barcode == result.sample_barcode %}
+<span class="match">MATCH</span>
+{% else %}
+<span class="mismatch">MISMATCH</span>
+{% endif %}
+</td>
+</tr>
+
+<tr>
+<td>Net Weight</td>
+<td>{{ result.approval_weight }}</td>
+<td>{{ result.sample_weight }}</td>
+<td>
+{% if result.approval_weight == result.sample_weight %}
+<span class="match">MATCH</span>
+{% else %}
+<span class="mismatch">MISMATCH</span>
+{% endif %}
+</td>
+</tr>
+
+<tr>
+<td>MFG Date</td>
+<td>{{ result.approval_mfg }}</td>
+<td>{{ result.sample_mfg }}</td>
+<td>
+{% if result.approval_mfg == result.sample_mfg %}
+<span class="match">MATCH</span>
+{% else %}
+<span class="mismatch">MISMATCH</span>
+{% endif %}
+</td>
+</tr>
+
+<tr>
+<td>EXP Date</td>
+<td>{{ result.approval_exp }}</td>
+<td>{{ result.sample_exp }}</td>
+<td>
+{% if result.approval_exp == result.sample_exp %}
+<span class="match">MATCH</span>
+{% else %}
+<span class="mismatch">MISMATCH</span>
+{% endif %}
+</td>
+</tr>
+
+</table>
 
 <div class="section">
 
 <h3>Matched Words</h3>
 
 <ul>
-
 {% for word in result.matched_words %}
-
-<li class="match">
-✓ {{ word }}
-</li>
-
+<li class="match">{{ word }}</li>
 {% endfor %}
-
 </ul>
 
 </div>
@@ -217,15 +313,9 @@ Logo Status:
 <h3>Missing Words</h3>
 
 <ul>
-
 {% for word in result.missing_words %}
-
-<li class="missing">
-✗ {{ word }}
-</li>
-
+<li class="mismatch">{{ word }}</li>
 {% endfor %}
-
 </ul>
 
 </div>
@@ -235,15 +325,9 @@ Logo Status:
 <h3>Extra Words</h3>
 
 <ul>
-
 {% for word in result.extra_words %}
-
-<li class="extra">
-⚠ {{ word }}
-</li>
-
+<li>{{ word }}</li>
 {% endfor %}
-
 </ul>
 
 </div>
@@ -252,9 +336,7 @@ Logo Status:
 
 <h3>Approval OCR Text</h3>
 
-<pre>
-{{ result.approval_text }}
-</pre>
+<pre>{{ result.approval_text }}</pre>
 
 </div>
 
@@ -262,27 +344,13 @@ Logo Status:
 
 <h3>Sample OCR Text</h3>
 
-<pre>
-{{ result.sample_text }}
-</pre>
+<pre>{{ result.sample_text }}</pre>
 
 </div>
 
 </div>
 
 {% endfor %}
-
-{% else %}
-
-<div class="card">
-
-<h3>
-No comparison results available.
-</h3>
-
-</div>
-
-{% endif %}
 
 <a href="/" class="btn">
 Compare More Labels

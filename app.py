@@ -11,31 +11,56 @@ from label_compare import compare_labels
 app = Flask(__name__)
 
 UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+os.makedirs(
+    UPLOAD_FOLDER,
+    exist_ok=True
+)
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+
+    return render_template(
+        "index.html"
+    )
 
 
-@app.route("/compare", methods=["POST"])
+@app.route(
+    "/compare",
+    methods=["POST"]
+)
 def compare():
 
     try:
 
-        approval_file = request.files.get("approval")
+        approval_file = request.files.get(
+            "approval"
+        )
 
-        sample_files = request.files.getlist("sample")
+        sample_files = request.files.getlist(
+            "sample"
+        )
 
         if not approval_file:
-            return "Approval image not selected"
+
+            return """
+            <h2>
+            Approval image not selected
+            </h2>
+            """
 
         if len(sample_files) == 0:
-            return "Sample image not selected"
+
+            return """
+            <h2>
+            Sample image not selected
+            </h2>
+            """
 
         approval_path = os.path.join(
             app.config["UPLOAD_FOLDER"],
@@ -80,12 +105,16 @@ def compare():
             )
 
             try:
-                os.remove(sample_path)
+                os.remove(
+                    sample_path
+                )
             except:
                 pass
 
         try:
-            os.remove(approval_path)
+            os.remove(
+                approval_path
+            )
         except:
             pass
 
@@ -99,8 +128,13 @@ def compare():
     except Exception as e:
 
         return f"""
-        <h2>Error Occurred</h2>
-        <pre>{str(e)}</pre>
+        <h2>
+        Internal Error
+        </h2>
+
+        <pre>
+        {str(e)}
+        </pre>
         """
 
 
@@ -108,8 +142,13 @@ def compare():
 def file_too_large(error):
 
     return """
-    <h2>File Too Large</h2>
-    <p>Please upload images below 10 MB.</p>
+    <h2>
+    File Too Large
+    </h2>
+
+    <p>
+    Maximum upload size is 10 MB.
+    </p>
     """, 413
 
 
@@ -117,6 +156,14 @@ def file_too_large(error):
 def health():
 
     return "OK"
+
+
+@app.route("/ping")
+def ping():
+
+    return {
+        "status": "running"
+    }
 
 
 if __name__ == "__main__":
@@ -130,5 +177,6 @@ if __name__ == "__main__":
 
     app.run(
         host="0.0.0.0",
-        port=port
+        port=port,
+        debug=False
     )

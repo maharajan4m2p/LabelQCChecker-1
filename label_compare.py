@@ -5,6 +5,7 @@ import re
 
 
 def extract_text(image_path):
+
     try:
 
         image = cv2.imread(image_path)
@@ -14,14 +15,14 @@ def extract_text(image_path):
 
         h, w = image.shape[:2]
 
-        # Resize large images to reduce memory usage
-        if w > 1200:
-            ratio = 1200 / w
+        if w > 1000:
+
+            ratio = 1000 / w
 
             image = cv2.resize(
                 image,
                 (
-                    1200,
+                    1000,
                     int(h * ratio)
                 )
             )
@@ -40,7 +41,8 @@ def extract_text(image_path):
         text = pytesseract.image_to_string(
             gray,
             lang="eng",
-            timeout=20
+            config="--oem 3 --psm 6",
+            timeout=60
         )
 
         return text.strip()
@@ -69,6 +71,68 @@ def clean_text(text):
     return text.strip()
 
 
+def extract_barcode(text):
+
+    match = re.search(
+        r'\b\d{12,14}\b',
+        text
+    )
+
+    return match.group() if match else "NOT FOUND"
+
+
+def extract_weight(text):
+
+    match = re.search(
+        r'(\d+(\.\d+)?)\s?(kg|g|mg|ml|l)',
+        text,
+        re.IGNORECASE
+    )
+
+    return match.group() if match else "NOT FOUND"
+
+
+def extract_dates(text):
+
+    dates = re.findall(
+        r'(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})',
+        text
+    )
+
+    mfg = dates[0] if len(dates) > 0 else "NOT FOUND"
+    exp = dates[1] if len(dates) > 1 else "NOT FOUND"
+
+    return mfg, exp
+
+
+def extract_brand_name(text):
+
+    lines = [
+        x.strip()
+        for x in text.splitlines()
+        if x.strip()
+    ]
+
+    if len(lines) > 0:
+        return lines[0]
+
+    return "NOT FOUND"
+
+
+def extract_product_name(text):
+
+    lines = [
+        x.strip()
+        for x in text.splitlines()
+        if x.strip()
+    ]
+
+    if len(lines) > 1:
+        return lines[1]
+
+    return "NOT FOUND"
+
+
 def check_logo(
     approval_path,
     sample_path
@@ -76,67 +140,68 @@ def check_logo(
 
     try:
 
-        approval_img = cv2.imread(
-            approval_path
+        img1 = cv2.imread(
+            approval_path,
+            cv2.IMREAD_GRAYSCALE
         )
 
-        sample_img = cv2.imread(
-            sample_path
+        img2 = cv2.imread(
+            sample_path,
+            cv2.IMREAD_GRAYSCALE
         )
 
-        if approval_img is None or sample_img is None:
+        if img1 is None or img2 is None:
             return "LOGO NOT FOUND"
 
-        h1, w1 = approval_img.shape[:2]
-        h2, w2 = sample_img.shape[:2]
+        orb = cv2.ORB_create(1000)
 
-        # Assume logo is in top-left corner
-        logo1 = approval_img[
-            0:int(h1 * 0.25),
-            0:int(w1 * 0.25)
+        kp1, des1 = orb.detectAndCompute(
+            img1,
+            None
+        )
+
+        kp2, des2 = orb.detectAndCompute(
+            img2,
+            None
+        )
+
+        if des1 is None or des2 is None:
+            return "LOGO NOT DETECTED"
+
+        bf = cv2.BFMatcher(
+            cv2.NORM_HAMMING,
+            crossCheck=True
+        )
+
+        matches = bf.match(
+            des1,
+            des2
+        )
+
+        good_matches = [
+            m
+            for m in matches
+            if m.distance < 50
         ]
 
-        logo2 = sample_img[
-            0:int(h2 * 0.25),
-            0:int(w2 * 0.25)
-        ]
-
-        logo2 = cv2.resize(
-            logo2,
-            (
-                logo1.shape[1],
-                logo1.shape[0]
+        similarity = (
+            len(good_matches)
+            /
+            max(
+                len(kp1),
+                len(kp2)
             )
-        )
+        ) * 100
 
-        gray1 = cv2.cvtColor(
-            logo1,
-            cv2.COLOR_BGR2GRAY
-        )
-
-        gray2 = cv2.cvtColor(
-            logo2,
-            cv2.COLOR_BGR2GRAY
-        )
-
-        similarity = cv2.matchTemplate(
-            gray1,
-            gray2,
-            cv2.TM_CCOEFF_NORMED
-        )[0][0]
-
-        similarity_percent = round(
-            similarity * 100,
+        similarity = round(
+            similarity,
             2
         )
 
-        if similarity >= 0.70:
+        if similarity >= 60:
+            return f"MATCH ({similarity}%)"
 
-            return f"MATCH ({similarity_percent}%)"
-
-        else:
-
-            return f"MISMATCH ({similarity_percent}%)"
+        return f"MISMATCH ({similarity}%)"
 
     except Exception:
 
@@ -183,9 +248,8 @@ def compare_labels(
 
     matched_words = sorted(
         list(
-            approval_words.intersection(
-                sample_words
-            )
+            approval_words &
+            sample_words
         )
     )
 
@@ -203,17 +267,55 @@ def compare_labels(
         )
     )
 
-    if similarity >= 95:
+    approval_brand = extract_brand_name(
+        approval_text
+    )
 
-        verdict = "APPROVED"
+    sample_brand = extract_brand_name(
+        sample_text
+    )
 
-    else:
+    approval_product = extract_product_name(
+        approval_text
+    )
 
-        verdict = "NOT APPROVED"
+    sample_product = extract_product_name(
+        sample_text
+    )
+
+    approval_barcode = extract_barcode(
+        approval_text
+    )
+
+    sample_barcode = extract_barcode(
+        sample_text
+    )
+
+    approval_weight = extract_weight(
+        approval_text
+    )
+
+    sample_weight = extract_weight(
+        sample_text
+    )
+
+    approval_mfg, approval_exp = extract_dates(
+        approval_text
+    )
+
+    sample_mfg, sample_exp = extract_dates(
+        sample_text
+    )
 
     logo_status = check_logo(
         approval_path,
         sample_path
+    )
+
+    verdict = (
+        "APPROVED"
+        if similarity >= 85
+        else "NOT APPROVED"
     )
 
     return {
@@ -225,13 +327,28 @@ def compare_labels(
         "logo_status": logo_status,
 
         "approval_text": approval_text,
-
         "sample_text": sample_text,
 
+        "approval_brand": approval_brand,
+        "sample_brand": sample_brand,
+
+        "approval_product": approval_product,
+        "sample_product": sample_product,
+
+        "approval_barcode": approval_barcode,
+        "sample_barcode": sample_barcode,
+
+        "approval_weight": approval_weight,
+        "sample_weight": sample_weight,
+
+        "approval_mfg": approval_mfg,
+        "sample_mfg": sample_mfg,
+
+        "approval_exp": approval_exp,
+        "sample_exp": sample_exp,
+
         "matched_words": matched_words,
-
         "missing_words": missing_words,
-
         "extra_words": extra_words,
 
         "matched_count": len(
@@ -245,5 +362,4 @@ def compare_labels(
         "extra_count": len(
             extra_words
         )
-
     }
