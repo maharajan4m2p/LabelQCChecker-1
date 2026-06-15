@@ -5,136 +5,119 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Label QC Detailed Results</title>
+<title>Multi Sample Label Comparison</title>
 
 <style>
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
 
 body{
     font-family:Arial,sans-serif;
     background:#f4f6f9;
+    margin:0;
     padding:20px;
+}
+
+.container{
+    max-width:1400px;
+    margin:auto;
 }
 
 h1{
     text-align:center;
     margin-bottom:30px;
-    color:#333;
+}
+
+.summary{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    margin-bottom:20px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.1);
 }
 
 .card{
     background:white;
     padding:20px;
     border-radius:10px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom:25px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.1);
 }
 
 .approved{
     color:green;
     font-weight:bold;
-    font-size:20px;
+    font-size:18px;
 }
 
 .partial{
     color:orange;
     font-weight:bold;
-    font-size:20px;
+    font-size:18px;
 }
 
 .rejected{
     color:red;
     font-weight:bold;
-    font-size:20px;
+    font-size:18px;
 }
 
 .stats{
     display:flex;
     flex-wrap:wrap;
     gap:15px;
-    margin-top:20px;
-    margin-bottom:20px;
+    margin-top:15px;
 }
 
-.stat-box{
+.stat{
     background:#f8f9fa;
-    border:1px solid #ddd;
-    padding:10px 15px;
+    padding:10px;
     border-radius:5px;
-}
-
-.logo-box{
-    background:#f8f9fa;
     border:1px solid #ddd;
-    padding:15px;
-    border-radius:5px;
-    margin-bottom:20px;
-}
-
-.logo-pass{
-    color:green;
-    font-weight:bold;
-}
-
-.logo-fail{
-    color:red;
-    font-weight:bold;
-}
-
-h3{
-    margin-top:20px;
-    margin-bottom:10px;
-}
-
-ul{
-    margin-left:25px;
-    margin-bottom:20px;
-}
-
-li{
-    margin-bottom:5px;
-}
-
-.matched{
-    color:green;
-}
-
-.missing{
-    color:red;
-}
-
-.extra{
-    color:orange;
 }
 
 table{
     width:100%;
     border-collapse:collapse;
     margin-top:15px;
-    margin-bottom:20px;
 }
 
-th{
+table th{
     background:#007bff;
     color:white;
     padding:10px;
-    border:1px solid #ddd;
 }
 
-td{
-    border:1px solid #ddd;
+table td{
     padding:10px;
+    border:1px solid #ddd;
 }
 
 tr:nth-child(even){
     background:#f8f8f8;
+}
+
+.match{
+    color:green;
+    font-weight:bold;
+}
+
+.missing{
+    color:red;
+    font-weight:bold;
+}
+
+.extra{
+    color:orange;
+    font-weight:bold;
+}
+
+ul{
+    margin-top:10px;
+}
+
+li{
+    margin-bottom:5px;
 }
 
 pre{
@@ -142,20 +125,18 @@ pre{
     border:1px solid #ddd;
     padding:15px;
     border-radius:5px;
-    white-space:pre-wrap;
-    word-wrap:break-word;
-    max-height:350px;
     overflow:auto;
+    white-space:pre-wrap;
 }
 
 .btn{
     display:inline-block;
-    margin-top:20px;
     padding:12px 20px;
     background:#007bff;
     color:white;
     text-decoration:none;
     border-radius:5px;
+    margin-top:20px;
 }
 
 .btn:hover{
@@ -168,11 +149,26 @@ pre{
 
 <body>
 
-<h1>Label QC Detailed Results</h1>
+<div class="container">
+
+<h1>Multi Sample Label Comparison Report</h1>
+
+<div class="summary">
+
+<h2>Total Samples Compared:
+{{ all_results|length }}
+</h2>
+
+</div>
+
+{% for results in all_results %}
 
 <div class="card">
 
-<h2>Final QC Result</h2>
+<h2>
+Sample:
+{{ results.sample_name }}
+</h2>
 
 {% if results.verdict == "APPROVED" %}
 
@@ -196,61 +192,47 @@ pre{
 
 <div class="stats">
 
-<div class="stat-box">
+<div class="stat">
 Similarity:
-<strong>{{ results.similarity }}%</strong>
+<strong>
+{{ results.similarity }}%
+</strong>
 </div>
 
-<div class="stat-box">
-Total Fields:
-<strong>{{ results.total_fields }}</strong>
-</div>
-
-<div class="stat-box">
-Matched:
-<strong>{{ results.matched_count }}</strong>
-</div>
-
-<div class="stat-box">
-Missing:
-<strong>{{ results.missing_count }}</strong>
-</div>
-
-<div class="stat-box">
-Extra:
-<strong>{{ results.extra_count }}</strong>
-</div>
-
-</div>
-
-<div class="logo-box">
-
-<h3>Logo Verification</h3>
-
-<p>
+<div class="stat">
 Logo Similarity:
-<strong>{{ results.logo_similarity }}%</strong>
-</p>
+<strong>
+{{ results.logo_similarity }}%
+</strong>
+</div>
 
-<p>
+<div class="stat">
+Logo Status:
+<strong>
+{{ results.logo_status }}
+</strong>
+</div>
 
-Status:
+<div class="stat">
+Matched:
+<strong>
+{{ results.matched_count }}
+</strong>
+</div>
 
-{% if results.logo_status == "PASS" %}
+<div class="stat">
+Missing:
+<strong>
+{{ results.missing_count }}
+</strong>
+</div>
 
-<span class="logo-pass">
-✅ PASS
-</span>
-
-{% else %}
-
-<span class="logo-fail">
-❌ FAIL
-</span>
-
-{% endif %}
-
-</p>
+<div class="stat">
+Extra:
+<strong>
+{{ results.extra_count }}
+</strong>
+</div>
 
 </div>
 
@@ -260,7 +242,7 @@ Status:
 
 {% for item in results.matched_data %}
 
-<li class="matched">
+<li class="match">
 ✓ {{ item }}
 </li>
 
@@ -296,13 +278,13 @@ Status:
 
 </ul>
 
-<h3>Approval vs Sample Comparison</h3>
+<h3>Detailed Comparison</h3>
 
 <table>
 
 <tr>
-<th>Approval Label</th>
-<th>Sample Label</th>
+<th>Approval Data</th>
+<th>Sample Data</th>
 <th>Status</th>
 </tr>
 
@@ -310,11 +292,17 @@ Status:
 
 <tr>
 
-<td>{{ row.approval }}</td>
+<td>
+{{ row.approval }}
+</td>
 
-<td>{{ row.sample }}</td>
+<td>
+{{ row.sample }}
+</td>
 
-<td>{{ row.status }}</td>
+<td>
+{{ row.status }}
+</td>
 
 </tr>
 
@@ -324,17 +312,26 @@ Status:
 
 <h3>Approval OCR Text</h3>
 
-<pre>{{ results.approval_text }}</pre>
+<pre>
+{{ results.approval_text }}
+</pre>
 
 <h3>Sample OCR Text</h3>
 
-<pre>{{ results.sample_text }}</pre>
+<pre>
+{{ results.sample_text }}
+</pre>
+
+</div>
+
+{% endfor %}
 
 <a href="/" class="btn">
-Compare Another Label
+Compare More Labels
 </a>
 
 </div>
 
 </body>
+
 </html>
