@@ -1,3 +1,4 @@
+import os
 import cv2
 import pytesseract
 import difflib
@@ -7,6 +8,9 @@ import re
 def extract_text(image_path):
 
     try:
+
+        print("OCR File:", image_path)
+        print("Exists:", os.path.exists(image_path))
 
         image = cv2.imread(image_path)
 
@@ -37,6 +41,13 @@ def extract_text(image_path):
             (3, 3),
             0
         )
+
+        gray = cv2.threshold(
+            gray,
+            0,
+            255,
+            cv2.THRESH_BINARY + cv2.THRESH_OTSU
+        )[1]
 
         text = pytesseract.image_to_string(
             gray,
@@ -140,6 +151,22 @@ def check_logo(
 
     try:
 
+        print("================================")
+        print("LOGO CHECK STARTED")
+
+        print("Approval Path:", approval_path)
+        print("Sample Path:", sample_path)
+
+        print(
+            "Approval Exists:",
+            os.path.exists(approval_path)
+        )
+
+        print(
+            "Sample Exists:",
+            os.path.exists(sample_path)
+        )
+
         img1 = cv2.imread(
             approval_path,
             cv2.IMREAD_GRAYSCALE
@@ -150,62 +177,69 @@ def check_logo(
             cv2.IMREAD_GRAYSCALE
         )
 
+        print(
+            "Approval Loaded:",
+            img1 is not None
+        )
+
+        print(
+            "Sample Loaded:",
+            img2 is not None
+        )
+
         if img1 is None or img2 is None:
-            return "LOGO NOT FOUND"
 
-        orb = cv2.ORB_create(1000)
+            return (
+                "LOGO NOT FOUND"
+            )
 
-        kp1, des1 = orb.detectAndCompute(
-            img1,
-            None
-        )
+        h1, w1 = img1.shape
+        h2, w2 = img2.shape
 
-        kp2, des2 = orb.detectAndCompute(
-            img2,
-            None
-        )
-
-        if des1 is None or des2 is None:
-            return "LOGO NOT DETECTED"
-
-        bf = cv2.BFMatcher(
-            cv2.NORM_HAMMING,
-            crossCheck=True
-        )
-
-        matches = bf.match(
-            des1,
-            des2
-        )
-
-        good_matches = [
-            m
-            for m in matches
-            if m.distance < 50
+        logo1 = img1[
+            0:int(h1 * 0.25),
+            0:int(w1 * 0.25)
         ]
 
-        similarity = (
-            len(good_matches)
-            /
-            max(
-                len(kp1),
-                len(kp2)
+        logo2 = img2[
+            0:int(h2 * 0.25),
+            0:int(w2 * 0.25)
+        ]
+
+        logo2 = cv2.resize(
+            logo2,
+            (
+                logo1.shape[1],
+                logo1.shape[0]
             )
-        ) * 100
+        )
+
+        similarity = cv2.matchTemplate(
+            logo1,
+            logo2,
+            cv2.TM_CCOEFF_NORMED
+        )[0][0]
 
         similarity = round(
-            similarity,
+            similarity * 100,
             2
         )
 
-        if similarity >= 60:
-            return f"MATCH ({similarity}%)"
+        if similarity >= 70:
 
-        return f"MISMATCH ({similarity}%)"
+            return (
+                f"MATCH ({similarity}%)"
+            )
 
-    except Exception:
+        return (
+            f"MISMATCH ({similarity}%)"
+        )
 
-        return "LOGO CHECK FAILED"
+    except Exception as e:
+
+        return (
+            f"LOGO CHECK FAILED: {str(e)}"
+        )
 
 
 def compare_labels(
@@ -247,24 +281,18 @@ def compare_labels(
     )
 
     matched_words = sorted(
-        list(
-            approval_words &
-            sample_words
-        )
+        approval_words &
+        sample_words
     )
 
     missing_words = sorted(
-        list(
-            approval_words -
-            sample_words
-        )
+        approval_words -
+        sample_words
     )
 
     extra_words = sorted(
-        list(
-            sample_words -
-            approval_words
-        )
+        sample_words -
+        approval_words
     )
 
     approval_brand = extract_brand_name(
