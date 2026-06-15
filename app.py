@@ -3,7 +3,9 @@ from flask import Flask, render_template, request
 from werkzeug.utils import secure_filename
 from label_compare import compare_labels
 
-app = Flask(__name__)
+app = Flask(__name__,
+            template_folder="templates",
+            static_folder="static")
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)

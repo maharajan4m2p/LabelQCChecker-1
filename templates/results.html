@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Comparison Result</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 40px auto;
+        }
+
+        .match {
+            color: green;
+            font-weight: bold;
+        }
+
+        .mismatch {
+            color: red;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        .btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<h1>Label Comparison Result</h1>
+
+{% if result %}
+
+<table>
+    <tr>
+        <th>Field</th>
+        <th>Approval</th>
+        <th>Sample</th>
+        <th>Status</th>
+    </tr>
+
+    {% for item in result %}
+    <tr>
+        <td>{{ item.label }}</td>
+        <td>{{ item.approval }}</td>
+        <td>{{ item.sample }}</td>
+
+        <td>
+            {% if item.match %}
+                <span class="match">MATCH</span>
+            {% else %}
+                <span class="mismatch">MISMATCH</span>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+
+</table>
+
+{% else %}
+
+<h3>No comparison results available.</h3>
+
+{% endif %}
+
+<a href="/" class="btn">Compare Another</a>
+
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Label QC Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        input, button {
+            margin: 10px;
+            padding: 10px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Label QC Checker</h1>
+
+    <form action="/compare" method="POST" enctype="multipart/form-data">
+
+        <p><strong>Approval Label Image</strong></p>
+        <input type="file" name="approval" required>
+
+        <p><strong>Sample Label Image</strong></p>
+        <input type="file" name="sample" required>
+
+        <br>
+        <button type="submit">Compare Labels</button>
+
+    </form>
+</div>
+
+</body>
+</html>
