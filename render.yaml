@@ -1,8 +1,7 @@
 services:
   - type: web
-    name: LabelQCChecker-1
+    name: labelqcchecker
     runtime: docker
     dockerfilePath: ./Dockerfile
     plan: free
     healthCheckPath: /
-    autoDeploy: true

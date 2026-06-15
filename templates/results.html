@@ -1,36 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Label Comparison Results</title>
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Label QC Results</title>
 
 <style>
 
-body{
-    font-family: Arial, sans-serif;
-    background:#f4f6f9;
+*{
     margin:0;
-    padding:30px;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f6f9;
+    padding:20px;
 }
 
 .container{
-    max-width:1200px;
+    max-width:1400px;
     margin:auto;
 }
 
 h1{
     text-align:center;
+    margin-bottom:30px;
     color:#333;
 }
 
 .card{
     background:white;
-    margin-top:25px;
-    padding:25px;
+    padding:20px;
+    margin-bottom:25px;
     border-radius:10px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.15);
+    box-shadow:0 2px 10px rgba(0,0,0,0.1);
 }
 
 .approved{
@@ -45,56 +55,64 @@ h1{
     font-size:20px;
 }
 
-.similarity{
-    font-size:18px;
-    color:#0066cc;
-    margin-top:10px;
+.stats{
+    display:flex;
+    flex-wrap:wrap;
+    gap:15px;
+    margin-top:15px;
+    margin-bottom:20px;
 }
 
-.section-title{
-    margin-top:20px;
-    color:#444;
-}
-
-.words-box{
-    background:#f8f8f8;
-    padding:12px;
-    border-radius:6px;
+.stat-box{
+    background:#f8f9fa;
     border:1px solid #ddd;
-    word-wrap:break-word;
+    padding:10px 15px;
+    border-radius:5px;
 }
 
 .match{
     color:green;
-    font-weight:bold;
 }
 
 .missing{
     color:red;
-    font-weight:bold;
 }
 
 .extra{
     color:orange;
-    font-weight:bold;
+}
+
+.section{
+    margin-top:20px;
+}
+
+ul{
+    margin-left:25px;
+    margin-top:10px;
+}
+
+li{
+    margin-bottom:5px;
 }
 
 pre{
+    background:#f8f8f8;
+    border:1px solid #ddd;
+    padding:15px;
+    border-radius:5px;
     white-space:pre-wrap;
     word-wrap:break-word;
-    background:#fafafa;
-    padding:12px;
-    border:1px solid #ddd;
-    border-radius:6px;
+    max-height:300px;
+    overflow:auto;
 }
 
 .btn{
     display:inline-block;
-    padding:12px 25px;
+    padding:12px 20px;
     background:#007bff;
     color:white;
     text-decoration:none;
-    border-radius:6px;
+    border-radius:5px;
     margin-top:20px;
 }
 
@@ -103,13 +121,14 @@ pre{
 }
 
 </style>
+
 </head>
 
 <body>
 
 <div class="container">
 
-<h1>Label Comparison Results</h1>
+<h1>Label QC Comparison Results</h1>
 
 {% if results %}
 
@@ -117,69 +136,137 @@ pre{
 
 <div class="card">
 
-<h2>Sample: {{ result.sample_name }}</h2>
+<h2>
+Sample File:
+{{ result.sample_file }}
+</h2>
 
 {% if result.verdict == "APPROVED" %}
-<p class="approved">✅ APPROVED</p>
-{% else %}
-<p class="rejected">❌ NOT APPROVED</p>
-{% endif %}
 
-<p class="similarity">
-Similarity Score:
-<strong>{{ result.similarity }}%</strong>
+<p class="approved">
+✅ APPROVED
 </p>
 
-<hr>
+{% else %}
 
-<h3 class="section-title">Summary</h3>
+<p class="rejected">
+❌ NOT APPROVED
+</p>
+
+{% endif %}
+
+<div class="stats">
+
+<div class="stat-box">
+Similarity:
+<strong>
+{{ result.similarity }}%
+</strong>
+</div>
+
+<div class="stat-box">
+Matched:
+<strong>
+{{ result.matched_count }}
+</strong>
+</div>
+
+<div class="stat-box">
+Missing:
+<strong>
+{{ result.missing_count }}
+</strong>
+</div>
+
+<div class="stat-box">
+Extra:
+<strong>
+{{ result.extra_count }}
+</strong>
+</div>
+
+<div class="stat-box">
+Logo Status:
+<strong>
+{{ result.logo_status }}
+</strong>
+</div>
+
+</div>
+
+<div class="section">
+
+<h3>Matched Words</h3>
 
 <ul>
+
+{% for word in result.matched_words %}
+
 <li class="match">
-Matched Words:
-{{ result.matched_count }}
+✓ {{ word }}
 </li>
 
-<li class="missing">
-Missing Words:
-{{ result.missing_count }}
-</li>
+{% endfor %}
 
-<li class="extra">
-Extra Words:
-{{ result.extra_count }}
-</li>
 </ul>
 
-<h3 class="section-title">Matched Words</h3>
-
-<div class="words-box match">
-{{ result.matched_words|join(', ') }}
 </div>
 
-<h3 class="section-title">Missing Words</h3>
+<div class="section">
 
-<div class="words-box missing">
-{{ result.missing_words|join(', ') }}
+<h3>Missing Words</h3>
+
+<ul>
+
+{% for word in result.missing_words %}
+
+<li class="missing">
+✗ {{ word }}
+</li>
+
+{% endfor %}
+
+</ul>
+
 </div>
 
-<h3 class="section-title">Extra Words</h3>
+<div class="section">
 
-<div class="words-box extra">
-{{ result.extra_words|join(', ') }}
+<h3>Extra Words</h3>
+
+<ul>
+
+{% for word in result.extra_words %}
+
+<li class="extra">
+⚠ {{ word }}
+</li>
+
+{% endfor %}
+
+</ul>
+
 </div>
 
-<h3 class="section-title">
-Approval OCR Text
-</h3>
+<div class="section">
 
-<pre>{{ result.approval_text }}</pre>
+<h3>Approval OCR Text</h3>
 
-<h3 class="section-title">
-Sample OCR Text
-</h3>
+<pre>
+{{ result.approval_text }}
+</pre>
 
-<pre>{{ result.sample_text }}</pre>
+</div>
+
+<div class="section">
+
+<h3>Sample OCR Text</h3>
+
+<pre>
+{{ result.sample_text }}
+</pre>
+
+</div>
 
 </div>
 
@@ -188,16 +275,21 @@ Sample OCR Text
 {% else %}
 
 <div class="card">
-<h3>No comparison results found.</h3>
+
+<h3>
+No comparison results available.
+</h3>
+
 </div>
 
 {% endif %}
 
 <a href="/" class="btn">
-Compare Another Label
+Compare More Labels
 </a>
 
 </div>
 
 </body>
+
 </html>
