@@ -10,8 +10,6 @@ from docx import Document
 from flask import Flask, render_template, request
 from werkzeug.utils import secure_filename
 
-
-
 def extract_text(file_path):
 
     ext = os.path.splitext(file_path)[1].lower()
@@ -81,30 +79,24 @@ def extract_text(file_path):
             return "\n".join(text)
 
         # PDF
-# PDF
         elif ext == ".pdf":
 
-         text = ""
+            text = ""
 
-    try:
+            with pdfplumber.open(file_path) as pdf:
 
-        with pdfplumber.open(file_path) as pdf:
+                for page in pdf.pages:
 
-            for page in pdf.pages:
+                    page_text = page.extract_text()
 
-                page_text = page.extract_text()
+                    if page_text:
 
-                if page_text:
-                    text += page_text + "\n"
+                        text += page_text + "\n"
 
-        return text
-
-    except Exception as e:
-
-        return f"ERROR: {str(e)}"
+            return text
 
         # IMAGE FILES
-    elifext in [
+        elif ext in [
             ".png",
             ".jpg",
             ".jpeg",
@@ -162,11 +154,11 @@ def extract_text(file_path):
 
             return text
 
-            return ""
+        return ""
 
-            except Exception as e:
+    except Exception as e:
 
-            return f"ERROR: {str(e)}"
+        return f"ERROR: {str(e)}"
 
 
 def clean_text(text):
