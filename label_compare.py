@@ -8,7 +8,7 @@ import pandas as pd
 
 from docx import Document
 import numpy as np
-frpm pdf2image import convert_from_path
+from pdf2image import convert_from_path
 from flask import (Flask, render_template, request)
 from werkzeug.utils import secure_filename
 
