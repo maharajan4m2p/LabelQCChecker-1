@@ -12,8 +12,7 @@ reader = easyocr.Reader(
 )
 
 from docx import Document
-from flask import Flask, render_template, request
-from werkzeug.utils import secure_filename
+
 
 def extract_text(file_path):
 
@@ -93,8 +92,10 @@ def extract_text(file_path):
 
                     if page_text:
                         text += page_text + "\n"
+            if text.strip():
+                return text
 
-            return text
+            return"NO TEXT FOUND IN PDF"
 
         # IMAGE FILES
         elif ext in [
@@ -149,7 +150,12 @@ def extract_text(file_path):
                 result[1]
                 for result in results
             )
-
+            if not text.strip():
+                text = pytesseract.image_to_string(
+                    gray,
+                    lang="eng",
+                    config="--psm 6"
+                )
             return text
 
         return ""
@@ -361,7 +367,7 @@ def check_logo(
             2
         )
 
-        if similarity >= 60:
+        if similarity >= 25:
 
             return f"MATCH ({similarity}%)"
 
@@ -476,7 +482,7 @@ def compare_labels(
         sample_path
     )
 
-    if similarity >= 85:
+    if similarity >= 70:
 
         verdict = "APPROVED"
 

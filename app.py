@@ -20,6 +20,7 @@ ALLOWED_EXTENSIONS = {
     "tif",
     "tiff",
     "webp",
+    "gif",
     "pdf",
     "doc",
     "docx",
@@ -102,11 +103,29 @@ def compare():
 
             all_results.append({
                 "sample_file": sample.filename,
+                "verdict": "ERROR",
                 "similarity": 0,
-                "status": "ERROR",
+                "logo_status": "FAILED",
+                "approval_text": "",
+                "sample_text": "",
+                "approval_brand": "",
+                "sample_brand": "",
+                "approval_product": "",
+                "sample_product": "",
+                "approval_barcode": "",
+                "sample_barcode": "",
+                "approval_weight": "",
+                "sample_weight": "",
+                "approval_mfg": "",
+                "sample_mfg": "",
+                "approval_exp": "",
+                "sample_exp": "",
                 "matched_words": [],
                 "missing_words": [],
                 "extra_words": [],
+                "matched_count": 0,
+                "missing_count": 0,
+                "extra_count": 0,
                 "error": str(e)
             })
 
@@ -114,6 +133,16 @@ def compare():
         "results.html",
         all_results=all_results
     )
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    return f"Server Error: {str(error)}", 500
+
+
+@app.errorhandler(404)
+def not_found(error):
+    return "Page Not Found", 404
 
 
 if __name__ == "__main__":
