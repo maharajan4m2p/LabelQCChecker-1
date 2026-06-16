@@ -5,11 +5,6 @@ import re
 import os
 import pdfplumber
 import pandas as pd
-import easyocr
-reader = easyocr.Reader(
-    ["en"],
-    gpu=False
-)
 
 from docx import Document
 
