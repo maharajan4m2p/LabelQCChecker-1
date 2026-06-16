@@ -3,20 +3,10 @@ import pytesseract
 import difflib
 import re
 import os
-import pandas as pd
 import pdfplumber
+import pandas as pd
+
 from docx import Document
-
-
-IMAGE_EXTENSIONS = {
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".bmp",
-    ".tif",
-    ".tiff",
-    ".webp"
-}
 
 
 def extract_text(file_path):
@@ -25,137 +15,129 @@ def extract_text(file_path):
 
     try:
 
-        if ext in IMAGE_EXTENSIONS:
-            return extract_image_text(file_path)
+        # TXT
+        if ext == ".txt":
 
-        elif ext == ".pdf":
-            return extract_pdf_text(file_path)
+            with open(
+                file_path,
+                "r",
+                encoding="utf-8",
+                errors="ignore"
+            ) as f:
 
-        elif ext == ".docx":
-            return extract_docx_text(file_path)
+                return f.read()
 
-        elif ext in [".xls", ".xlsx"]:
-            return extract_excel_text(file_path)
-
+        # CSV
         elif ext == ".csv":
-            return extract_csv_text(file_path)
 
-        elif ext == ".txt":
-            return extract_txt_text(file_path)
+            df = pd.read_csv(
+                file_path,
+                dtype=str
+            )
 
+            return df.to_string(index=False)
+
+        # XLS / XLSX
+        elif ext in [".xls", ".xlsx"]:
+
+            df = pd.read_excel(
+                file_path,
+                dtype=str
+            )
+
+            return df.to_string(index=False)
+
+        # DOCX
+        elif ext == ".docx":
+
+            doc = Document(file_path)
+
+            text = []
+
+            for para in doc.paragraphs:
+
+                if para.text.strip():
+
+                    text.append(
+                        para.text.strip()
+                    )
+
+            return "\n".join(text)
+
+        # PDF
+        elif ext == ".pdf":
+
+            text = ""
+
+            with pdfplumber.open(
+                file_path
+            ) as pdf:
+
+                for page in pdf.pages:
+
+                    page_text = page.extract_text()
+
+                    if page_text:
+
+                        text += page_text + "\n"
+
+            return text
+
+        # IMAGE OCR
         else:
-            return ""
+
+            image = cv2.imread(
+                file_path
+            )
+
+            if image is None:
+
+                return ""
+
+            h, w = image.shape[:2]
+
+            if w > 1000:
+
+                ratio = 1000 / w
+
+                image = cv2.resize(
+                    image,
+                    (
+                        1000,
+                        int(h * ratio)
+                    )
+                )
+
+            gray = cv2.cvtColor(
+                image,
+                cv2.COLOR_BGR2GRAY
+            )
+
+            gray = cv2.GaussianBlur(
+                gray,
+                (3, 3),
+                0
+            )
+
+            gray = cv2.threshold(
+                gray,
+                0,
+                255,
+                cv2.THRESH_BINARY +
+                cv2.THRESH_OTSU
+            )[1]
+
+            text = pytesseract.image_to_string(
+                gray,
+                lang="eng",
+                config="--oem 3 --psm 6"
+            )
+
+            return text
 
     except Exception as e:
-        return f"READ ERROR : {str(e)}"
 
-
-def extract_image_text(image_path):
-
-    image = cv2.imread(image_path)
-
-    if image is None:
-        return ""
-
-    h, w = image.shape[:2]
-
-    if w > 1000:
-
-        ratio = 1000 / w
-
-        image = cv2.resize(
-            image,
-            (
-                1000,
-                int(h * ratio)
-            )
-        )
-
-    gray = cv2.cvtColor(
-        image,
-        cv2.COLOR_BGR2GRAY
-    )
-
-    gray = cv2.GaussianBlur(
-        gray,
-        (3, 3),
-        0
-    )
-
-    gray = cv2.threshold(
-        gray,
-        0,
-        255,
-        cv2.THRESH_BINARY + cv2.THRESH_OTSU
-    )[1]
-
-    text = pytesseract.image_to_string(
-        gray,
-        lang="eng",
-        config="--oem 3 --psm 6"
-    )
-
-    return text.strip()
-
-
-def extract_pdf_text(pdf_path):
-
-    text = ""
-
-    with pdfplumber.open(pdf_path) as pdf:
-
-        for page in pdf.pages:
-
-            page_text = page.extract_text()
-
-            if page_text:
-                text += page_text + "\n"
-
-    return text
-
-
-def extract_docx_text(doc_path):
-
-    doc = Document(doc_path)
-
-    text = []
-
-    for para in doc.paragraphs:
-        text.append(para.text)
-
-    return "\n".join(text)
-
-
-def extract_excel_text(excel_path):
-
-    df = pd.read_excel(
-        excel_path,
-        header=None
-    )
-
-    return df.astype(str).to_string()
-
-
-def extract_csv_text(csv_path):
-
-    df = pd.read_csv(
-        csv_path,
-        header=None
-    )
-
-    return df.astype(str).to_string()
-
-
-def extract_txt_text(txt_path):
-
-    with open(
-        txt_path,
-        "r",
-        encoding="utf-8",
-        errors="ignore"
-    ) as f:
-
-        return f.read()
+        return f"ERROR: {str(e)}"
 
 
 def clean_text(text):
@@ -180,11 +162,12 @@ def clean_text(text):
 def extract_barcode(text):
 
     match = re.search(
-        r'\b\d{12,14}\b',
+        r'\b\d{8,14}\b',
         text
     )
 
     if match:
+
         return match.group()
 
     return "NOT FOUND"
@@ -199,6 +182,7 @@ def extract_weight(text):
     )
 
     if match:
+
         return match.group()
 
     return "NOT FOUND"
@@ -211,8 +195,17 @@ def extract_dates(text):
         text
     )
 
-    mfg = dates[0] if len(dates) > 0 else "NOT FOUND"
-    exp = dates[1] if len(dates) > 1 else "NOT FOUND"
+    mfg = (
+        dates[0]
+        if len(dates) > 0
+        else "NOT FOUND"
+    )
+
+    exp = (
+        dates[1]
+        if len(dates) > 1
+        else "NOT FOUND"
+    )
 
     return mfg, exp
 
@@ -225,7 +218,11 @@ def extract_brand_name(text):
         if line.strip()
     ]
 
-    return lines[0] if lines else "NOT FOUND"
+    if lines:
+
+        return lines[0]
+
+    return "NOT FOUND"
 
 
 def extract_product_name(text):
@@ -236,7 +233,11 @@ def extract_product_name(text):
         if line.strip()
     ]
 
-    return lines[1] if len(lines) > 1 else "NOT FOUND"
+    if len(lines) > 1:
+
+        return lines[1]
+
+    return "NOT FOUND"
 
 
 def check_logo(
@@ -244,19 +245,32 @@ def check_logo(
     sample_path
 ):
 
-    ext1 = os.path.splitext(
+    image_extensions = [
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".bmp",
+        ".tif",
+        ".tiff",
+        ".webp",
+        ".gif"
+    ]
+
+    approval_ext = os.path.splitext(
         approval_path
     )[1].lower()
 
-    ext2 = os.path.splitext(
+    sample_ext = os.path.splitext(
         sample_path
     )[1].lower()
 
-    if ext1 not in IMAGE_EXTENSIONS:
-        return "NOT IMAGE FILE"
+    if (
+        approval_ext not in image_extensions
+        or
+        sample_ext not in image_extensions
+    ):
 
-    if ext2 not in IMAGE_EXTENSIONS:
-        return "NOT IMAGE FILE"
+        return "NOT APPLICABLE"
 
     try:
 
@@ -271,9 +285,12 @@ def check_logo(
         )
 
         if img1 is None or img2 is None:
+
             return "LOGO NOT FOUND"
 
-        orb = cv2.ORB_create(1000)
+        orb = cv2.ORB_create(
+            1000
+        )
 
         kp1, des1 = orb.detectAndCompute(
             img1,
@@ -286,6 +303,7 @@ def check_logo(
         )
 
         if des1 is None or des2 is None:
+
             return "LOGO NOT DETECTED"
 
         bf = cv2.BFMatcher(
@@ -298,22 +316,34 @@ def check_logo(
             des2
         )
 
-        good_matches = [
-            m for m in matches
-            if m.distance < 50
-        ]
+        good_matches = []
 
-        similarity = (
-            len(good_matches)
-            / max(len(kp1), len(kp2))
-        ) * 100
+        for m in matches:
+
+            if m.distance < 50:
+
+                good_matches.append(m)
+
+        denominator = max(
+            len(kp1),
+            len(kp2)
+        )
+
+        if denominator == 0:
+
+            return "LOGO NOT DETECTED"
 
         similarity = round(
-            similarity,
+            (
+                len(good_matches)
+                /
+                denominator
+            ) * 100,
             2
         )
 
         if similarity >= 60:
+
             return f"MATCH ({similarity}%)"
 
         return f"MISMATCH ({similarity}%)"
@@ -382,71 +412,87 @@ def compare_labels(
         )
     )
 
-    verdict = (
-        "APPROVED"
-        if similarity >= 85
-        else "NOT APPROVED"
+    approval_brand = extract_brand_name(
+        approval_text
     )
+
+    sample_brand = extract_brand_name(
+        sample_text
+    )
+
+    approval_product = extract_product_name(
+        approval_text
+    )
+
+    sample_product = extract_product_name(
+        sample_text
+    )
+
+    approval_barcode = extract_barcode(
+        approval_text
+    )
+
+    sample_barcode = extract_barcode(
+        sample_text
+    )
+
+    approval_weight = extract_weight(
+        approval_text
+    )
+
+    sample_weight = extract_weight(
+        sample_text
+    )
+
+    approval_mfg, approval_exp = extract_dates(
+        approval_text
+    )
+
+    sample_mfg, sample_exp = extract_dates(
+        sample_text
+    )
+
+    logo_status = check_logo(
+        approval_path,
+        sample_path
+    )
+
+    if similarity >= 85:
+
+        verdict = "APPROVED"
+
+    else:
+
+        verdict = "NOT APPROVED"
 
     return {
 
         "verdict": verdict,
+
         "similarity": similarity,
-        "logo_status": check_logo(
-            approval_path,
-            sample_path
-        ),
+
+        "logo_status": logo_status,
 
         "approval_text": approval_text,
         "sample_text": sample_text,
 
-        "approval_brand": extract_brand_name(
-            approval_text
-        ),
+        "approval_brand": approval_brand,
+        "sample_brand": sample_brand,
 
-        "sample_brand": extract_brand_name(
-            sample_text
-        ),
+        "approval_product": approval_product,
+        "sample_product": sample_product,
 
-        "approval_product": extract_product_name(
-            approval_text
-        ),
+        "approval_barcode": approval_barcode,
+        "sample_barcode": sample_barcode,
 
-        "sample_product": extract_product_name(
-            sample_text
-        ),
+        "approval_weight": approval_weight,
+        "sample_weight": sample_weight,
 
-        "approval_barcode": extract_barcode(
-            approval_text
-        ),
+        "approval_mfg": approval_mfg,
+        "sample_mfg": sample_mfg,
 
-        "sample_barcode": extract_barcode(
-            sample_text
-        ),
-
-        "approval_weight": extract_weight(
-            approval_text
-        ),
-
-        "sample_weight": extract_weight(
-            sample_text
-        ),
-
-        "approval_mfg": extract_dates(
-            approval_text
-        )[0],
-
-        "sample_mfg": extract_dates(
-            sample_text
-        )[0],
-
-        "approval_exp": extract_dates(
-            approval_text
-        )[1],
-
-        "sample_exp": extract_dates(
-            sample_text
-        )[1],
+        "approval_exp": approval_exp,
+        "sample_exp": sample_exp,
 
         "matched_words": matched_words,
         "missing_words": missing_words,
