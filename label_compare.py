@@ -112,8 +112,8 @@ def extract_text(file_path):
             image = cv2.resize(
                 image,
                 None,
-                fx=3,
-                fy=3,
+                fx=1.2,
+                fy=1.2,
                 interpolation=cv2.INTER_CUBIC
             )
 
@@ -132,6 +132,7 @@ def extract_text(file_path):
 
             gray = cv2.adaptiveThreshold(
                 gray,
+                150,
                 255,
                 cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                 cv2.THRESH_BINARY,
@@ -142,7 +143,7 @@ def extract_text(file_path):
             text = pytesseract.image_to_string(
                 gray,
                 lang="eng",
-                config="--oem 3 --psm 4"
+                config="--oem 1 --psm 6"
             )
 
             return text
@@ -228,7 +229,7 @@ def check_logo(
 
             return "LOGO NOT FOUND"
 
-        orb = cv2.ORB_create(1500)
+        orb = cv2.ORB_create(500)
 
         kp1, des1 = orb.detectAndCompute(
             img1,
