@@ -95,6 +95,91 @@ def extract_text(file_path):
 
             return text
 
+def extract_text(file_path):
+
+    ext = os.path.splitext(file_path)[1].lower()
+
+    try:
+
+        # TXT
+        if ext == ".txt":
+
+            with open(
+                file_path,
+                "r",
+                encoding="utf-8",
+                errors="ignore"
+            ) as f:
+
+                return f.read()
+
+        # CSV
+        elif ext == ".csv":
+
+            df = pd.read_csv(
+                file_path,
+                dtype=str,
+                keep_default_na=False
+            )
+
+            return df.to_string(index=False)
+
+        # XLS
+        elif ext == ".xls":
+
+            df = pd.read_excel(
+                file_path,
+                dtype=str,
+                engine="xlrd"
+            )
+
+            return df.to_string(index=False)
+
+        # XLSX
+        elif ext == ".xlsx":
+
+            df = pd.read_excel(
+                file_path,
+                dtype=str,
+                engine="openpyxl"
+            )
+
+            return df.to_string(index=False)
+
+        # DOCX
+        elif ext == ".docx":
+
+            doc = Document(file_path)
+
+            text = []
+
+            for para in doc.paragraphs:
+
+                if para.text.strip():
+
+                    text.append(
+                        para.text.strip()
+                    )
+
+            return "\n".join(text)
+
+        # PDF
+        elif ext == ".pdf":
+
+            text = ""
+
+            with pdfplumber.open(file_path) as pdf:
+
+                for page in pdf.pages:
+
+                    page_text = page.extract_text()
+
+                    if page_text:
+
+                        text += page_text + "\n"
+
+            return text
+
         # IMAGE FILES
         elif ext in [
             ".png",
@@ -110,46 +195,44 @@ def extract_text(file_path):
             image = cv2.imread(file_path)
 
             if image is None:
-
                 return ""
 
-            h, w = image.shape[:2]
-
-            if w > 1200:
-
-                ratio = 1200 / w
-
-                image = cv2.resize(
-                    image,
-                    (
-                        1200,
-                        int(h * ratio)
-                    )
-                )
+            # Improve OCR quality
+            image = cv2.resize(
+                image,
+                None,
+                fx=2,
+                fy=2,
+                interpolation=cv2.INTER_CUBIC
+            )
 
             gray = cv2.cvtColor(
                 image,
                 cv2.COLOR_BGR2GRAY
             )
 
-            gray = cv2.GaussianBlur(
+            gray = cv2.fastNlMeansDenoising(
                 gray,
-                (3, 3),
-                0
+                None,
+                30,
+                7,
+                21
             )
 
-            gray = cv2.threshold(
+            gray = cv2.adaptiveThreshold(
                 gray,
-                0,
                 255,
-                cv2.THRESH_BINARY +
-                cv2.THRESH_OTSU
-            )[1]
+                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                cv2.THRESH_BINARY,
+                31,
+                11
+            )
 
-            text = pytesseract.image_to_string(
-                gray,
-                lang="eng",
-                config="--oem 3 --psm 6"
+            results = reader.readtext(gray)
+
+            text = " ".join(
+                result[1]
+                for result in results
             )
 
             return text
@@ -158,6 +241,8 @@ def extract_text(file_path):
 
     except Exception as e:
 
+        return f"ERROR: {str(e)}"
+    except Exception as e:
         return f"ERROR: {str(e)}"
 
 
