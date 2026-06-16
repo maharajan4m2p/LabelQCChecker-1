@@ -7,9 +7,7 @@ import pdfplumber
 import pandas as pd
 
 from docx import Document
-import numpy as np
-from pdf2image import convert_from_path
-from flask import (Flask, render_template, request)
+from flask import Flask, render_template, request
 from werkzeug.utils import secure_filename
 
 
@@ -83,67 +81,30 @@ def extract_text(file_path):
             return "\n".join(text)
 
         # PDF
+# PDF
         elif ext == ".pdf":
 
-            text = ""
+         text = ""
 
-            try:
+    try:
 
-                with pdfplumber.open(file_path) as pdf:
+        with pdfplumber.open(file_path) as pdf:
 
-                    for page in pdf.pages:
+            for page in pdf.pages:
 
-                        page_text = page.extract_text()
+                page_text = page.extract_text()
 
-                        if page_text:
+                if page_text:
+                    text += page_text + "\n"
 
-                            text += page_text + "\n"
+        return text
 
-            except:
-                pass
+    except Exception as e:
 
-            if text.strip():
-
-                return text
-
-            # OCR scanned PDF pages
-            from pdf2image import convert_from_path
-            import numpy as np
-
-            pages = convert_from_path(file_path)
-
-            ocr_text = ""
-
-            for page in pages:
-
-                page_img = cv2.cvtColor(
-                    np.array(page),
-                    cv2.COLOR_RGB2BGR
-                )
-
-                gray = cv2.cvtColor(
-                    page_img,
-                    cv2.COLOR_BGR2GRAY
-                )
-
-                gray = cv2.threshold(
-                    gray,
-                    0,
-                    255,
-                    cv2.THRESH_BINARY +
-                    cv2.THRESH_OTSU
-                )[1]
-
-                ocr_text += pytesseract.image_to_string(
-                    gray,
-                    lang="eng",
-                    config="--oem 3 --psm 6"
-                ) + "\n"
-
-            return ocr_text
+        return f"ERROR: {str(e)}"
 
         # IMAGE FILES
-        elif ext in [
+    elifext in [
             ".png",
             ".jpg",
             ".jpeg",
@@ -201,11 +162,11 @@ def extract_text(file_path):
 
             return text
 
-        return ""
+            return ""
 
-    except Exception as e:
+            except Exception as e:
 
-        return f"ERROR: {str(e)}"
+            return f"ERROR: {str(e)}"
 
 
 def clean_text(text):
