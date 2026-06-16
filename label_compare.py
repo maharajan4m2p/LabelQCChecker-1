@@ -9,15 +9,16 @@ import pandas as pd
 from docx import Document
 
 
+# =========================
+# TEXT EXTRACTION
+# =========================
+
 def extract_text(file_path):
 
-    ext = os.path.splitext(
-        file_path
-    )[1].lower()
+    ext = os.path.splitext(file_path)[1].lower()
 
     try:
 
-        # TXT
         if ext == ".txt":
 
             with open(
@@ -29,7 +30,6 @@ def extract_text(file_path):
 
                 return f.read()
 
-        # CSV
         elif ext == ".csv":
 
             df = pd.read_csv(
@@ -38,11 +38,8 @@ def extract_text(file_path):
                 keep_default_na=False
             )
 
-            return df.to_string(
-                index=False
-            )
+            return df.to_string(index=False)
 
-        # XLS
         elif ext == ".xls":
 
             df = pd.read_excel(
@@ -51,11 +48,8 @@ def extract_text(file_path):
                 engine="xlrd"
             )
 
-            return df.to_string(
-                index=False
-            )
+            return df.to_string(index=False)
 
-        # XLSX
         elif ext == ".xlsx":
 
             df = pd.read_excel(
@@ -64,16 +58,11 @@ def extract_text(file_path):
                 engine="openpyxl"
             )
 
-            return df.to_string(
-                index=False
-            )
+            return df.to_string(index=False)
 
-        # DOCX
         elif ext == ".docx":
 
-            doc = Document(
-                file_path
-            )
+            doc = Document(file_path)
 
             text = []
 
@@ -85,37 +74,25 @@ def extract_text(file_path):
                         para.text.strip()
                     )
 
-            return "\n".join(
-                text
-            )
+            return "\n".join(text)
 
-        # PDF
         elif ext == ".pdf":
 
             text = ""
 
-            with pdfplumber.open(
-                file_path
-            ) as pdf:
+            with pdfplumber.open(file_path) as pdf:
 
                 for page in pdf.pages:
 
-                    page_text = (
-                        page.extract_text()
-                    )
+                    page_text = page.extract_text()
 
                     if page_text:
 
-                        text += (
-                            page_text
-                            + "\n"
-                        )
+                        text += page_text + "\n"
 
             return text
 
-        # IMAGE FILES
         elif ext in [
-
             ".png",
             ".jpg",
             ".jpeg",
@@ -124,12 +101,9 @@ def extract_text(file_path):
             ".tiff",
             ".webp",
             ".gif"
-
         ]:
 
-            image = cv2.imread(
-                file_path
-            )
+            image = cv2.imread(file_path)
 
             if image is None:
 
@@ -168,7 +142,7 @@ def extract_text(file_path):
             text = pytesseract.image_to_string(
                 gray,
                 lang="eng",
-                config="--psm 6"
+                config="--oem 3 --psm 4"
             )
 
             return text
@@ -177,10 +151,12 @@ def extract_text(file_path):
 
     except Exception as e:
 
-        return (
-            f"ERROR: {str(e)}"
-        )
+        return f"ERROR: {str(e)}"
 
+
+# =========================
+# CLEAN TEXT
+# =========================
 
 def clean_text(text):
 
@@ -201,13 +177,16 @@ def clean_text(text):
     return text.strip()
 
 
+# =========================
+# LOGO COMPARISON
+# =========================
+
 def check_logo(
     approval_path,
     sample_path
 ):
 
     image_extensions = [
-
         ".png",
         ".jpg",
         ".jpeg",
@@ -215,7 +194,6 @@ def check_logo(
         ".tif",
         ".tiff",
         ".webp"
-
     ]
 
     approval_ext = os.path.splitext(
@@ -227,11 +205,9 @@ def check_logo(
     )[1].lower()
 
     if (
-        approval_ext
-        not in image_extensions
+        approval_ext not in image_extensions
         or
-        sample_ext
-        not in image_extensions
+        sample_ext not in image_extensions
     ):
 
         return "NOT IMAGE FILE"
@@ -247,13 +223,12 @@ def check_logo(
             sample_path,
             cv2.IMREAD_GRAYSCALE
         )
+
         if img1 is None or img2 is None:
 
             return "LOGO NOT FOUND"
 
-        orb = cv2.ORB_create(
-            1500
-        )
+        orb = cv2.ORB_create(1500)
 
         kp1, des1 = orb.detectAndCompute(
             img1,
@@ -280,13 +255,9 @@ def check_logo(
         )
 
         good_matches = [
-
             m
-
             for m in matches
-
             if m.distance < 60
-
         ]
 
         denominator = max(
@@ -299,39 +270,33 @@ def check_logo(
             return "LOGO NOT DETECTED"
 
         similarity = round(
-
             (
                 len(good_matches)
                 /
                 denominator
             ) * 100,
-
             2
-
         )
 
-        if similarity >= 20:
+        if similarity >= 40:
 
-            return (
-                f"MATCH ({similarity}%)"
-            )
+            return f"MATCH ({similarity}%)"
 
-        return (
-            f"MISMATCH ({similarity}%)"
-        )
+        return f"MISMATCH ({similarity}%)"
 
     except Exception as e:
 
-        return (
-            f"FAILED ({str(e)})"
-        )
+        return f"FAILED ({str(e)})"
 
+
+# =========================
+# MAIN COMPARISON
+# =========================
 
 def compare_labels(
     approval_path,
     sample_path
 ):
-
     approval_text = extract_text(
         approval_path
     )
@@ -420,7 +385,17 @@ def compare_labels(
 
     )
 
-    if similarity >= 85:
+    if (
+
+        similarity >= 85
+
+        and
+
+        len(missing_words) <= 10
+        and
+        len(extra_words) <= 10
+
+    ):
 
         verdict = "APPROVED"
 
@@ -430,21 +405,29 @@ def compare_labels(
 
     return {
 
+        # Overall Result
+
         "verdict": verdict,
 
         "similarity": similarity,
 
         "logo_status": logo_status,
 
+        # Extracted Text
+
         "approval_text": approval_text,
 
         "sample_text": sample_text,
+
+        # Word Lists
 
         "matched_words": matched_words,
 
         "missing_words": missing_words,
 
         "extra_words": extra_words,
+
+        # Counts
 
         "matched_count": len(
             matched_words
@@ -456,6 +439,61 @@ def compare_labels(
 
         "extra_count": len(
             extra_words
-        )
+        ),
+
+        # Detailed Text Output
+
+        "matched_data": "\n".join(
+            matched_words
+        ),
+
+        "missing_data": "\n".join(
+            missing_words
+        ),
+
+        "extra_data": "\n".join(
+            extra_words
+        ),
+
+        # Table Output
+
+        "comparison_table":
+
+            [
+
+                {
+                    "type": "MATCHED",
+                    "value": word
+                }
+
+                for word in matched_words
+
+            ]
+
+            +
+
+            [
+
+                {
+                    "type": "MISSING",
+                    "value": word
+                }
+
+                for word in missing_words
+
+            ]
+
+            +
+
+            [
+
+                {
+                    "type": "EXTRA",
+                    "value": word
+                }
+
+                for word in extra_words
+
+            ]
 
     }
