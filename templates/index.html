@@ -1,116 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
 
-<meta charset="UTF-8">
-
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
-
-<title>Label QC Checker</title>
+<title>
+Label QC Checker
+</title>
 
 <style>
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
 body{
-    font-family:Arial,sans-serif;
-    background:#f4f6f9;
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    padding:20px;
+font-family:Arial;
+background:#f4f6f9;
+padding:30px;
 }
 
 .container{
-    width:100%;
-    max-width:750px;
-}
-
-.card{
-    background:white;
-    padding:30px;
-    border-radius:12px;
-    box-shadow:0 2px 12px rgba(0,0,0,0.15);
+max-width:800px;
+margin:auto;
+background:white;
+padding:30px;
+border-radius:10px;
 }
 
 h1{
-    text-align:center;
-    color:#333;
-    margin-bottom:25px;
+text-align:center;
 }
 
-.info{
-    background:#eaf4ff;
-    border-left:5px solid #007bff;
-    padding:15px;
-    margin-bottom:25px;
-    border-radius:5px;
-}
-
-.info h3{
-    margin-bottom:10px;
-}
-
-.info ul{
-    margin-left:20px;
-}
-
-.info li{
-    margin-bottom:6px;
-}
-
-.form-group{
-    margin-bottom:20px;
-}
-
-label{
-    display:block;
-    font-weight:bold;
-    margin-bottom:8px;
-    color:#444;
-}
-
-input[type="file"]{
-    width:100%;
-    padding:12px;
-    border:2px dashed #007bff;
-    border-radius:8px;
-    background:#f8fbff;
-}
-
-.note{
-    font-size:13px;
-    color:#666;
-    margin-top:5px;
+input{
+width:100%;
+padding:10px;
+margin-top:10px;
+margin-bottom:20px;
 }
 
 button{
-    width:100%;
-    padding:15px;
-    background:#007bff;
-    color:white;
-    border:none;
-    border-radius:8px;
-    font-size:16px;
-    cursor:pointer;
-}
-
-button:hover{
-    background:#0056b3;
-}
-
-.footer{
-    text-align:center;
-    margin-top:15px;
-    color:#777;
-    font-size:14px;
+width:100%;
+padding:15px;
+background:#007bff;
+color:white;
+border:none;
+font-size:16px;
 }
 
 </style>
@@ -121,78 +51,40 @@ button:hover{
 
 <div class="container">
 
-<div class="card">
-
-<h1>🏷️ Label QC Checker</h1>
-
-<div class="info">
-
-<h3>Supported Features</h3>
-
-<ul>
-<li>Image OCR Extraction</li>
-<li>PDF Comparison</li>
-<li>DOC / DOCX Comparison</li>
-<li>XLS / XLSX Comparison</li>
-<li>CSV Comparison</li>
-<li>TXT Comparison</li>
-<li>Multiple Sample Comparison</li>
-<li>Similarity Percentage</li>
-<li>Matched Words Detection</li>
-<li>Missing Words Detection</li>
-<li>Extra Words Detection</li>
-<li>Brand Name Detection</li>
-<li>Product Name Detection</li>
-<li>Barcode Detection</li>
-<li>Weight Detection</li>
-<li>Date Detection</li>
-<li>Logo Comparison (Images Only)</li>
-<li>Approval / Rejection Result</li>
-</ul>
-
-</div>
+<h1>
+Label QC Checker
+</h1>
 
 <form
 action="/compare"
 method="POST"
-enctype="multipart/form-data">
-
-<div class="form-group">
+enctype="multipart/form-data"
+>
 
 <label>
+
 Approval File
+
 </label>
 
 <input
-    type="file"
-    name="approval"
-    accept=".png,.jpg,.jpeg,.bmp,.tif,.tiff,.webp,.gif,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
-    required>
-
-<div class="note">
-Upload one approved reference file.
-</div>
-
-</div>
-
-<div class="form-group">
+type="file"
+name="approval"
+required
+>
 
 <label>
+
 Sample Files
+
 </label>
 
 <input
-    type="file"
-    name="samples"
-    multiple
-    accept=".png,.jpg,.jpeg,.bmp,.tif,.tiff,.webp,.gif,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
-    required>
-
-<div class="note">
-Select one or more sample files for comparison.
-</div>
-
-</div>
+type="file"
+name="samples"
+multiple
+required
+>
 
 <button type="submit">
 
@@ -201,14 +93,6 @@ Compare Files
 </button>
 
 </form>
-
-<div class="footer">
-
-Compare one approval file against multiple sample files.
-
-</div>
-
-</div>
 
 </div>
 
