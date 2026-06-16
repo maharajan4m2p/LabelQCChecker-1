@@ -5,6 +5,11 @@ import re
 import os
 import pdfplumber
 import pandas as pd
+import easyocr
+reader = easyocr.Reader(
+    lang_list=["en"],
+    gpu=False
+)
 
 from docx import Document
 from flask import Flask, render_template, request
