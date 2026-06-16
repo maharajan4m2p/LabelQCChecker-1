@@ -5,6 +5,11 @@ import re
 import os
 import pdfplumber
 import pandas as pd
+import easyocr
+reader = easyocr.Reader(
+    ["en"],
+    gpu=False
+)   
 
 from docx import Document
 
@@ -137,6 +142,11 @@ def extract_text(file_path):
                 cv2.THRESH_BINARY,
                 31,
                 11
+            )
+            results =reader.readtext(
+                gray)
+            text = "".join(
+                result[1] for result in results
             )
             if not text.strip():
                 text = pytesseract.image_to_string(
