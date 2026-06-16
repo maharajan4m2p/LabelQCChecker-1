@@ -112,8 +112,8 @@ def extract_text(file_path):
             image = cv2.resize(
                 image,
                 None,
-                fx=2,
-                fy=2,
+                fx=3,
+                fy=3,
                 interpolation=cv2.INTER_CUBIC
             )
 
@@ -281,8 +281,9 @@ def check_logo(
         if similarity >= 40:
 
             return f"MATCH ({similarity}%)"
+        else:
 
-        return f"MISMATCH ({similarity}%)"
+            return f"MISMATCH ({similarity}%)"
 
     except Exception as e:
 
@@ -293,10 +294,16 @@ def check_logo(
 # MAIN COMPARISON
 # =========================
 
+# =========================
+# MAIN COMPARISON
+# =========================
+
 def compare_labels(
     approval_path,
     sample_path
 ):
+
+    # Extract Text
     approval_text = extract_text(
         approval_path
     )
@@ -305,6 +312,7 @@ def compare_labels(
         sample_path
     )
 
+    # Clean Text
     approval_clean = clean_text(
         approval_text
     )
@@ -313,187 +321,92 @@ def compare_labels(
         sample_text
     )
 
+    # Similarity
     similarity = round(
-
         difflib.SequenceMatcher(
-
             None,
-
             approval_clean,
-
             sample_clean
-
         ).ratio() * 100,
-
         2
-
     )
 
     approval_words = set(
-
         approval_clean.split()
-
     )
 
     sample_words = set(
-
         sample_clean.split()
-
     )
 
     matched_words = sorted(
-
-        list(
-
-            approval_words
-            &
-            sample_words
-
-        )
-
+        approval_words &
+        sample_words
     )
 
     missing_words = sorted(
-
-        list(
-
-            approval_words
-            -
-            sample_words
-
-        )
-
+        approval_words -
+        sample_words
     )
 
     extra_words = sorted(
-
-        list(
-
-            sample_words
-            -
-            approval_words
-
-        )
-
+        sample_words -
+        approval_words
     )
 
     logo_status = check_logo(
-
         approval_path,
-
         sample_path
-
     )
 
     if (
-
-        similarity >= 85
-
-        and
-
-        len(missing_words) <= 10
-        and
-        len(extra_words) <= 10
-
+        similarity >= 80
+        and len(missing_words) <= 10
     ):
-
         verdict = "APPROVED"
-
     else:
-
         verdict = "NOT APPROVED"
+
+    comparison_table = []
+
+    for word in matched_words:
+        comparison_table.append({
+            "type": "MATCHED",
+            "value": word
+        })
+
+    for word in missing_words:
+        comparison_table.append({
+            "type": "MISSING",
+            "value": word
+        })
+
+    for word in extra_words:
+        comparison_table.append({
+            "type": "EXTRA",
+            "value": word
+        })
 
     return {
 
-        # Overall Result
-
         "verdict": verdict,
-
         "similarity": similarity,
-
         "logo_status": logo_status,
 
-        # Extracted Text
-
         "approval_text": approval_text,
-
         "sample_text": sample_text,
 
-        # Word Lists
-
         "matched_words": matched_words,
-
         "missing_words": missing_words,
-
         "extra_words": extra_words,
 
-        # Counts
+        "matched_count": len(matched_words),
+        "missing_count": len(missing_words),
+        "extra_count": len(extra_words),
 
-        "matched_count": len(
-            matched_words
-        ),
+        "matched_data": matched_words,
+        "missing_data": missing_words,
+        "extra_data": extra_words,
 
-        "missing_count": len(
-            missing_words
-        ),
-
-        "extra_count": len(
-            extra_words
-        ),
-
-        # Detailed Text Output
-
-        "matched_data": "\n".join(
-            matched_words
-        ),
-
-        "missing_data": "\n".join(
-            missing_words
-        ),
-
-        "extra_data": "\n".join(
-            extra_words
-        ),
-
-        # Table Output
-
-        "comparison_table":
-
-            [
-
-                {
-                    "type": "MATCHED",
-                    "value": word
-                }
-
-                for word in matched_words
-
-            ]
-
-            +
-
-            [
-
-                {
-                    "type": "MISSING",
-                    "value": word
-                }
-
-                for word in missing_words
-
-            ]
-
-            +
-
-            [
-
-                {
-                    "type": "EXTRA",
-                    "value": word
-                }
-
-                for word in extra_words
-
-            ]
-
+        "comparison_table": comparison_table
     }
