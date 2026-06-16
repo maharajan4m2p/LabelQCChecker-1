@@ -7,7 +7,7 @@ import pdfplumber
 import pandas as pd
 import easyocr
 reader = easyocr.Reader(
-    lang_list=["en"],
+    ["en"],
     gpu=False
 )
 
@@ -76,10 +76,7 @@ def extract_text(file_path):
             for para in doc.paragraphs:
 
                 if para.text.strip():
-
-                    text.append(
-                        para.text.strip()
-                    )
+                    text.append(para.text.strip())
 
             return "\n".join(text)
 
@@ -95,92 +92,6 @@ def extract_text(file_path):
                     page_text = page.extract_text()
 
                     if page_text:
-
-                        text += page_text + "\n"
-
-            return text
-
-def extract_text(file_path):
-
-    ext = os.path.splitext(file_path)[1].lower()
-
-    try:
-
-        # TXT
-        if ext == ".txt":
-
-            with open(
-                file_path,
-                "r",
-                encoding="utf-8",
-                errors="ignore"
-            ) as f:
-
-                return f.read()
-
-        # CSV
-        elif ext == ".csv":
-
-            df = pd.read_csv(
-                file_path,
-                dtype=str,
-                keep_default_na=False
-            )
-
-            return df.to_string(index=False)
-
-        # XLS
-        elif ext == ".xls":
-
-            df = pd.read_excel(
-                file_path,
-                dtype=str,
-                engine="xlrd"
-            )
-
-            return df.to_string(index=False)
-
-        # XLSX
-        elif ext == ".xlsx":
-
-            df = pd.read_excel(
-                file_path,
-                dtype=str,
-                engine="openpyxl"
-            )
-
-            return df.to_string(index=False)
-
-        # DOCX
-        elif ext == ".docx":
-
-            doc = Document(file_path)
-
-            text = []
-
-            for para in doc.paragraphs:
-
-                if para.text.strip():
-
-                    text.append(
-                        para.text.strip()
-                    )
-
-            return "\n".join(text)
-
-        # PDF
-        elif ext == ".pdf":
-
-            text = ""
-
-            with pdfplumber.open(file_path) as pdf:
-
-                for page in pdf.pages:
-
-                    page_text = page.extract_text()
-
-                    if page_text:
-
                         text += page_text + "\n"
 
             return text
@@ -202,7 +113,6 @@ def extract_text(file_path):
             if image is None:
                 return ""
 
-            # Improve OCR quality
             image = cv2.resize(
                 image,
                 None,
@@ -246,8 +156,6 @@ def extract_text(file_path):
 
     except Exception as e:
 
-        return f"ERROR: {str(e)}"
-    except Exception as e:
         return f"ERROR: {str(e)}"
 
 
