@@ -30,7 +30,7 @@ body{
 
 .container{
     width:100%;
-    max-width:700px;
+    max-width:750px;
 }
 
 .card{
@@ -54,12 +54,16 @@ h1{
     border-radius:5px;
 }
 
+.info h3{
+    margin-bottom:10px;
+}
+
 .info ul{
     margin-left:20px;
 }
 
 .info li{
-    margin-bottom:5px;
+    margin-bottom:6px;
 }
 
 .form-group{
@@ -126,12 +130,24 @@ button:hover{
 <h3>Features</h3>
 
 <ul>
-<li>OCR Text Extraction</li>
+<li>Image OCR Extraction</li>
+<li>PDF Comparison</li>
+<li>DOCX Comparison</li>
+<li>Excel (XLSX) Comparison</li>
+<li>CSV Comparison</li>
+<li>TXT Comparison</li>
 <li>Multiple Sample Comparison</li>
 <li>Similarity Percentage</li>
 <li>Matched Words Detection</li>
 <li>Missing Words Detection</li>
 <li>Extra Words Detection</li>
+<li>Brand Name Detection</li>
+<li>Product Name Detection</li>
+<li>Barcode Detection</li>
+<li>Net Weight Detection</li>
+<li>Manufacturing Date Detection</li>
+<li>Expiry Date Detection</li>
+<li>Logo Comparison (Images Only)</li>
 <li>Approval / Rejection Result</li>
 </ul>
 
@@ -145,16 +161,17 @@ enctype="multipart/form-data">
 <div class="form-group">
 
 <label>
-Approval Label Image
+Approval File
 </label>
 
 <input
     type="file"
-    name="Approval_file"
-    accept=".png,.jpg,.jpeg,.bmp,.tif,.tiff,.webp,.gif,.pdf"
+    name="approval"
+    accept=".png,.jpg,.jpeg,.bmp,.tif,.tiff,.webp,.pdf,.docx,.xlsx,.csv,.txt"
     required>
+
 <div class="note">
-Upload one approved reference label.
+Upload one approved reference file.
 </div>
 
 </div>
@@ -162,17 +179,18 @@ Upload one approved reference label.
 <div class="form-group">
 
 <label>
-Sample Label Images
+Sample Files
 </label>
 
 <input
     type="file"
-    name="Sample_file"
-    accept=".png,.jpg,.jpeg,.bmp,.tif,.tiff,.webp,.gif,.pdf"
+    name="samples"
+    multiple
+    accept=".png,.jpg,.jpeg,.bmp,.tif,.tiff,.webp,.pdf,.docx,.xlsx,.csv,.txt"
     required>
 
 <div class="note">
-You can select multiple sample images.
+Select one or more sample files for comparison.
 </div>
 
 </div>
@@ -187,7 +205,7 @@ Compare Labels
 
 <div class="footer">
 
-Compare one approval label against multiple sample labels.
+Compare one approval file against multiple sample files.
 
 </div>
 

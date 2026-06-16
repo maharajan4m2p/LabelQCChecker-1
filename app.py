@@ -1,27 +1,16 @@
 import os
 
-from flask import (
-    Flask,
-    render_template,
-    request
-)
-
+from flask import Flask, render_template, request
 from werkzeug.utils import secure_filename
 
 from label_compare import compare_labels
 
-
 app = Flask(__name__)
 
 UPLOAD_FOLDER = "uploads"
-
-os.makedirs(
-    UPLOAD_FOLDER,
-    exist_ok=True
-)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-
 
 ALLOWED_EXTENSIONS = {
     "png",
@@ -30,6 +19,7 @@ ALLOWED_EXTENSIONS = {
     "bmp",
     "tif",
     "tiff",
+    "webp",
     "pdf",
     "doc",
     "docx",
@@ -41,87 +31,84 @@ ALLOWED_EXTENSIONS = {
 
 
 def allowed_file(filename):
-
-    return '.' in filename and \
-        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower()
+        in ALLOWED_EXTENSIONS
+    )
 
 
 @app.route("/")
 def home():
-
-    return render_template(
-        "index.html"
-    )
+    return render_template("index.html")
 
 
-@app.route(
-    "/compare",
-    methods=["POST"]
-)
+@app.route("/compare", methods=["POST"])
 def compare():
 
-    approval = request.files.get(
-        "approval"
-    )
-
-    samples = request.files.getlist(
-        "samples"
-    )
+    approval = request.files.get("approval")
+    samples = request.files.getlist("samples")
 
     if not approval:
         return "Approval file missing"
 
-    if not allowed_file(
-        approval.filename
-    ):
+    if not allowed_file(approval.filename):
         return "Unsupported approval file type"
+
+    approval_filename = secure_filename(
+        approval.filename
+    )
 
     approval_path = os.path.join(
         app.config["UPLOAD_FOLDER"],
-        secure_filename(
-            approval.filename
-        )
+        approval_filename
     )
 
-    approval.save(
-        approval_path
-    )
+    approval.save(approval_path)
 
     all_results = []
 
     for sample in samples:
 
-        if not sample.filename:
+        if sample.filename == "":
             continue
 
-        if not allowed_file(
-            sample.filename
-        ):
+        if not allowed_file(sample.filename):
             continue
+
+        sample_filename = secure_filename(
+            sample.filename
+        )
 
         sample_path = os.path.join(
             app.config["UPLOAD_FOLDER"],
-            secure_filename(
-                sample.filename
+            sample_filename
+        )
+
+        sample.save(sample_path)
+
+        try:
+
+            result = compare_labels(
+                approval_path,
+                sample_path
             )
-        )
 
-        sample.save(
-            sample_path
-        )
+            result["sample_file"] = sample.filename
 
-        result = compare_labels(
-            approval_path,
-            sample_path
-        )
+            all_results.append(result)
 
-        result[
-            "sample_file"
-        ] = sample.filename
+        except Exception as e:
 
-        all_results.append(
-            result
-        )
+            all_results.append({
+                "sample_file": sample.filename,
+                "similarity": 0,
+                "status": "ERROR",
+                "matched_words": [],
+                "missing_words": [],
+                "extra_words": [],
+                "error": str(e)
+            })
 
     return render_template(
         "results.html",
@@ -130,7 +117,6 @@ def compare():
 
 
 if __name__ == "__main__":
-
     app.run(
         host="0.0.0.0",
         port=5000,
