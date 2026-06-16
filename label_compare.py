@@ -143,13 +143,6 @@ def extract_text(file_path):
                 31,
                 11
             )
-
-            results = reader.readtext(gray)
-
-            text = " ".join(
-                result[1]
-                for result in results
-            )
             if not text.strip():
                 text = pytesseract.image_to_string(
                     gray,
