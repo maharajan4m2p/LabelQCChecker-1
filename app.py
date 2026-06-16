@@ -1,12 +1,15 @@
 import os
-import gc
 
-from flask import Flask
-from flask import render_template
-from flask import request
+from flask import (
+    Flask,
+    render_template,
+    request
+)
+
 from werkzeug.utils import secure_filename
 
 from label_compare import compare_labels
+
 
 app = Flask(__name__)
 
@@ -19,7 +22,28 @@ os.makedirs(
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
+
+ALLOWED_EXTENSIONS = {
+    "png",
+    "jpg",
+    "jpeg",
+    "bmp",
+    "tif",
+    "tiff",
+    "pdf",
+    "doc",
+    "docx",
+    "xls",
+    "xlsx",
+    "csv",
+    "txt"
+}
+
+
+def allowed_file(filename):
+
+    return '.' in filename and \
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @app.route("/")
@@ -36,147 +60,79 @@ def home():
 )
 def compare():
 
-    try:
+    approval = request.files.get(
+        "approval"
+    )
 
-        approval_file = request.files.get(
-            "approval"
+    samples = request.files.getlist(
+        "samples"
+    )
+
+    if not approval:
+        return "Approval file missing"
+
+    if not allowed_file(
+        approval.filename
+    ):
+        return "Unsupported approval file type"
+
+    approval_path = os.path.join(
+        app.config["UPLOAD_FOLDER"],
+        secure_filename(
+            approval.filename
         )
+    )
 
-        sample_files = request.files.getlist(
-            "sample"
-        )
+    approval.save(
+        approval_path
+    )
 
-        if not approval_file:
+    all_results = []
 
-            return """
-            <h2>
-            Approval image not selected
-            </h2>
-            """
+    for sample in samples:
 
-        if len(sample_files) == 0:
+        if not sample.filename:
+            continue
 
-            return """
-            <h2>
-            Sample image not selected
-            </h2>
-            """
+        if not allowed_file(
+            sample.filename
+        ):
+            continue
 
-        approval_path = os.path.join(
+        sample_path = os.path.join(
             app.config["UPLOAD_FOLDER"],
             secure_filename(
-                approval_file.filename
-            )
-        )
-
-        approval_file.save(
-            approval_path
-        )
-
-        all_results = []
-
-        for sample in sample_files:
-
-            if sample.filename == "":
-                continue
-
-            sample_path = os.path.join(
-                app.config["UPLOAD_FOLDER"],
-                secure_filename(
-                    sample.filename
-                )
-            )
-
-            sample.save(
-                sample_path
-            )
-
-            result = compare_labels(
-                approval_path,
-                sample_path
-            )
-
-            result["sample_file"] = (
                 sample.filename
             )
-
-            all_results.append(
-                result
-            )
-
-            try:
-                os.remove(
-                    sample_path
-                )
-            except:
-                pass
-
-        try:
-            os.remove(
-                approval_path
-            )
-        except:
-            pass
-
-        gc.collect()
-
-        return render_template(
-            "results.html",
-            results=all_results
         )
 
-    except Exception as e:
+        sample.save(
+            sample_path
+        )
 
-        return f"""
-        <h2>
-        Internal Error
-        </h2>
+        result = compare_labels(
+            approval_path,
+            sample_path
+        )
 
-        <pre>
-        {str(e)}
-        </pre>
-        """
+        result[
+            "sample_file"
+        ] = sample.filename
 
+        all_results.append(
+            result
+        )
 
-@app.errorhandler(413)
-def file_too_large(error):
-
-    return """
-    <h2>
-    File Too Large
-    </h2>
-
-    <p>
-    Maximum upload size is 10 MB.
-    </p>
-    """, 413
-
-
-@app.route("/health")
-def health():
-
-    return "OK"
-
-
-@app.route("/ping")
-def ping():
-
-    return {
-        "status": "running"
-    }
+    return render_template(
+        "results.html",
+        all_results=all_results
+    )
 
 
 if __name__ == "__main__":
 
-    port = int(
-        os.environ.get(
-            "PORT",
-            5000
-        )
-    )
-
     app.run(
         host="0.0.0.0",
-        port=port,
+        port=5000,
         debug=False
     )

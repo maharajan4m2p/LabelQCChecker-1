@@ -3,358 +3,314 @@
 
 <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-<title>Label QC Results</title>
+    <title>Label QC Results</title>
 
-<style>
+    <style>
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
+        body{
+            font-family: Arial, sans-serif;
+            background:#f4f6f9;
+            margin:0;
+            padding:20px;
+        }
 
-body{
-    font-family:Arial,sans-serif;
-    background:#f4f6f9;
-    padding:20px;
-}
+        h1{
+            text-align:center;
+            color:#333;
+        }
 
-.container{
-    max-width:1400px;
-    margin:auto;
-}
+        .card{
+            background:white;
+            padding:20px;
+            margin:20px auto;
+            max-width:1200px;
+            border-radius:10px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.1);
+        }
 
-h1{
-    text-align:center;
-    margin-bottom:30px;
-    color:#333;
-}
+        .approved{
+            color:green;
+            font-weight:bold;
+            font-size:24px;
+        }
 
-.card{
-    background:white;
-    padding:20px;
-    margin-bottom:25px;
-    border-radius:10px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.1);
-}
+        .rejected{
+            color:red;
+            font-weight:bold;
+            font-size:24px;
+        }
 
-.approved{
-    color:green;
-    font-size:22px;
-    font-weight:bold;
-}
+        .stats{
+            display:flex;
+            flex-wrap:wrap;
+            gap:15px;
+            margin:20px 0;
+        }
 
-.rejected{
-    color:red;
-    font-size:22px;
-    font-weight:bold;
-}
+        .stat-box{
+            padding:12px;
+            border:1px solid #ddd;
+            border-radius:6px;
+            background:#fafafa;
+            min-width:150px;
+        }
 
-.stats{
-    display:flex;
-    flex-wrap:wrap;
-    gap:15px;
-    margin-top:15px;
-    margin-bottom:20px;
-}
+        table{
+            width:100%;
+            border-collapse:collapse;
+            margin-top:20px;
+        }
 
-.stat-box{
-    background:#f8f9fa;
-    border:1px solid #ddd;
-    padding:12px;
-    border-radius:5px;
-}
+        th{
+            background:#007bff;
+            color:white;
+        }
 
-table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:20px;
-}
+        th,td{
+            border:1px solid #ddd;
+            padding:10px;
+            text-align:left;
+        }
 
-table th{
-    background:#007bff;
-    color:white;
-    padding:12px;
-}
+        .section-title{
+            margin-top:25px;
+            color:#333;
+        }
 
-table td{
-    border:1px solid #ddd;
-    padding:10px;
-}
+        .word-box{
+            border:1px solid #ddd;
+            padding:15px;
+            border-radius:8px;
+            max-height:250px;
+            overflow:auto;
+            background:#fafafa;
+        }
 
-tr:nth-child(even){
-    background:#f8f8f8;
-}
+        .match{
+            color:green;
+        }
 
-.match{
-    color:green;
-    font-weight:bold;
-}
+        .missing{
+            color:red;
+        }
 
-.mismatch{
-    color:red;
-    font-weight:bold;
-}
+        .extra{
+            color:orange;
+        }
 
-.section{
-    margin-top:25px;
-}
+        pre{
+            white-space:pre-wrap;
+            word-wrap:break-word;
+            background:#f8f8f8;
+            padding:15px;
+            border-radius:8px;
+            border:1px solid #ddd;
+        }
 
-pre{
-    background:#f8f8f8;
-    border:1px solid #ddd;
-    padding:15px;
-    border-radius:5px;
-    white-space:pre-wrap;
-    word-wrap:break-word;
-}
+        .btn{
+            display:inline-block;
+            margin-top:20px;
+            padding:12px 20px;
+            background:#007bff;
+            color:white;
+            text-decoration:none;
+            border-radius:6px;
+        }
 
-ul{
-    margin-left:25px;
-    margin-top:10px;
-}
+        .btn:hover{
+            background:#0056b3;
+        }
 
-li{
-    margin-bottom:5px;
-}
-
-.btn{
-    display:inline-block;
-    padding:12px 20px;
-    background:#007bff;
-    color:white;
-    text-decoration:none;
-    border-radius:5px;
-    margin-top:25px;
-}
-
-</style>
+    </style>
 
 </head>
 
 <body>
 
-<div class="container">
+<h1>Label QC Comparison Results</h1>
 
-<h1>Label QC Detailed Report</h1>
-
-{% for result in results %}
+{% for result in all_results %}
 
 <div class="card">
 
-<h2>
-Sample File:
-{{ result.sample_file }}
-</h2>
+    <h2>
+        Sample File:
+        {{ result.sample_file }}
+    </h2>
 
-{% if result.verdict == "APPROVED" %}
+    {% if result.verdict == "APPROVED" %}
 
-<p class="approved">
-✅ APPROVED
-</p>
+        <div class="approved">
+            ✓ APPROVED
+        </div>
 
-{% else %}
+    {% else %}
 
-<p class="rejected">
-❌ NOT APPROVED
-</p>
+        <div class="rejected">
+            ✗ NOT APPROVED
+        </div>
 
-{% endif %}
+    {% endif %}
 
-<div class="stats">
+    <div class="stats">
 
-<div class="stat-box">
-Similarity:
-<strong>
-{{ result.similarity }}%
-</strong>
-</div>
+        <div class="stat-box">
+            Similarity:
+            <strong>
+                {{ result.similarity }}%
+            </strong>
+        </div>
 
-<div class="stat-box">
-Logo:
-<strong>
-{{ result.logo_status }}
-</strong>
-</div>
+        <div class="stat-box">
+            Matched:
+            <strong>
+                {{ result.matched_count }}
+            </strong>
+        </div>
 
-<div class="stat-box">
-Matched:
-<strong>
-{{ result.matched_count }}
-</strong>
-</div>
+        <div class="stat-box">
+            Missing:
+            <strong>
+                {{ result.missing_count }}
+            </strong>
+        </div>
 
-<div class="stat-box">
-Missing:
-<strong>
-{{ result.missing_count }}
-</strong>
-</div>
+        <div class="stat-box">
+            Extra:
+            <strong>
+                {{ result.extra_count }}
+            </strong>
+        </div>
 
-<div class="stat-box">
-Extra:
-<strong>
-{{ result.extra_count }}
-</strong>
-</div>
+        <div class="stat-box">
+            Logo Status:
+            <strong>
+                {{ result.logo_status }}
+            </strong>
+        </div>
 
-</div>
+    </div>
 
-<h3>Field Comparison</h3>
+    <h3 class="section-title">
+        Field Level Comparison
+    </h3>
 
-<table>
+    <table>
 
-<tr>
-<th>Field</th>
-<th>Approval</th>
-<th>Sample</th>
-<th>Status</th>
-</tr>
+        <tr>
+            <th>Field</th>
+            <th>Approval</th>
+            <th>Sample</th>
+        </tr>
 
-<tr>
-<td>Brand Name</td>
-<td>{{ result.approval_brand }}</td>
-<td>{{ result.sample_brand }}</td>
-<td>
-{% if result.approval_brand == result.sample_brand %}
-<span class="match">MATCH</span>
-{% else %}
-<span class="mismatch">MISMATCH</span>
-{% endif %}
-</td>
-</tr>
+        <tr>
+            <td>Brand Name</td>
+            <td>{{ result.approval_brand }}</td>
+            <td>{{ result.sample_brand }}</td>
+        </tr>
 
-<tr>
-<td>Product Name</td>
-<td>{{ result.approval_product }}</td>
-<td>{{ result.sample_product }}</td>
-<td>
-{% if result.approval_product == result.sample_product %}
-<span class="match">MATCH</span>
-{% else %}
-<span class="mismatch">MISMATCH</span>
-{% endif %}
-</td>
-</tr>
+        <tr>
+            <td>Product Name</td>
+            <td>{{ result.approval_product }}</td>
+            <td>{{ result.sample_product }}</td>
+        </tr>
 
-<tr>
-<td>Barcode</td>
-<td>{{ result.approval_barcode }}</td>
-<td>{{ result.sample_barcode }}</td>
-<td>
-{% if result.approval_barcode == result.sample_barcode %}
-<span class="match">MATCH</span>
-{% else %}
-<span class="mismatch">MISMATCH</span>
-{% endif %}
-</td>
-</tr>
+        <tr>
+            <td>Barcode</td>
+            <td>{{ result.approval_barcode }}</td>
+            <td>{{ result.sample_barcode }}</td>
+        </tr>
 
-<tr>
-<td>Net Weight</td>
-<td>{{ result.approval_weight }}</td>
-<td>{{ result.sample_weight }}</td>
-<td>
-{% if result.approval_weight == result.sample_weight %}
-<span class="match">MATCH</span>
-{% else %}
-<span class="mismatch">MISMATCH</span>
-{% endif %}
-</td>
-</tr>
+        <tr>
+            <td>Net Weight</td>
+            <td>{{ result.approval_weight }}</td>
+            <td>{{ result.sample_weight }}</td>
+        </tr>
 
-<tr>
-<td>MFG Date</td>
-<td>{{ result.approval_mfg }}</td>
-<td>{{ result.sample_mfg }}</td>
-<td>
-{% if result.approval_mfg == result.sample_mfg %}
-<span class="match">MATCH</span>
-{% else %}
-<span class="mismatch">MISMATCH</span>
-{% endif %}
-</td>
-</tr>
+        <tr>
+            <td>Manufacturing Date</td>
+            <td>{{ result.approval_mfg }}</td>
+            <td>{{ result.sample_mfg }}</td>
+        </tr>
 
-<tr>
-<td>EXP Date</td>
-<td>{{ result.approval_exp }}</td>
-<td>{{ result.sample_exp }}</td>
-<td>
-{% if result.approval_exp == result.sample_exp %}
-<span class="match">MATCH</span>
-{% else %}
-<span class="mismatch">MISMATCH</span>
-{% endif %}
-</td>
-</tr>
+        <tr>
+            <td>Expiry Date</td>
+            <td>{{ result.approval_exp }}</td>
+            <td>{{ result.sample_exp }}</td>
+        </tr>
 
-</table>
+    </table>
 
-<div class="section">
+    <h3 class="section-title">
+        Matched Words
+    </h3>
 
-<h3>Matched Words</h3>
+    <div class="word-box">
 
-<ul>
-{% for word in result.matched_words %}
-<li class="match">{{ word }}</li>
-{% endfor %}
-</ul>
+        {% for word in result.matched_words %}
+            <div class="match">
+                ✓ {{ word }}
+            </div>
+        {% endfor %}
 
-</div>
+    </div>
 
-<div class="section">
+    <h3 class="section-title">
+        Missing Words
+    </h3>
 
-<h3>Missing Words</h3>
+    <div class="word-box">
 
-<ul>
-{% for word in result.missing_words %}
-<li class="mismatch">{{ word }}</li>
-{% endfor %}
-</ul>
+        {% for word in result.missing_words %}
+            <div class="missing">
+                ✗ {{ word }}
+            </div>
+        {% endfor %}
 
-</div>
+    </div>
 
-<div class="section">
+    <h3 class="section-title">
+        Extra Words
+    </h3>
 
-<h3>Extra Words</h3>
+    <div class="word-box">
 
-<ul>
-{% for word in result.extra_words %}
-<li>{{ word }}</li>
-{% endfor %}
-</ul>
+        {% for word in result.extra_words %}
+            <div class="extra">
+                + {{ word }}
+            </div>
+        {% endfor %}
 
-</div>
+    </div>
 
-<div class="section">
+    <h3 class="section-title">
+        Approval OCR Text
+    </h3>
 
-<h3>Approval OCR Text</h3>
+    <pre>{{ result.approval_text }}</pre>
 
-<pre>{{ result.approval_text }}</pre>
+    <h3 class="section-title">
+        Sample OCR Text
+    </h3>
 
-</div>
-
-<div class="section">
-
-<h3>Sample OCR Text</h3>
-
-<pre>{{ result.sample_text }}</pre>
-
-</div>
+    <pre>{{ result.sample_text }}</pre>
 
 </div>
 
 {% endfor %}
 
-<a href="/" class="btn">
-Compare More Labels
-</a>
+<div style="text-align:center;">
+
+    <a href="/" class="btn">
+
+        Compare Another Label
+
+    </a>
 
 </div>
 
