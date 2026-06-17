@@ -386,6 +386,69 @@ No missing data found.
 </div>
 
 <h3 class="section-title">
+<hr>
+
+<h2>✅ Matched Constraints</h2>
+
+<div class="word-box">
+
+{% if result.matched_constraints %}
+
+    {% for item in result.matched_constraints %}
+
+        <div class="match">
+            ✓ {{ item }}
+        </div>
+
+    {% endfor %}
+
+{% else %}
+
+    No matched constraints found.
+
+{% endif %}
+
+</div>
+
+<p>
+<strong>
+Matched Constraints Count:
+{{ result.matched_constraints_count }}
+</strong>
+</p>
+
+<hr>
+
+<h2>❌ Missing Constraints</h2>
+
+<div class="word-box">
+
+{% if result.missing_constraints %}
+
+    {% for item in result.missing_constraints %}
+
+        <div class="missing">
+            ✗ {{ item }}
+        </div>
+
+    {% endfor %}
+
+{% else %}
+
+    No missing constraints found.
+
+{% endif %}
+
+</div>
+
+<p>
+<strong>
+Missing Constraints Count:
+{{ result.missing_constraints_count }}
+</strong>
+</p>
+
+<hr>
 
 ➕ Extra Data
 

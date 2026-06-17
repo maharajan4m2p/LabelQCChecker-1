@@ -5,7 +5,10 @@ import pytesseract
 import difflib
 import re
 import os
-pytesseract.pytesseract.tesseract_cmd = (
+import platform
+
+if platform.system() == "Windows":
+    pytesseract.pytesseract.tesseract_cmd = (
     r"C:\Users\Maharajan\AppData\Local\Programs\Tesseract-OCR\tesseract.exe"
 )
 
@@ -395,7 +398,7 @@ def check_constraints(
     sample_text = sample_text.lower()
     
     combined_text = clean_text(
-        approval_text+""+sample_text
+        approval_text+" "+sample_text
     )
 
     print("COMBINED TEXT")
@@ -437,21 +440,15 @@ def check_constraints(
             missing_constraints.append(item)
     return {
 
-        "matched_constraints":
-            matched_constraints,
+        "matched_constraints":matched_constraints,
 
-        "missing_constraints":
-            missing_constraints,
+        "missing_constraints":missing_constraints,
 
         "matched_constraints_count":
-            len(
-                matched_constraints
-            ),
+            len(matched_constraints),
 
         "missing_constraints_count":
-            len(
-                missing_constraints
-            )
+            len(missing_constraints)
 
     }
 # =========================
@@ -608,68 +605,33 @@ def compare_labels(
 
         })
 
-    return {
-
+    result ={
         # Result
-
         "verdict": verdict,
-
         "similarity": similarity,
-
         "logo_status": logo_status,
-
         # OCR Text
-
         "approval_text": approval_text,
-
         "sample_text": sample_text,
-
-        # Word Comparison
-
+            # Word Comparison
         "matched_words": matched_words,
-
         "missing_words": missing_words,
-
         "extra_words": extra_words,
-
-        "matched_count": len(
-            matched_words
-        ),
-
-        "missing_count": len(
-            missing_words
-        ),
-
-        "extra_count": len(
-            extra_words
-        ),
-
+        "matched_count": len(matched_words),
+        "missing_count": len(missing_words),
+        "extra_count": len(extra_words),
         # Constraint Results
 
         "matched_constraints":
-            constraint_result[
-                "matched_constraints"
-            ],
-
+    constraint_result["matched_constraints"],
         "missing_constraints":
-            constraint_result[
-                "missing_constraints"
-            ],
-
+            constraint_result["missing_constraints"],
         "matched_constraints_count":
-            constraint_result[
-                "matched_constraints_count"
-            ],
-
+            constraint_result["matched_constraints_count"],
         "missing_constraints_count":
-            constraint_result[
-                "missing_constraints_count"
-            ],
+            constraint_result["missing_constraints_count"],
 
         # Table
 
-        "comparison_table":
-            comparison_table
-
-    }
-
+        "comparison_table":comparison_table}
+    return result          

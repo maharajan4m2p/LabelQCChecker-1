@@ -147,9 +147,7 @@ def compare():
             "sample_file"
         ] = sample.filename
 
-        all_results.append(
-            result
-        )
+        all_results.append(result)
 
     return render_template(
         "results.html",
