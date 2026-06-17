@@ -1,8 +1,14 @@
+from pydoc import text
+
 import cv2
 import pytesseract
 import difflib
 import re
 import os
+pytesseract.pytesseract.tesseract_cmd = (
+    r"C:\Users\Maharajan\AppData\Local\Programs\Tesseract-OCR\tesseract.exe"
+)
+
 import pdfplumber
 import pandas as pd
 
@@ -15,10 +21,13 @@ from docx import Document
 
 def extract_text(file_path):
 
-    ext = os.path.splitext(file_path)[1].lower()
+    ext = os.path.splitext(
+        file_path
+    )[1].lower()
 
     try:
 
+        # TXT
         if ext == ".txt":
 
             with open(
@@ -30,6 +39,7 @@ def extract_text(file_path):
 
                 return f.read()
 
+        # CSV
         elif ext == ".csv":
 
             df = pd.read_csv(
@@ -38,8 +48,11 @@ def extract_text(file_path):
                 keep_default_na=False
             )
 
-            return df.to_string(index=False)
+            return df.to_string(
+                index=False
+            )
 
+        # XLS
         elif ext == ".xls":
 
             df = pd.read_excel(
@@ -48,8 +61,11 @@ def extract_text(file_path):
                 engine="xlrd"
             )
 
-            return df.to_string(index=False)
+            return df.to_string(
+                index=False
+            )
 
+        # XLSX
         elif ext == ".xlsx":
 
             df = pd.read_excel(
@@ -58,11 +74,16 @@ def extract_text(file_path):
                 engine="openpyxl"
             )
 
-            return df.to_string(index=False)
+            return df.to_string(
+                index=False
+            )
 
+        # DOCX
         elif ext == ".docx":
 
-            doc = Document(file_path)
+            doc = Document(
+                file_path
+            )
 
             text = []
 
@@ -74,25 +95,37 @@ def extract_text(file_path):
                         para.text.strip()
                     )
 
-            return "\n".join(text)
+            return "\n".join(
+                text
+            )
 
+        # PDF
         elif ext == ".pdf":
 
             text = ""
 
-            with pdfplumber.open(file_path) as pdf:
+            with pdfplumber.open(
+                file_path
+            ) as pdf:
 
                 for page in pdf.pages:
 
-                    page_text = page.extract_text()
+                    page_text = (
+                        page.extract_text()
+                    )
 
                     if page_text:
 
-                        text += page_text + "\n"
+                        text += (
+                            page_text
+                            + "\n"
+                        )
 
             return text
 
+        # IMAGE FILES
         elif ext in [
+
             ".png",
             ".jpg",
             ".jpeg",
@@ -101,9 +134,12 @@ def extract_text(file_path):
             ".tiff",
             ".webp",
             ".gif"
+
         ]:
 
-            image = cv2.imread(file_path)
+            image = cv2.imread(
+                file_path
+            )
 
             if image is None:
 
@@ -112,47 +148,39 @@ def extract_text(file_path):
             image = cv2.resize(
                 image,
                 None,
-                fx=1.2,
-                fy=1.2,
+                fx=2,
+                fy=2,
                 interpolation=cv2.INTER_CUBIC
             )
-
             gray = cv2.cvtColor(
                 image,
                 cv2.COLOR_BGR2GRAY
             )
 
-            gray = cv2.fastNlMeansDenoising(
+            gray = cv2.GaussianBlur(
                 gray,
-                None,
-                30,
-                7,
-                21
+                (3, 3),
+                0
             )
 
-            gray = cv2.adaptiveThreshold(
+            _, gray = cv2.threshold(
                 gray,
                 150,
                 255,
-                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                cv2.THRESH_BINARY,
-                31,
-                11
+                cv2.THRESH_BINARY
             )
 
-            text = pytesseract.image_to_string(
+        text = pytesseract.image_to_string(
                 gray,
                 lang="eng",
-                config="--oem 1 --psm 6"
+                config="--oem 3 --psm 6"
             )
 
-            return text
-
-        return ""
+        return text
 
     except Exception as e:
 
-        return f"ERROR: {str(e)}"
+     return f"ERROR: {str(e)}"
 
 
 # =========================
@@ -176,8 +204,6 @@ def clean_text(text):
     )
 
     return text.strip()
-
-
 # =========================
 # LOGO COMPARISON
 # =========================
@@ -188,6 +214,7 @@ def check_logo(
 ):
 
     image_extensions = [
+
         ".png",
         ".jpg",
         ".jpeg",
@@ -195,6 +222,7 @@ def check_logo(
         ".tif",
         ".tiff",
         ".webp"
+
     ]
 
     approval_ext = os.path.splitext(
@@ -229,7 +257,9 @@ def check_logo(
 
             return "LOGO NOT FOUND"
 
-        orb = cv2.ORB_create(500)
+        orb = cv2.ORB_create(
+            500
+        )
 
         kp1, des1 = orb.detectAndCompute(
             img1,
@@ -256,9 +286,13 @@ def check_logo(
         )
 
         good_matches = [
+
             m
+
             for m in matches
+
             if m.distance < 60
+
         ]
 
         denominator = max(
@@ -271,30 +305,155 @@ def check_logo(
             return "LOGO NOT DETECTED"
 
         similarity = round(
+
             (
                 len(good_matches)
                 /
                 denominator
             ) * 100,
+
             2
+
         )
 
         if similarity >= 40:
 
-            return f"MATCH ({similarity}%)"
+            return (
+                f"MATCH ({similarity}%)"
+            )
+
         else:
 
-            return f"MISMATCH ({similarity}%)"
+            return (
+                f"MISMATCH ({similarity}%)"
+            )
 
     except Exception as e:
 
-        return f"FAILED ({str(e)})"
-
+        return (
+            f"FAILED ({str(e)})"
+        )
+    
 
 # =========================
-# MAIN COMPARISON
+# CONSTRAINT CHECKING
 # =========================
 
+
+from difflib import SequenceMatcher
+import re
+
+def clean_text(text):
+    text = text.lower()
+
+    text = re.sub(
+        r'[^a-z0-9\s]',
+        ' ',
+        text
+    )
+
+    text = ' '.join(
+        text.split()
+    )
+
+    return text
+
+def fuzzy_exists(text, phrase):
+
+    words = text.split()
+
+    phrase_words = phrase.split()
+
+    size = len(phrase_words)
+
+    for i in range(len(words) - size + 1):
+
+        chunk = " ".join(
+            words[i:i+size]
+        )
+
+        score = SequenceMatcher(
+            None,
+            chunk,
+            phrase
+        ).ratio()
+
+        if score >= 0.70:
+            print("MATCH:",chunk,phrase,score)
+
+        if score >= 0.80:
+            return True
+        
+
+    return False
+def check_constraints(
+    approval_text,
+    sample_text
+):
+
+    approval_text = approval_text.lower()
+    sample_text = sample_text.lower()
+    
+    combined_text = clean_text(
+        approval_text+""+sample_text
+    )
+
+    print("COMBINED TEXT")
+    print(combined_text)
+
+    constraints = [
+
+        "f&f",
+        "up to 1m",
+        "56cm",
+        "22in",
+        "4.5kg",
+        "10lbs",
+        "41 5cm",
+        "5063637905105",
+        "UK EAN",
+        "CE EAN",
+        "100% "
+        "910-3758",
+        "made in bangladesh"
+
+    ]
+
+    matched_constraints = []
+    missing_constraints = []
+
+    for item in constraints:
+
+
+        item_clean = clean_text(item)
+
+        if item_clean in combined_text:
+            matched_constraints.append(item)
+            continue
+
+        if fuzzy_exists(combined_text,item_clean):
+            matched_constraints.append(item)
+        else:
+            missing_constraints.append(item)
+    return {
+
+        "matched_constraints":
+            matched_constraints,
+
+        "missing_constraints":
+            missing_constraints,
+
+        "matched_constraints_count":
+            len(
+                matched_constraints
+            ),
+
+        "missing_constraints_count":
+            len(
+                missing_constraints
+            )
+
+    }
 # =========================
 # MAIN COMPARISON
 # =========================
@@ -305,6 +464,7 @@ def compare_labels(
 ):
 
     # Extract Text
+
     approval_text = extract_text(
         approval_path
     )
@@ -314,6 +474,7 @@ def compare_labels(
     )
 
     # Clean Text
+
     approval_clean = clean_text(
         approval_text
     )
@@ -322,92 +483,193 @@ def compare_labels(
         sample_text
     )
 
-    # Similarity
+    # Similarity %
+
     similarity = round(
+
         difflib.SequenceMatcher(
+
             None,
+
             approval_clean,
+
             sample_clean
+
         ).ratio() * 100,
+
         2
+
     )
 
+    # Word Comparison
+
     approval_words = set(
-        approval_clean.split()
+
+        word
+
+        for word in approval_clean.split()
+
+        if len(word) > 1
+
     )
 
     sample_words = set(
-        sample_clean.split()
+
+        word
+
+        for word in sample_clean.split()
+
+        if len(word) > 1
+
     )
 
     matched_words = sorted(
+
         approval_words &
         sample_words
+
     )
 
     missing_words = sorted(
+
         approval_words -
         sample_words
+
     )
 
     extra_words = sorted(
+
         sample_words -
         approval_words
+
     )
+
+    # Logo Check
 
     logo_status = check_logo(
         approval_path,
         sample_path
     )
 
+    # Constraint Check
+
+    constraint_result = check_constraints(
+        approval_text,
+        sample_text
+    )
+
+    # Verdict
+
     if (
         similarity >= 80
-        and len(missing_words) <= 10
+        and
+        constraint_result[
+            "missing_constraints_count"
+        ] <= 2
     ):
+
         verdict = "APPROVED"
+
     else:
+
         verdict = "NOT APPROVED"
+
+    # Detailed Table
 
     comparison_table = []
 
     for word in matched_words:
+
         comparison_table.append({
+
             "type": "MATCHED",
+
             "value": word
+
         })
 
     for word in missing_words:
+
         comparison_table.append({
+
             "type": "MISSING",
+
             "value": word
+
         })
 
     for word in extra_words:
+
         comparison_table.append({
+
             "type": "EXTRA",
+
             "value": word
+
         })
 
     return {
 
+        # Result
+
         "verdict": verdict,
+
         "similarity": similarity,
+
         "logo_status": logo_status,
 
+        # OCR Text
+
         "approval_text": approval_text,
+
         "sample_text": sample_text,
 
+        # Word Comparison
+
         "matched_words": matched_words,
+
         "missing_words": missing_words,
+
         "extra_words": extra_words,
 
-        "matched_count": len(matched_words),
-        "missing_count": len(missing_words),
-        "extra_count": len(extra_words),
+        "matched_count": len(
+            matched_words
+        ),
 
-        "matched_data": matched_words,
-        "missing_data": missing_words,
-        "extra_data": extra_words,
+        "missing_count": len(
+            missing_words
+        ),
 
-        "comparison_table": comparison_table
+        "extra_count": len(
+            extra_words
+        ),
+
+        # Constraint Results
+
+        "matched_constraints":
+            constraint_result[
+                "matched_constraints"
+            ],
+
+        "missing_constraints":
+            constraint_result[
+                "missing_constraints"
+            ],
+
+        "matched_constraints_count":
+            constraint_result[
+                "matched_constraints_count"
+            ],
+
+        "missing_constraints_count":
+            constraint_result[
+                "missing_constraints_count"
+            ],
+
+        # Table
+
+        "comparison_table":
+            comparison_table
+
     }
+
