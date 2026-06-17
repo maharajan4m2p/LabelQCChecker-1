@@ -3,7 +3,7 @@
 A web app to compare garment labels using OCR.
 
 ## Live Demo
-https://labelqcchecker-t962.onrender.com
+(https://labelqcchecker-1.onrender.com/)
 
 ## What It Does
 - Upload Approval Label and Sample Label
