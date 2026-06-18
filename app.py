@@ -132,9 +132,6 @@ def compare():
 
         all_results.append(result)
 
-    print("TOTAL RESULTS:", len(all_results))
-    print(all_results)
-
 
     return render_template(
         "results.html",
@@ -143,9 +140,12 @@ def compare():
 
 
 
-if __name__ == "__main__":
+    if len(all_results) == 0 :
 
-    app.run(
-        host="0.0.0.0",
-        port=5000
-    )
+        return"No sample files uploded",400
+
+    return render_template(
+        "results.html",
+        all_results=all_results
+
+)
