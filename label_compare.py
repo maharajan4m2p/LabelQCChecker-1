@@ -448,23 +448,17 @@ def check_constraints(
             extra_constraints.append(word)
 
     return {
-        "matched_constraints": matched_constraints,
-        "missing_constraints": missing_constraints,
-        "extra_constraints": extra_constraints,
-        "matched_constraints_count":
-            len(matched_constraints),
-
-        "missing_constraints_count":
-            len(missing_constraints)
-    }
+    "matched_constraints": matched_constraints,
+    "missing_constraints": missing_constraints,
+    "extra_constraints": extra_constraints,
+    "matched_constraints_count": len(matched_constraints),
+    "missing_constraints_count": len(missing_constraints)
+}
 # =========================
 # MAIN COMPARISON
 # =========================
 
-def compare_labels(
-    approval_path,
-    sample_path
-):
+def compare_labels(approval_path,sample_path):
 
     # Extract Text
 
@@ -506,44 +500,25 @@ def compare_labels(
 
     # Word Comparison
 
-    approval_words = set(
+    approval_words = set(approval_clean.split())
 
-        word
-
-        for word in approval_clean.split()
-
-        if len(word) > 1
-
-    )
-
-    sample_words = set(
-
-        word
-
-        for word in sample_clean.split()
-
-        if len(word) > 1
-
-    )
+    sample_words = set(sample_clean.split())
 
     matched_words = sorted(
 
-        approval_words &
-        sample_words
+        approval_words & sample_words
 
     )
 
     missing_words = sorted(
 
-        approval_words -
-        sample_words
+        approval_words - sample_words
 
     )
 
     extra_words = sorted(
 
-        sample_words -
-        approval_words
+        sample_words - approval_words
 
     )
 
@@ -621,35 +596,37 @@ def compare_labels(
 
         })
 
-    result ={
-        "sample_file":os.path.basename(sample_path),
+    result = {
+    "similarity": similarity,
+    "logo_status": logo_status,
 
-        "verdict": verdict,
-        "similarity": constraint_score,
-        "logo_status": logo_status,
-        
-        "approval_text": approval_text,
-        "sample_text": sample_text,  
-        "matched_words": matched_words,
-        "missing_words": missing_words,
-        "extra_words": extra_words,
-        "matched_count": len(matched_words),
-        "missing_count": len(missing_words),
-        "extra_count": len(extra_words),
+    "matched_count": len(matched_words),
+    "missing_count": len(missing_words),
+    "extra_count": len(extra_words),
 
-        "matched_constraints":
+    "matched_words": matched_words,
+    "missing_words": missing_words,
+    "extra_words": extra_words,
 
-            constraint_result["matched_constraints"],
-        "missing_constraints":
-            constraint_result["missing_constraints"],
-        "extra_constraints":
+    "matched_constraints":
+        constraint_result["matched_constraints"],
 
-            constraint_result["extra_constraints"],
-        "matched_constraints_count":
-            constraint_result["matched_constraints_count"],
-        "missing_constraints_count":
-            constraint_result["missing_constraints_count"],
+    "missing_constraints":
+        constraint_result["missing_constraints"],
 
-        "comparison_table":comparison_table}
-    
-    return result          
+    "extra_constraints":
+        constraint_result["extra_constraints"],
+
+    "matched_constraints_count":
+        constraint_result["matched_constraints_count"],
+
+    "missing_constraints_count":
+        constraint_result["missing_constraints_count"],
+
+    "approval_text": approval_text,
+    "sample_text": sample_text,
+
+    "verdict": verdict
+}
+
+    return result
