@@ -193,7 +193,20 @@ Comparison Summary
 
 </table></div>{% for result in all_results %}
 
-<div class="card">{% if result.verdict == "APPROVED" %}
+{% for result in all_results %}
+
+<div class="card">
+
+<h2>📄 Sample: {{ result.sample_file }}</h2>
+
+<p><strong>Similarity:</strong> {{ result.similarity }}%</p>
+<p><strong>Matched:</strong> {{ result.matched_count }}</p>
+<p><strong>Missing:</strong> {{ result.missing_count }}</p>
+<p><strong>Extra:</strong> {{ result.extra_count }}</p>
+<p><strong>Matched Constraints:</strong> {{ result.matched_constraints_count }}</p>
+<p><strong>Missing Constraints:</strong> {{ result.missing_constraints_count }}</p>
+
+{% if result.verdict == "APPROVED" %}
 
 <div class="approved">
 ✅ APPROVED
@@ -273,18 +286,29 @@ Extra
 + {{ word }}
 </div>{% endfor %}
 
-</div><h2 class="section-title">
-📄 Approval OCR Text
-</h2><pre>{{ result.approval_text }}</pre><h2 class="section-title">
-📄 Sample OCR Text
-</h2><pre>{{ result.sample_text }}</pre></div>{% endfor %}
+</div>
+
+<br>
+
+<h3>📄 Approval OCR Text</h3>
+
+<pre>{{ result.approval_text }}</pre>
+
+<h3>📄 Sample OCR Text</h3>
+
+<pre>{{ result.sample_text }}</pre>
+
+</div>
+
+{% endfor %}
 
 {% endif %}
 
-<div style="text-align:center;"><a href="/" class="btn">🔄 Compare Another Label
+<div class="center">
+<a href="/" class="btn">
+🔄 Compare Another Label
+</a>
+</div>
 
-</a></div><div class="footer"><hr><p>🏷️ Made By
-
-<span class="author">Maharajan
-
-</span></p></div></body></html>
+</body>
+</html>

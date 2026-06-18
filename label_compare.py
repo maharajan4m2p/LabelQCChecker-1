@@ -622,22 +622,20 @@ def compare_labels(
         })
 
     result ={
-        # Result
-        "verdict": verdict,
+        "sample_file":os.path.basename(sample_path),
 
+        "verdict": verdict,
         "similarity": constraint_score,
         "logo_status": logo_status,
-        # OCR Text
+        
         "approval_text": approval_text,
-        "sample_text": sample_text,
-            # Word Comparison
+        "sample_text": sample_text,  
         "matched_words": matched_words,
         "missing_words": missing_words,
         "extra_words": extra_words,
         "matched_count": len(matched_words),
         "missing_count": len(missing_words),
         "extra_count": len(extra_words),
-        # Constraint Results
 
         "matched_constraints":
 
@@ -652,7 +650,6 @@ def compare_labels(
         "missing_constraints_count":
             constraint_result["missing_constraints_count"],
 
-        # Table
-
         "comparison_table":comparison_table}
+    
     return result          

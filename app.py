@@ -115,6 +115,7 @@ def compare():
     all_results = []
 
     for sample in samples:
+        print("Sample File.",sample.filename)
 
         if (
             sample.filename == ""
@@ -140,20 +141,22 @@ def compare():
             approval_path,
             sample_path
         )
+        print(result)
 
         result[
             "sample_file"
         ] = sample.filename
 
         all_results.append(result)
+        
+    return render_template(
+        "results.html",
+        all_results=all_results)
 
     print("TOTAL RESULTS:",len(all_results))
     print(all_results)
 
-    return render_template(
-        "results.html",
-        all_results=all_results
-    )
+
 
 
 if __name__ == "__main__":
