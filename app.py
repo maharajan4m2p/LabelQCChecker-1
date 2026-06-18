@@ -84,11 +84,11 @@ def home():
 def compare():
 
     approval = request.files.get(
-        "approval"
+        "approval_file"
     )
 
     samples = request.files.getlist(
-        "samples"
+        "samples_file"
     )
 
     if not approval:
@@ -146,6 +146,9 @@ def compare():
         ] = sample.filename
 
         all_results.append(result)
+
+    print("TOTAL RESULTS:",len(all_results))
+    print(all_results)
 
     return render_template(
         "results.html",
