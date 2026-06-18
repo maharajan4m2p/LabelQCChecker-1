@@ -389,23 +389,21 @@ def fuzzy_exists(text, phrase):
         
 
     return False
+
 def check_constraints(
     approval_text,
     sample_text
 ):
 
-    approval_text = approval_text.lower()
-    sample_text = sample_text.lower()
-    
-    combined_text = clean_text(
-        approval_text+" "+sample_text
+    approval_clean = clean_text(
+        approval_text
     )
 
-    print("COMBINED TEXT")
-    print(combined_text)
+    sample_clean = clean_text(
+        sample_text
+    )
 
     constraints = [
-
         "f&f",
         "up to 1m",
         "56cm",
@@ -416,40 +414,48 @@ def check_constraints(
         "5063637905105",
         "UK EAN",
         "CE EAN",
-        "100% "
+        "100%",
         "910-3758",
         "made in bangladesh"
-
     ]
 
     matched_constraints = []
     missing_constraints = []
+    extra_constraints = []
 
     for item in constraints:
 
-
         item_clean = clean_text(item)
 
-        if item_clean in combined_text:
-            matched_constraints.append(item)
-            continue
-
-        if fuzzy_exists(combined_text,item_clean):
+        if item_clean in sample_clean:
             matched_constraints.append(item)
         else:
             missing_constraints.append(item)
+
+    sample_words = set(sample_clean.split())
+
+    for word in sample_words:
+
+        found = False
+
+        for item in constraints:
+
+            if word in clean_text(item):
+                found = True
+                break
+
+        if not found and len(word) > 2:
+            extra_constraints.append(word)
+
     return {
-
-        "matched_constraints":matched_constraints,
-
-        "missing_constraints":missing_constraints,
-
+        "matched_constraints": matched_constraints,
+        "missing_constraints": missing_constraints,
+        "extra_constraints": extra_constraints,
         "matched_constraints_count":
             len(matched_constraints),
 
         "missing_constraints_count":
             len(missing_constraints)
-
     }
 # =========================
 # MAIN COMPARISON
@@ -555,15 +561,25 @@ def compare_labels(
         sample_text
     )
 
-    # Verdict
+    total_constraints = (
+        constraint_result["matched_constraints_count"]
+        +
+        constraint_result["missing_constraints_count"]
+    )
 
-    if (
-        similarity >= 80
-        and
-        constraint_result[
-            "missing_constraints_count"
-        ] <= 2
-    ):
+    constraint_score = round(
+        (   
+            constraint_result["matched_constraints_count"]
+            /
+            max(total_constraints, 1)
+        ) * 100,
+        2
+
+
+    )
+
+# Verdict
+    if constraint_result["missing_constraints_count"] == 0:
 
         verdict = "APPROVED"
 
@@ -608,7 +624,8 @@ def compare_labels(
     result ={
         # Result
         "verdict": verdict,
-        "similarity": similarity,
+
+        "similarity": constraint_score,
         "logo_status": logo_status,
         # OCR Text
         "approval_text": approval_text,
@@ -623,9 +640,13 @@ def compare_labels(
         # Constraint Results
 
         "matched_constraints":
-    constraint_result["matched_constraints"],
+
+            constraint_result["matched_constraints"],
         "missing_constraints":
             constraint_result["missing_constraints"],
+        "extra_constraints":
+
+            constraint_result["extra_constraints"],
         "matched_constraints_count":
             constraint_result["matched_constraints_count"],
         "missing_constraints_count":
