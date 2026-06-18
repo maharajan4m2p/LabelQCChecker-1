@@ -404,13 +404,16 @@ def check_constraints(
     )
 
     constraints = [
-        "f&f",
+        "F&F",
+        "UK",
+        "EUR",
+        "6-9M",
         "up to 1m",
         "56cm",
         "22in",
         "4.5kg",
         "10lbs",
-        "41 5cm",
+        "41.5cm",
         "5063637905105",
         "UK EAN",
         "CE EAN",

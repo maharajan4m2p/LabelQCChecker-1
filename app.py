@@ -6,9 +6,7 @@ from flask import (
     request
 )
 
-from werkzeug.utils import (
-    secure_filename
-)
+import werkzeug.utils
 
 from label_compare import (
     compare_labels
@@ -99,7 +97,7 @@ def compare():
             "Approval file missing"
         )
 
-    approval_name = secure_filename(
+    approval_name = werkzeug.utils.secure_filename(
         approval.filename
     )
 
@@ -123,7 +121,7 @@ def compare():
         ):
             continue
 
-        sample_name = secure_filename(
+        sample_name = werkzeug.utils.secure_filename(
             sample.filename
         )
 
