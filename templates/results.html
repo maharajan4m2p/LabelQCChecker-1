@@ -1,80 +1,97 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
-<head>
+<title>Label QC Dashboard</title><style>
 
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Label QC Results</title>
-
-<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
 
 body{
-    font-family:Arial,sans-serif;
-    background:#f4f6f9;
-    margin:0;
+    font-family:'Segoe UI',sans-serif;
+    background:#f1f5f9;
     padding:20px;
 }
 
-h1{
+.header{
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #1d4ed8
+    );
+    color:white;
     text-align:center;
-    color:#333;
+    padding:30px;
+    border-radius:15px;
+    margin-bottom:20px;
 }
 
+.header h1{
+    font-size:36px;
+}
+
+.header p{
+    margin-top:10px;
+    opacity:0.9;
+}
+
+.summary-card,
 .card{
     background:white;
+    border-radius:15px;
     padding:20px;
-    margin:20px auto;
-    max-width:1200px;
-    border-radius:10px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.1);
-}
-
-.summary-card{
-    background:white;
-    padding:20px;
-    margin:20px auto;
-    max-width:1200px;
-    border-radius:10px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.1);
-}
-
-.approved{
-    color:green;
-    font-size:24px;
-    font-weight:bold;
-}
-
-.rejected{
-    color:red;
-    font-size:24px;
-    font-weight:bold;
+    margin-bottom:20px;
+    box-shadow:0 5px 20px rgba(0,0,0,0.08);
 }
 
 .stats{
-    display:flex;
-    flex-wrap:wrap;
+    display:grid;
+    grid-template-columns:
+    repeat(auto-fit,minmax(180px,1fr));
     gap:15px;
     margin-top:20px;
 }
 
 .stat-box{
-    min-width:180px;
-    padding:12px;
-    border:1px solid #ddd;
-    border-radius:6px;
-    background:#fafafa;
+    background:#f8fafc;
+    padding:15px;
+    border-radius:10px;
+    border-left:5px solid #2563eb;
+}
+
+.stat-box strong{
+    font-size:22px;
+}
+
+.approved{
+    background:#dcfce7;
+    color:#166534;
+    padding:15px;
+    text-align:center;
+    border-radius:10px;
+    font-size:24px;
+    font-weight:bold;
+}
+
+.rejected{
+    background:#fee2e2;
+    color:#991b1b;
+    padding:15px;
+    text-align:center;
+    border-radius:10px;
+    font-size:24px;
+    font-weight:bold;
 }
 
 .word-box{
-    border:1px solid #ddd;
-    background:#fafafa;
+    background:#f8fafc;
+    border-radius:10px;
     padding:15px;
-    border-radius:8px;
     max-height:300px;
     overflow:auto;
+    border:1px solid #ddd;
 }
 
 .match{
@@ -95,11 +112,10 @@ h1{
 table{
     width:100%;
     border-collapse:collapse;
-    margin-top:20px;
 }
 
 th{
-    background:#007bff;
+    background:#2563eb;
     color:white;
 }
 
@@ -108,12 +124,15 @@ th,td{
     padding:10px;
 }
 
+tr:hover{
+    background:#eff6ff;
+}
+
 pre{
-    background:#f8f8f8;
+    background:#0f172a;
+    color:white;
     padding:15px;
-    border-radius:8px;
-    border:1px solid #ddd;
-    white-space:pre-wrap;
+    border-radius:10px;
     max-height:400px;
     overflow:auto;
 }
@@ -121,289 +140,151 @@ pre{
 .btn{
     display:inline-block;
     padding:12px 20px;
-    background:#007bff;
+    background:#2563eb;
     color:white;
     text-decoration:none;
-    border-radius:6px;
+    border-radius:8px;
+    font-weight:bold;
 }
 
-.center{
-    text-align:center;
-    margin-top:30px;
+.btn:hover{
+    background:#1d4ed8;
 }
 
 .footer{
     text-align:center;
-    margin-top:40px;
+    margin-top:30px;
 }
 
-</style>
+.author{
+    color:#2563eb;
+    font-size:22px;
+    font-weight:bold;
+}
 
-</head>
+.section-title{
+    margin-top:20px;
+    margin-bottom:10px;
+}
 
-<body>
+</style></head><body><div class="header"><h1>
+🏷️ Label QC Dashboard
+</h1><p>
+OCR Based Label Verification & Constraint Validation
+</p></div>{% if all_results %}
 
-<h1>🏷️ Label QC Comparison Results</h1>
-
-{% if all_results %}
-
-<div class="summary-card">
-
-<h2>Comparison Summary</h2>
-
-<table>
-
-<tr>
-<th>Sample File</th>
+<div class="summary-card"><h2>
+Comparison Summary
+</h2><table><tr>
 <th>Constraint Score</th>
-<th>Logo Status</th>
+<th>Logo</th>
 <th>Matched</th>
 <th>Missing</th>
 <th>Extra</th>
 <th>Verdict</th>
-</tr>
+</tr>{% for result in all_results %}
 
-{% for result in all_results %}
-
-<tr>
-
-<td>{{ result.sample_file }}</td>
-<td>{{ result.similarity }}%</td>
+<tr><td>{{ result.similarity }}%</td>
 <td>{{ result.logo_status }}</td>
 <td>{{ result.matched_count }}</td>
 <td>{{ result.missing_count }}</td>
 <td>{{ result.extra_count }}</td>
-<td>{{ result.verdict }}</td>
+<td>{{ result.verdict }}</td></tr>{% endfor %}
 
-</tr>
+</table></div>{% for result in all_results %}
 
-{% endfor %}
-
-</table>
-
-</div>
-
-{% for result in all_results %}
-
-<div class="card">
-
-<h2>📄 Sample File: {{ result.sample_file }}</h2>
-
-{% if result.verdict == "APPROVED" %}
+<div class="card">{% if result.verdict == "APPROVED" %}
 
 <div class="approved">
-✓ APPROVED
-</div>
-
-{% else %}
+✅ APPROVED
+</div>{% else %}
 
 <div class="rejected">
-✗ NOT APPROVED
-</div>
+❌ NOT APPROVED
+</div>{% endif %}
 
-{% endif %}
-
-<div class="stats">
-
-<div class="stat-box">
+<div class="stats"><div class="stat-box">
 Constraint Score
 <br>
 <strong>{{ result.similarity }}%</strong>
-</div>
-
-<div class="stat-box">
+</div><div class="stat-box">
 Logo Status
 <br>
 <strong>{{ result.logo_status }}</strong>
-</div>
-
-<div class="stat-box">
-Matched Data
+</div><div class="stat-box">
+Matched
 <br>
 <strong>{{ result.matched_count }}</strong>
-</div>
-
-<div class="stat-box">
-Missing Data
+</div><div class="stat-box">
+Missing
 <br>
 <strong>{{ result.missing_count }}</strong>
-</div>
-
-<div class="stat-box">
-Extra Data
+</div><div class="stat-box">
+Extra
 <br>
 <strong>{{ result.extra_count }}</strong>
-</div>
-
-</div>
-
-<hr>
-
-<h2>📋 Constraint Summary</h2>
-
-<h3 style="color:green;">
+</div></div><h2 class="section-title">
+📋 Constraint Summary
+</h2><h3 style="color:green;">
 ✅ Matched Constraints
-({{ result.matched_constraints_count }})
-</h3>
-
-<div class="word-box">
-
-{% if result.matched_constraints %}
-
-{% for item in result.matched_constraints %}
+</h3><div class="word-box">{% for item in result.matched_constraints %}
 
 <div class="match">
 ✓ {{ item }}
-</div>
+</div>{% endfor %}
 
-{% endfor %}
-
-{% else %}
-
-No matched constraints found.
-
-{% endif %}
-
-</div>
-
-<h3 style="color:red;">
+</div><h3 style="color:red;">
 ❌ Missing Constraints
-({{ result.missing_constraints_count }})
-</h3>
-
-<div class="word-box">
-
-{% if result.missing_constraints %}
-
-{% for item in result.missing_constraints %}
+</h3><div class="word-box">{% for item in result.missing_constraints %}
 
 <div class="missing">
 ✗ {{ item }}
-</div>
+</div>{% endfor %}
 
-{% endfor %}
-
-{% else %}
-
-No missing constraints found.
-
-{% endif %}
-
-</div>
-
-<h3 style="color:orange;">
+</div><h3 style="color:orange;">
 ➕ Extra Constraints
-</h3>
-
-<div class="word-box">
-
-{% if result.extra_constraints %}
-
-{% for item in result.extra_constraints %}
+</h3><div class="word-box">{% for item in result.extra_constraints %}
 
 <div class="extra">
 + {{ item }}
-</div>
+</div>{% endfor %}
 
-{% endfor %}
-
-{% else %}
-
-No extra constraints found.
-
-{% endif %}
-
-</div>
-
-<hr>
-
-<h2>✅ Matched Data</h2>
-
-<div class="word-box">
-
-{% for word in result.matched_words %}
+</div><h2 class="section-title">
+✅ Matched Data
+</h2><div class="word-box">{% for word in result.matched_words %}
 
 <div class="match">
 ✓ {{ word }}
-</div>
+</div>{% endfor %}
 
-{% endfor %}
-
-</div>
-
-<h2>❌ Missing Data</h2>
-
-<div class="word-box">
-
-{% for word in result.missing_words %}
+</div><h2 class="section-title">
+❌ Missing Data
+</h2><div class="word-box">{% for word in result.missing_words %}
 
 <div class="missing">
 ✗ {{ word }}
-</div>
+</div>{% endfor %}
 
-{% endfor %}
-
-</div>
-
-<h2>➕ Extra Data</h2>
-
-<div class="word-box">
-
-{% for word in result.extra_words %}
+</div><h2 class="section-title">
+➕ Extra Data
+</h2><div class="word-box">{% for word in result.extra_words %}
 
 <div class="extra">
 + {{ word }}
-</div>
+</div>{% endfor %}
 
-{% endfor %}
-
-</div>
-
-<hr>
-
-<h2>📄 Approval Extracted Text</h2>
-
-<pre>{{ result.approval_text }}</pre>
-
-<h2>📄 Sample Extracted Text</h2>
-
-<pre>{{ result.sample_text }}</pre>
-
-</div>
-
-{% endfor %}
-
-{% else %}
-
-<div class="card">
-
-<h3>No comparison results found.</h3>
-
-</div>
+</div><h2 class="section-title">
+📄 Approval OCR Text
+</h2><pre>{{ result.approval_text }}</pre><h2 class="section-title">
+📄 Sample OCR Text
+</h2><pre>{{ result.sample_text }}</pre></div>{% endfor %}
 
 {% endif %}
 
-<div class="center">
+<div style="text-align:center;"><a href="/" class="btn">🔄 Compare Another Label
 
-<a href="/" class="btn">
+</a></div><div class="footer"><hr><p>🏷️ Made By
 
-Compare Another File
+<span class="author">Maharajan
 
-</a>
-
-</div>
-
-<div class="footer">
-
-<hr>
-
-<p>
-
-Developed By <strong>Maharajan</strong>
-
-</p>
-
-</div>
-
-</body>
-</html>
+</span></p></div></body></html>

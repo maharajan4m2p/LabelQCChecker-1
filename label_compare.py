@@ -658,4 +658,5 @@ def compare_labels(
         # Table
 
         "comparison_table":comparison_table}
-    return result          
+    return result  
+            

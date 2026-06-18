@@ -1,46 +1,260 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
 
-<title>
-Label QC Checker
-</title>
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Label QC Checker</title>
 
 <style>
 
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
 body{
-font-family:Arial;
-background:#f4f6f9;
-padding:30px;
+
+    font-family:'Segoe UI',sans-serif;
+
+    background:linear-gradient(
+        135deg,
+        #0f172a,
+        #1e293b,
+        #334155
+    );
+
+    min-height:100vh;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    padding:30px;
 }
 
 .container{
-max-width:800px;
-margin:auto;
-background:white;
-padding:30px;
-border-radius:10px;
+
+    width:100%;
+    max-width:900px;
+
+    background:white;
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+    box-shadow:
+    0 15px 40px rgba(0,0,0,0.3);
 }
 
-h1{
-text-align:center;
+.header{
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #1d4ed8
+    );
+
+    color:white;
+
+    text-align:center;
+
+    padding:40px;
 }
 
-input{
-width:100%;
-padding:10px;
-margin-top:10px;
-margin-bottom:20px;
+.header h1{
+
+    font-size:42px;
+
+    margin-bottom:10px;
 }
 
-button{
-width:100%;
-padding:15px;
-background:#007bff;
-color:white;
-border:none;
-font-size:16px;
+.header p{
+
+    font-size:18px;
+
+    opacity:0.9;
+}
+
+.content{
+
+    padding:40px;
+}
+
+.section{
+
+    margin-bottom:30px;
+}
+
+.section h2{
+
+    color:#1e293b;
+
+    margin-bottom:15px;
+}
+
+.upload-box{
+
+    border:3px dashed #2563eb;
+
+    border-radius:15px;
+
+    padding:35px;
+
+    text-align:center;
+
+    background:#f8fafc;
+
+    transition:0.3s;
+}
+
+.upload-box:hover{
+
+    background:#eff6ff;
+}
+
+.upload-icon{
+
+    font-size:60px;
+
+    margin-bottom:15px;
+}
+
+.upload-box p{
+
+    color:#475569;
+
+    margin-bottom:15px;
+}
+
+input[type=file]{
+
+    width:100%;
+
+    padding:12px;
+
+    border:1px solid #cbd5e1;
+
+    border-radius:8px;
+
+    background:white;
+}
+
+.btn{
+
+    width:100%;
+
+    padding:16px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #1d4ed8
+    );
+
+    color:white;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:0.3s;
+}
+
+.btn:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:
+    0 10px 20px rgba(37,99,235,0.4);
+}
+
+.loader{
+
+    display:none;
+
+    text-align:center;
+
+    margin-top:20px;
+}
+
+.spinner{
+
+    width:45px;
+
+    height:45px;
+
+    border:5px solid #ddd;
+
+    border-top:5px solid #2563eb;
+
+    border-radius:50%;
+
+    margin:auto;
+
+    animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+
+    100%{
+        transform:rotate(360deg);
+    }
+}
+
+.footer{
+
+    background:#f8fafc;
+
+    text-align:center;
+
+    padding:25px;
+}
+
+.footer p{
+
+    color:#475569;
+
+    font-size:16px;
+}
+
+.author{
+
+    color:#2563eb;
+
+    font-weight:bold;
+
+    font-size:20px;
+
+    letter-spacing:1px;
+
+    text-shadow:
+        0 0 10px rgba(37,99,235,0.3);
+}
+
+@media(max-width:768px){
+
+    .header h1{
+
+        font-size:30px;
+    }
+
+    .content{
+
+        padding:20px;
+    }
 }
 
 </style>
@@ -51,50 +265,127 @@ font-size:16px;
 
 <div class="container">
 
+<div class="header">
+
 <h1>
-Label QC Checker
+🏷️ Label QC Checker
 </h1>
+
+<p>
+OCR Based Label Comparison & Constraint Validation System
+</p>
+
+</div>
+
+<div class="content">
 
 <form
 action="/compare"
 method="POST"
 enctype="multipart/form-data"
+onsubmit="showLoader()"
 >
 
-<label>
+<div class="section">
 
-Approval File
+<h2>
+📄 Approval Label
+</h2>
 
-</label>
+<div class="upload-box">
+
+<div class="upload-icon">
+📋
+</div>
+
+<p>
+Upload Approved Label
+</p>
 
 <input
 type="file"
-name="approval"
+name="approval_file"
 required
 >
 
-<label>
+</div>
 
-Sample Files
+</div>
 
-</label>
+<div class="section">
+
+<h2>
+📂 Sample Labels
+</h2>
+
+<div class="upload-box">
+
+<div class="upload-icon">
+📁
+</div>
+
+<p>
+Upload One or Multiple Sample Labels
+</p>
 
 <input
 type="file"
-name="samples"
+name="sample_files"
 multiple
 required
 >
 
-<button type="submit">
+</div>
 
-Compare Files
+</div>
 
+<button
+type="submit"
+class="btn"
+>
+🔍 Start Comparison
 </button>
+
+<div
+id="loader"
+class="loader"
+>
+
+<div class="spinner"></div>
+
+<p style="margin-top:10px;">
+Processing OCR & Comparing Labels...
+</p>
+
+</div>
 
 </form>
 
 </div>
+
+<div class="footer">
+
+<p>
+🏷️ Made By
+<span class="author">
+Maharajan
+</span>
+</p>
+
+</div>
+
+</div>
+
+<script>
+
+function showLoader(){
+
+    document
+    .getElementById("loader")
+    .style.display = "block";
+}
+
+</script>
 
 </body>
 
