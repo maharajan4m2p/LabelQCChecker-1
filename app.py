@@ -84,6 +84,8 @@ def home():
 def compare():
 
     print("FILES RECEIVED:",request.files)
+     
+    return str(request.files)
 
     approval = request.files.get(
         "approval_files"
