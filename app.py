@@ -77,29 +77,18 @@ def home():
     )
 
 
-@app.route(
-    "/compare",
-    methods=["POST"]
-)
+@app.route("/compare",methods=["POST"])
 def compare():
 
-    print("FILES RECEIVED:",request.files)
-     
-    return str(request.files)
+    approval = request.files.get("approval_file")
 
-    approval = request.files.get(
-        "approval_files"
-    )
-
-    samples = request.files.getlist(
-        "samples_files"
-    )
+    samples = request.files.getlist("samples_file")
 
     if not approval:
-
-        return (
-            "Approval file missing"
-        )
+        return ("Approval file missing")
+    
+    print("Approval:",approval.filename)
+    print("Samples:",len(samples))
 
     approval_name = werkzeug.utils.secure_filename(
         approval.filename
