@@ -107,33 +107,32 @@ def compare():
 
     all_results = []
 
-for sample in samples:
+    for sample in samples:
 
-    if sample.filename == "":
-        continue
+        if sample.filename == "":
+            continue
 
-    sample_name = werkzeug.utils.secure_filename(
-        sample.filename
-    )
+        sample_name = werkzeug.utils.secure_filename(
+            sample.filename
+        )
 
-    sample_path = os.path.join(
-        app.config["UPLOAD_FOLDER"],
-        sample_name
-    )
+        sample_path = os.path.join(
+            app.config["UPLOAD_FOLDER"],
+            sample_name
+        )
 
-    sample.save(sample_path)
+        sample.save(sample_path)
 
-    result = compare_labels(
-        approval_path,
-        sample_path
-    )
+        result = compare_labels(
+            approval_path,
+            sample_path
+        )
 
-    result["sample_file"] = sample.filename
+        result["sample_file"] = sample.filename
 
-    all_results.append(result)
+        all_results.append(result)
 
-
-    print("TOTAL RESULTS:",len(all_results))
+    print("TOTAL RESULTS:", len(all_results))
     print(all_results)
 
 
