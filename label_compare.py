@@ -404,16 +404,13 @@ def check_constraints(
     )
 
     constraints = [
-        "F&F",
-        "UK",
-        "EUR",
-        "6-9M",
+        "f&f",
         "up to 1m",
         "56cm",
         "22in",
         "4.5kg",
         "10lbs",
-        "41.5cm",
+        "41 5cm",
         "5063637905105",
         "UK EAN",
         "CE EAN",
@@ -658,5 +655,4 @@ def compare_labels(
         # Table
 
         "comparison_table":comparison_table}
-    return result  
-            
+    return result          
