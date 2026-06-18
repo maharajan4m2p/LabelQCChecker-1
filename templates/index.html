@@ -75,25 +75,27 @@ function showLoader(){
 <h1>🏷️ Label QC Checker</h1>
 
 <form
-action="/compare"
-method="POST"
-enctype="multipart/form-data"
-onsubmit="showLoader()"
+    action="/compare"
+    method="POST"
+    enctype="multipart/form-data"
+    onsubmit="showLoader()"
 >
 
 <div class="section">
 <h3>Approval Label</h3>
-<input type="file"
-       name="approval_files"
-       required>
+<input
+    type="file"
+    name="approval_file"
+    required>
 </div>
 
 <div class="section">
 <h3>Sample Labels</h3>
-<input type="file"
-       name="sample_files"
-       multiple
-       required>
+<input 
+    type="file"
+    name="sample_file"
+    multiple
+    required>
 </div>
 
 <button type="submit">

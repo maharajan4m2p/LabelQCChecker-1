@@ -83,12 +83,14 @@ def home():
 )
 def compare():
 
+    print("FILES RECEIVED:",request.files)
+
     approval = request.files.get(
-        "approval_file"
+        "approval_files"
     )
 
     samples = request.files.getlist(
-        "samples_file"
+        "samples_files"
     )
 
     if not approval:
