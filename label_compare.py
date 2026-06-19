@@ -332,60 +332,20 @@ def compare_labels(
 # Side By Side Comparison Rows
 # ===============================
 
-    approval_list = approval_text.split()
-    sample_list = sample_text.split()
-
-    comparison_rows = []
-
-    max_len = max(
-    len(approval_list),
-    len(sample_list)
-)
-
-    for i in range(max_len):
-
-        approval_word = (
-        approval_list[i]
-        if i < len(approval_list)
-        else ""
-    )
-
-    sample_word = (
-        sample_list[i]
-        if i < len(sample_list)
-        else ""
-    )
-
-    if approval_word == sample_word:
-
-        status = "matched"
-
-    elif approval_word and not sample_word:
-
-        status = "missing"
-
-    elif sample_word and not approval_word:
-
-        status = "extra"
-
-    else:
-
-        status = "different"
-
-    comparison_rows.append({
-
-        "approval": approval_word,
-
-        "sample": sample_word,
-
-        "status": status
-
-    })
+    approval_list = [
+        line.strip()
+        for line in approval_text.splitlines()
+        if line.strip()
+    ]
     
-    comparison_rows = []
-
-    approval_list = approval_clean.split()
-    sample_list = sample_clean.split()
+    sample_list = [
+        line.strip()
+        for line in sample_text.splitlines()
+        if line.strip()
+    ]
+    
+    modified_items =[]
+    comparison_rows =[]
 
     max_len = max(
     len(approval_list),
@@ -417,6 +377,11 @@ def compare_labels(
 
     else:
         status = "different"
+        
+        modified_items.append({
+            "approval":approval_word,
+            "sample":sample_word
+        })
 
     comparison_rows.append({
         "approval": approval_word,
@@ -466,6 +431,8 @@ def compare_labels(
 
         "extra_words":
         extra_words,
+        
+        "modified_items":modified_items,
 
         "matched_count":
         len(matched_words),
@@ -501,10 +468,13 @@ def compare_labels(
             "missing_constraints_count"
         ],
         
+        "modified_count":len(modified_items),
+        
+        "modified_items":modified_items,
+        
         "comparison_rows":comparison_rows,
 
-        "verdict":
-        verdict
+        "verdict":verdict
 
     }
 
