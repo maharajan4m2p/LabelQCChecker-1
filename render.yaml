@@ -1,7 +1,6 @@
 services:
   - type: web
-    name: labelqcchecker
-    runtime: docker
-    dockerfilePath: ./Dockerfile
-    plan: free
-    autoDeploy: true
+    name: label-qc
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py

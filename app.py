@@ -6,7 +6,7 @@ from flask import (
     request
 )
 
-import werkzeug.utils
+from werkzeug.utils import secure_filename
 
 from label_compare import (
     compare_labels
@@ -24,7 +24,6 @@ os.makedirs(
 app.config[
     "UPLOAD_FOLDER"
 ] = UPLOAD_FOLDER
-
 ALLOWED_EXTENSIONS = {
 
     "png",
@@ -45,10 +44,7 @@ ALLOWED_EXTENSIONS = {
     "csv",
 
     "txt"
-
 }
-
-
 def allowed_file(filename):
 
     return (
@@ -67,30 +63,39 @@ def allowed_file(filename):
         ALLOWED_EXTENSIONS
 
     )
-
-
 @app.route("/")
 def home():
 
     return render_template(
         "index.html"
     )
-
-
-@app.route("/compare",methods=["POST"])
+@app.route(
+    "/compare",
+    methods=["POST"]
+)
 def compare():
 
-    approval = request.files.get("approval_file")
+    approval = request.files.get(
+        "approval_file"
+    )
 
-    samples = request.files.getlist("samples_file")
-
+    samples = request.files.getlist(
+        "samples_file"
+    )
     if not approval:
-        return ("Approval file missing")
-    
-    print("Approval:",approval.filename)
-    print("Samples:",len(samples))
 
-    approval_name = werkzeug.utils.secure_filename(
+        return (
+            "Approval file missing",
+            400
+        )
+
+    if approval.filename == "":
+
+        return (
+            "Approval file missing",
+            400
+        )
+    approval_name = secure_filename(
         approval.filename
     )
 
@@ -104,48 +109,61 @@ def compare():
     approval.save(
         approval_path
     )
-
-    all_results = []
-
+    all_results=[]
     for sample in samples:
 
         if sample.filename == "":
-            continue
 
-        sample_name = werkzeug.utils.secure_filename(
+            continue
+        sample_name = secure_filename(
             sample.filename
         )
 
         sample_path = os.path.join(
-            app.config["UPLOAD_FOLDER"],
+            app.config[
+                "UPLOAD_FOLDER"
+            ],
             sample_name
         )
 
-        sample.save(sample_path)
-
+        sample.save(
+            sample_path
+        )
         result = compare_labels(
             approval_path,
             sample_path
         )
-
-        result["sample_file"] = sample.filename
-
-        all_results.append(result)
-
-
-    return render_template(
-        "results.html",
-        all_results=all_results
+        result[
+            "sample_file"
+        ] = sample.filename
+        all_results.append(
+            result
+        )
+        print(
+        "TOTAL RESULTS:",
+        len(all_results)
     )
 
+    print(
+        all_results
+    )
+    if len(all_results) == 0:
 
-
-    if len(all_results) == 0 :
-
-        return"No sample files uploded",400
-
+        return (
+            "No sample files uploaded",
+            400
+        )
     return render_template(
+
         "results.html",
+
         all_results=all_results
 
-)
+    )
+if __name__ == "__main__":
+
+    app.run(
+        
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000))
+    )

@@ -1,7 +1,19 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport"
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
 content="width=device-width, initial-scale=1.0">
 
-<title>Label QC Dashboard</title><style>
+<title>Label QC Dashboard</title>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
 
 *{
     margin:0;
@@ -34,11 +46,17 @@ body{
 
 .header p{
     margin-top:10px;
-    opacity:0.9;
 }
 
-.summary-card,
 .card{
+    background:white;
+    border-radius:15px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 5px 20px rgba(0,0,0,0.08);
+}
+
+.summary-card{
     background:white;
     border-radius:15px;
     padding:20px;
@@ -51,7 +69,7 @@ body{
     grid-template-columns:
     repeat(auto-fit,minmax(180px,1fr));
     gap:15px;
-    margin-top:20px;
+    margin-top:15px;
 }
 
 .stat-box{
@@ -69,9 +87,9 @@ body{
     background:#dcfce7;
     color:#166534;
     padding:15px;
-    text-align:center;
     border-radius:10px;
-    font-size:24px;
+    text-align:center;
+    font-size:22px;
     font-weight:bold;
 }
 
@@ -79,34 +97,31 @@ body{
     background:#fee2e2;
     color:#991b1b;
     padding:15px;
-    text-align:center;
     border-radius:10px;
-    font-size:24px;
+    text-align:center;
+    font-size:22px;
     font-weight:bold;
 }
 
 .word-box{
     background:#f8fafc;
+    border:1px solid #ddd;
     border-radius:10px;
     padding:15px;
     max-height:300px;
     overflow:auto;
-    border:1px solid #ddd;
 }
 
 .match{
     color:green;
-    margin-bottom:5px;
 }
 
 .missing{
     color:red;
-    margin-bottom:5px;
 }
 
 .extra{
     color:orange;
-    margin-bottom:5px;
 }
 
 table{
@@ -124,10 +139,6 @@ th,td{
     padding:10px;
 }
 
-tr:hover{
-    background:#eff6ff;
-}
-
 pre{
     background:#0f172a;
     color:white;
@@ -137,178 +148,366 @@ pre{
     overflow:auto;
 }
 
-.btn{
-    display:inline-block;
-    padding:12px 20px;
-    background:#2563eb;
-    color:white;
-    text-decoration:none;
-    border-radius:8px;
-    font-weight:bold;
-}
-
-.btn:hover{
-    background:#1d4ed8;
-}
-
-.footer{
-    text-align:center;
-    margin-top:30px;
-}
-
-.author{
-    color:#2563eb;
-    font-size:22px;
-    font-weight:bold;
-}
-
 .section-title{
     margin-top:20px;
     margin-bottom:10px;
 }
 
-</style></head><body><div class="header"><h1>
-🏷️ Label QC Dashboard
-</h1><p>
-OCR Based Label Verification & Constraint Validation
-</p></div>{% if all_results %}
+.btn{
+    display:inline-block;
+    background:#2563eb;
+    color:white;
+    padding:12px 20px;
+    border-radius:8px;
+    text-decoration:none;
+}
 
-<div class="summary-card"><h2>
-Comparison Summary
-</h2><table><tr>
-<th>Constraint Score</th>
+.center{
+    text-align:center;
+    margin-top:20px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+
+<h1>🏷️ Label QC Dashboard</h1>
+
+<p>
+OCR Based Label Verification & Constraint Validation
+</p>
+
+</div>
+{% if all_results %}
+
+<div class="summary-card">
+
+<h2>📊 Comparison Summary</h2>
+
+<br>
+
+<table>
+
+<tr>
+<th>Sample File</th>
+<th>Similarity</th>
 <th>Logo</th>
 <th>Matched</th>
 <th>Missing</th>
 <th>Extra</th>
 <th>Verdict</th>
-</tr>{% for result in all_results %}
+</tr>
 
-<tr><td>{{ result.similarity }}%</td>
+{% for result in all_results %}
+
+<tr>
+
+<td>{{ result.sample_file }}</td>
+
+<td>{{ result.similarity }}%</td>
+
 <td>{{ result.logo_status }}</td>
+
 <td>{{ result.matched_count }}</td>
+
 <td>{{ result.missing_count }}</td>
+
 <td>{{ result.extra_count }}</td>
-<td>{{ result.verdict }}</td></tr>{% endfor %}
 
-</table></div>{% for result in all_results %}
+<td>{{ result.verdict }}</td>
 
+</tr>
+
+{% endfor %}
+
+</table>
+
+<div>
 {% for result in all_results %}
 
 <div class="card">
 
-<h2>📄 Sample: {{ result.sample_file }}</h2>
+<h2>
+📄 Sample :
+{{ result.sample_file }}
+</h2>
 
-<p><strong>Similarity:</strong> {{ result.similarity }}%</p>
-<p><strong>Matched:</strong> {{ result.matched_count }}</p>
-<p><strong>Missing:</strong> {{ result.missing_count }}</p>
-<p><strong>Extra:</strong> {{ result.extra_count }}</p>
-<p><strong>Matched Constraints:</strong> {{ result.matched_constraints_count }}</p>
-<p><strong>Missing Constraints:</strong> {{ result.missing_constraints_count }}</p>
+<br>
 
 {% if result.verdict == "APPROVED" %}
 
 <div class="approved">
-✅ APPROVED
-</div>{% else %}
 
-<div class="rejected">
-❌ NOT APPROVED
-</div>{% endif %}
-
-<div class="stats"><div class="stat-box">
-Constraint Score
-<br>
-<strong>{{ result.similarity }}%</strong>
-</div><div class="stat-box">
-Logo Status
-<br>
-<strong>{{ result.logo_status }}</strong>
-</div><div class="stat-box">
-Matched
-<br>
-<strong>{{ result.matched_count }}</strong>
-</div><div class="stat-box">
-Missing
-<br>
-<strong>{{ result.missing_count }}</strong>
-</div><div class="stat-box">
-Extra
-<br>
-<strong>{{ result.extra_count }}</strong>
-</div></div><h2 class="section-title">
-📋 Constraint Summary
-</h2><h3 style="color:green;">
-✅ Matched Constraints
-</h3><div class="word-box">{% for item in result.matched_constraints %}
-
-<div class="match">
-✓ {{ item }}
-</div>{% endfor %}
-
-</div><h3 style="color:red;">
-❌ Missing Constraints
-</h3><div class="word-box">{% for item in result.missing_constraints %}
-
-<div class="missing">
-✗ {{ item }}
-</div>{% endfor %}
-
-</div><h3 style="color:orange;">
-➕ Extra Constraints
-</h3><div class="word-box">{% for item in result.extra_constraints %}
-
-<div class="extra">
-+ {{ item }}
-</div>{% endfor %}
-
-</div><h2 class="section-title">
-✅ Matched Data
-</h2><div class="word-box">{% for word in result.matched_words %}
-
-<div class="match">
-✓ {{ word }}
-</div>{% endfor %}
-
-</div><h2 class="section-title">
-❌ Missing Data
-</h2><div class="word-box">{% for word in result.missing_words %}
-
-<div class="missing">
-✗ {{ word }}
-</div>{% endfor %}
-
-</div><h2 class="section-title">
-➕ Extra Data
-</h2><div class="word-box">{% for word in result.extra_words %}
-
-<div class="extra">
-+ {{ word }}
-</div>{% endfor %}
+✅ LABEL APPROVED
 
 </div>
 
+{% else %}
+
+<div class="rejected">
+
+❌ LABEL NOT APPROVED
+
+</div>
+
+{% endif %}
+<div class="stats">
+
+<div class="stat-box">
+Similarity
 <br>
+<strong>{{ result.similarity }}%</strong>
+</div>
 
-<h3>📄 Approval OCR Text</h3>
+<div class="stat-box">
+Logo Status
+<br>
+<strong>{{ result.logo_status }}</strong>
+</div>
 
-<pre>{{ result.approval_text }}</pre>
+<div class="stat-box">
+Matched
+<br>
+<strong>{{ result.matched_count }}</strong>
+</div>
 
-<h3>📄 Sample OCR Text</h3>
+<div class="stat-box">
+Missing
+<br>
+<strong>{{ result.missing_count }}</strong>
+</div>
 
-<pre>{{ result.sample_text }}</pre>
+<div class="stat-box">
+Extra
+<br>
+<strong>{{ result.extra_count }}</strong>
+
+
+</div>
+
+<div class="stat-box">
+Matched Constraints
+<br>
+<strong>{{ result.matched_constraints_count }}</strong>
+</div>
+
+<div class="stat-box">
+Missing Constraints
+<br>
+<strong>{{ result.missing_constraints_count }}</strong>
+</div>
+
+</div>
+<h2 class="section-title">
+
+✅ Matched Constraints
+
+</h2>
+
+<div class="word-box">
+
+{% for item in result.matched_constraints %}
+
+<div class="match">
+
+✓ {{ item }}
+
+
+</div>
+
+{% endfor %}
+</div>
+<h2 class="section-title">
+
+❌ Missing Constraints
+
+</h2>
+
+<div class="word-box">
+
+{% for item in result.missing_constraints %}
+
+<div class="missing">
+
+✗ {{ item }}
 
 </div>
 
 {% endfor %}
 
-{% endif %}
+</div>
+<h2 class="section-title">
 
-<div class="center">
-<a href="/" class="btn">
-🔄 Compare Another Label
-</a>
+➕ Extra Constraints
+
+</h2>
+
+<div class="word-box">
+
+{% for item in result.extra_constraints %}
+
+<div class="extra">
+
++ {{ item }}
+
 </div>
 
+{% endfor %}
+
+</div>
+<h2 class="section-title">
+✅ Matched Data
+</h2>
+
+<div class="word-box">
+
+{% for word in result.matched_words %}
+
+<div class="match">
+
+✓ {{ word }}
+
+</div>
+
+{% endfor %}
+
+</div>
+
+
+<h2 class="section-title">
+❌ Missing Data
+</h2>
+
+<div class="word-box">
+
+{% for word in result.missing_words %}
+
+<div class="missing">
+
+✗ {{ word }}
+
+</div>
+
+{% endfor %}
+
+</div>
+
+
+<h2 class="section-title">
+➕ Extra Data
+</h2>
+
+<div class="word-box">
+
+{% for word in result.extra_words %}
+
+<div class="extra">
+
++ {{ word }}
+
+</div>
+
+{% endfor %}
+
+</div>
+<h2 class="section-title">
+✅ Matched Data
+</h2>
+
+<div class="word-box">
+
+{% for word in result.matched_words %}
+
+<div class="match">
+
+✓ {{ word }}
+
+</div>
+
+{% endfor %}
+
+</div>
+
+
+<h2 class="section-title">
+❌ Missing Data
+</h2>
+
+<div class="word-box">
+
+{% for word in result.missing_words %}
+
+<div class="missing">
+
+✗ {{ word }}
+
+</div>
+
+{% endfor %}
+
+</div>
+
+
+<h2 class="section-title">
+➕ Extra Data
+</h2>
+
+<div class="word-box">
+
+{% for word in result.extra_words %}
+
+<div class="extra">
+
++ {{ word }}
+
+</div>
+
+{% endfor %}
+
+</div>
+<h2 class="section-title">
+
+📄 Approval OCR Text
+
+</h2>
+
+<pre>
+
+{{ result.approval_text }}
+
+</pre>
+
+<h2 class="section-title">
+
+📄 Sample OCR Text
+
+</h2>
+
+<pre>
+
+{{ result.sample_text }}
+
+</pre>
+
+</div>
+
+{% endfor %}
+<div class="center">
+
+<a href="/" class="btn">
+
+🔄 Compare Another Label
+
+</a>
+
+</div>
+
+{% endif %}
+
 </body>
+
 </html>
