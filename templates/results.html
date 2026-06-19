@@ -5,8 +5,7 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Label QC Comparison Dashboard</title>
 
@@ -23,21 +22,17 @@ body{
     background:#f1f5f9;
     padding:20px;
 }
+
 .header{
     background:linear-gradient(
         135deg,
         #1e40af,
         #2563eb
     );
-
     color:white;
-
     text-align:center;
-
     padding:30px;
-
     border-radius:15px;
-
     margin-bottom:20px;
 }
 
@@ -47,171 +42,151 @@ body{
 
 .header p{
     margin-top:10px;
+    font-size:16px;
 }
+
 .card{
     background:white;
-
     border-radius:15px;
-
     padding:20px;
-
-    margin-bottom:20px;
-
-    box-shadow:
-    0 5px 20px rgba(0,0,0,0.08);
+    margin-bottom:25px;
+    box-shadow:0 5px 20px rgba(0,0,0,0.08);
 }
 
 .summary-card{
     background:white;
-
     border-radius:15px;
-
     padding:20px;
-
-    margin-bottom:20px;
-
-    box-shadow:
-    0 5px 20px rgba(0,0,0,0.08);
+    margin-bottom:25px;
+    box-shadow:0 5px 20px rgba(0,0,0,0.08);
 }
+
 .stats{
     display:grid;
-
     grid-template-columns:
     repeat(auto-fit,minmax(180px,1fr));
-
     gap:15px;
-
     margin-top:20px;
 }
 
 .stat-box{
-
     background:#f8fafc;
-
     border-left:5px solid #2563eb;
-
     padding:15px;
-
     border-radius:10px;
 }
 
 .stat-box strong{
-
     font-size:22px;
 }
+
 .approved{
-
     background:#dcfce7;
-
     color:#166534;
-
     padding:15px;
-
     border-radius:10px;
-
     text-align:center;
-
     font-size:22px;
-
     font-weight:bold;
 }
 
 .rejected{
-
     background:#fee2e2;
-
     color:#991b1b;
-
     padding:15px;
-
     border-radius:10px;
-
     text-align:center;
-
     font-size:22px;
-
     font-weight:bold;
 }
+
 .compare-table{
-
     width:100%;
-
     border-collapse:collapse;
-
     margin-top:20px;
 }
 
 .compare-table th{
-
-    background:#1e40af;
-
+    background:#1565c0;
     color:white;
-
     padding:12px;
+    text-align:center;
 }
 
 .compare-table td{
-
     border:1px solid #ddd;
-
     padding:12px;
-
     vertical-align:top;
 }
 
-.green{
-
-    background:#dcfce7;
-
-    color:#166534;
+.match{
+    background:#d4edda;
+    color:#155724;
+    font-weight:bold;
+    margin:2px;
+    padding:3px;
+    border-radius:4px;
 }
 
-.red{
-
-    background:#fee2e2;
-
-    color:#991b1b;
+.missing{
+    background:#f8d7da;
+    color:#721c24;
+    font-weight:bold;
+    margin:2px;
+    padding:3px;
+    border-radius:4px;
 }
 
-.yellow{
-
-    background:#fef3c7;
-
-    color:#92400e;
+.extra{
+    background:#fff3cd;
+    color:#856404;
+    font-weight:bold;
+    margin:2px;
+    padding:3px;
+    border-radius:4px;
 }
+
+.constraint-match{
+    background:#d1ecf1;
+    color:#0c5460;
+    font-weight:bold;
+    text-decoration:underline;
+    margin:2px;
+    padding:3px;
+    border-radius:4px;
+}
+
+.constraint-missing{
+    background:#f8d7da;
+    color:#721c24;
+    font-weight:bold;
+    text-decoration:underline;
+    margin:2px;
+    padding:3px;
+    border-radius:4px;
+}
+
 pre{
-
     background:#0f172a;
-
     color:white;
-
     padding:15px;
-
     border-radius:10px;
-
-    max-height:400px;
-
+    max-height:450px;
     overflow:auto;
+    white-space:pre-wrap;
 }
+
 .btn{
-
     display:inline-block;
-
     background:#2563eb;
-
     color:white;
-
     padding:12px 20px;
-
     border-radius:8px;
-
     text-decoration:none;
 }
 
 .center{
-
     text-align:center;
-
     margin-top:20px;
 }
 
@@ -230,16 +205,81 @@ pre{
     border-top:1px solid #ddd;
 }
 
+.section-title{
+    margin-top:25px;
+    margin-bottom:10px;
+    font-size:22px;
+}
+
+.matched-cell{
+    background:#ecfdf5;
+    width:33%;
+}
+
+.missing-cell{
+    background:#fef2f2;
+    width:33%;
+}
+
+.extra-cell{
+    background:#fffbeb;
+    width:33%;
+}
+
+.matched-item{
+    color:#15803d;
+    font-weight:600;
+    text-decoration:underline;
+    margin-bottom:4px;
+}
+
+.missing-item{
+    color:#dc2626;
+    font-weight:600;
+    text-decoration:underline;
+    margin-bottom:4px;
+}
+
+.extra-item{
+    color:#d97706;
+    font-weight:600;
+    text-decoration:underline;
+    margin-bottom:4px;
+}
+
+.compare-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:15px;
+}
+
+.compare-table th{
+    background:#1565c0;
+    color:white;
+    padding:12px;
+    text-align:center;
+}
+
+.compare-table td{
+    border:1px solid #ddd;
+    padding:10px;
+    vertical-align:top;
+}
+
+.compare-table tr:nth-child(even){
+    background:#fafafa;
+}
+
+
 </style>
 
 </head>
+
 <body>
 
 <div class="header">
 
-<h1>
-🏷️ Label QC Dashboard
-</h1>
+<h1>🏷️ Label QC Dashboard</h1>
 
 <p>
 OCR Based Label Verification & Constraint Validation
@@ -250,9 +290,7 @@ OCR Based Label Verification & Constraint Validation
 
 <div class="summary-card">
 
-<h2>
-📊 Comparison Summary
-</h2>
+<h2>📊 Comparison Summary</h2>
 
 <br>
 
@@ -260,18 +298,12 @@ OCR Based Label Verification & Constraint Validation
 
 <tr>
 
-<th>Sample</th>
-
+<th>Sample File</th>
 <th>Similarity</th>
-
-<th>Logo</th>
-
+<th>Logo Status</th>
 <th>Matched</th>
-
 <th>Missing</th>
-
 <th>Extra</th>
-
 <th>Verdict</th>
 
 </tr>
@@ -292,7 +324,23 @@ OCR Based Label Verification & Constraint Validation
 
 <td>{{ result.extra_count }}</td>
 
-<td>{{ result.verdict }}</td>
+<td>
+
+{% if result.verdict == "APPROVED" %}
+
+<span style="color:green;font-weight:bold;">
+✅ APPROVED
+</span>
+
+{% else %}
+
+<span style="color:red;font-weight:bold;">
+❌ NOT APPROVED
+</span>
+
+{% endif %}
+
+</td>
 
 </tr>
 
@@ -301,8 +349,8 @@ OCR Based Label Verification & Constraint Validation
 </table>
 
 </div>
-{% for result in all_results %}
 
+{% for result in all_results %}
 <div class="card">
 
 <h2>
@@ -325,6 +373,7 @@ OCR Based Label Verification & Constraint Validation
 </div>
 
 {% endif %}
+
 <div class="stats">
 
 <div class="stat-box">
@@ -334,25 +383,25 @@ Similarity
 </div>
 
 <div class="stat-box">
-Logo Status
+Logo
 <br>
 <strong>{{ result.logo_status }}</strong>
 </div>
 
 <div class="stat-box">
-Matched Data
+Matched
 <br>
 <strong>{{ result.matched_count }}</strong>
 </div>
 
 <div class="stat-box">
-Missing Data
+Missing
 <br>
 <strong>{{ result.missing_count }}</strong>
 </div>
 
 <div class="stat-box">
-Extra Data
+Extra
 <br>
 <strong>{{ result.extra_count }}</strong>
 </div>
@@ -370,8 +419,11 @@ Missing Constraints
 </div>
 
 </div>
-<h2 style="margin-top:25px;">
-📋 Constraint Comparison
+
+<br>
+
+<h2>
+📋 Constraint Validation
 </h2>
 
 <table class="compare-table">
@@ -383,18 +435,26 @@ Missing Constraints
 
 <tr>
 
-<td class="green">
+<td class="matched-cell">
 
 {% for item in result.matched_constraints %}
-✓ {{ item }}<br>
+
+<div class="matched-item">
+✓ {{ item }}
+</div>
+
 {% endfor %}
 
 </td>
 
-<td class="red">
+<td class="missing-cell">
 
 {% for item in result.missing_constraints %}
-✗ {{ item }}<br>
+
+<div class="missing-item">
+✗ {{ item }}
+</div>
+
 {% endfor %}
 
 </td>
@@ -402,40 +462,57 @@ Missing Constraints
 </tr>
 
 </table>
-<h2 style="margin-top:25px;">
+
+<br>
+
+<h2>
 📊 Label Data Comparison
 </h2>
 
 <table class="compare-table">
 
 <tr>
+
 <th>Matched Data</th>
 <th>Missing Data</th>
 <th>Extra Data</th>
+
 </tr>
 
 <tr>
 
-<td class="green">
+<td class="matched-cell">
 
 {% for word in result.matched_words %}
-{{ word }}<br>
+
+<div class="matched-item">
+{{ word }}
+</div>
+
 {% endfor %}
 
 </td>
 
-<td class="red">
+<td class="missing-cell">
 
 {% for word in result.missing_words %}
-{{ word }}<br>
+
+<div class="missing-item">
+{{ word }}
+</div>
+
 {% endfor %}
 
 </td>
 
-<td class="yellow">
+<td class="extra-cell">
 
 {% for word in result.extra_words %}
-{{ word }}<br>
+
+<div class="extra-item">
+{{ word }}
+</div>
+
 {% endfor %}
 
 </td>
@@ -443,15 +520,63 @@ Missing Constraints
 </tr>
 
 </table>
-<h2 style="margin-top:25px;">
+.<h2 class="section-title">
+📑 Approval vs Sample Label
+</h2>
+
+<table class="compare-table">
+
+<tr>
+<th width="50%">Approval Label</th>
+<th width="50%">Sample Label</th>
+</tr>
+
+<tr>
+
+<td>
+
+{% for word in result.matched_words %}
+<div class="matched-item">
+✓ {{ word }}
+</div>
+{% endfor %}
+
+{% for word in result.missing_words %}
+<div class="missing-item">
+✗ {{ word }}
+</div>
+{% endfor %}
+
+</td>
+
+<td>
+
+{% for word in result.matched_words %}
+<div class="matched-item">
+✓ {{ word }}
+</div>
+{% endfor %}
+
+{% for word in result.extra_words %}
+<div class="extra-item">
++ {{ word }}
+</div>
+{% endfor %}
+
+</td>
+
+</tr>
+
+</table>
+<h2 class="section-title">
 📄 OCR Text Comparison
 </h2>
 
 <table class="compare-table">
 
 <tr>
-<th>Approval Label OCR</th>
-<th>Sample Label OCR</th>
+<th>Approval OCR</th>
+<th>Sample OCR</th>
 </tr>
 
 <tr>
@@ -467,28 +592,10 @@ Missing Constraints
 </tr>
 
 </table>
-
-</div>
-
-{% endfor %}
-<div class="center">
-
-<a href="/" class="btn">
-
-🔄 Compare Another Label
-
-</a>
-
-</div>
-
-{% endif %}
-
 <div class="footer">
 
-© 2026 Label QC Checker | Developed by <strong>MAHARAJAN</strong>
+© 2026 Label QC Checker
+<br>
+Developed by <strong>MAHARAJAN</strong>
 
 </div>
-
-</body>
-
-</html>
