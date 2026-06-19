@@ -150,22 +150,70 @@ def clean_text(text):
     )
 
     return text.strip()
-CONSTRAINTS = [
-    "up to 1m",
-    "56cm",
-    "22in",
-    "4.5kg",
-    "10lbs",
-    "41.5cm",
-    "5063637905105",
-    "uk ean",
-    "ce ean",
-    "100%",
-    "910-3758",
-    "polyester",
-    "100%",
-    "recycled"
-]
+
+def extract_constraints(text):
+
+    constraints = []
+
+    for line in text.splitlines():
+
+        line = line.strip()
+
+        if not line:
+            continue
+        
+        if (not re.search(r'[0-9%]',line)
+        and not any(
+            word in line.lower()
+            for word in [
+                "wash",
+                "iron",
+                "bleach",
+                "fire",
+                "dry",
+                "made in"
+            ]    
+        )
+        ):
+            continue
+    
+        
+        score = 0
+
+        # numbers are important
+        if any(ch.isdigit() for ch in line):
+            score += 2
+
+        # percentages
+        if "%" in line:
+            score += 2
+
+        # measurements
+        if any(unit in line.lower() for unit in [
+            "cm", "mm", "kg", "g",
+            "lbs", "lb", "oz", "in"
+        ]):
+            score += 2
+
+        # warning / care text
+        if any(word in line.lower() for word in [
+            "wash",
+            "iron",
+            "bleach",
+            "fire",
+            "dry",
+            "made in"
+        ]):
+            score += 2
+
+        # product code style
+        if "-" in line:
+            score += 1
+
+        if score >= 2 and len(line)>3 and len(line)<80:
+            constraints.append(line)
+
+    return list(set(constraints))
 
 
 def check_logo(approval_path, sample_path):
@@ -231,28 +279,32 @@ def check_logo(approval_path, sample_path):
 
     except Exception as e:
         return f"FAILED ({str(e)})"
-
-
+    
 def check_constraints(
     approval_text,
     sample_text
 ):
 
-    sample_clean = clean_text(
-        sample_text
+    approval_constraints = extract_constraints(
+        approval_text
     )
+    
+    print("AUTO CONSTRAINTS:",approval_constraints)
+
+    sample_text_lower = sample_text.lower()
 
     matched_constraints = []
     missing_constraints = []
-    extra_constraints = []
+    
 
-    for item in CONSTRAINTS:
+    for item in approval_constraints:
 
-        item_clean = clean_text(item)
-
-        if item_clean in sample_clean:
+        if item.lower() in sample_text_lower:
+        
             matched_constraints.append(item)
+
         else:
+
             missing_constraints.append(item)
 
     return {
@@ -263,8 +315,7 @@ def check_constraints(
         "missing_constraints":
         missing_constraints,
 
-        "extra_constraints":
-        extra_constraints,
+        "extra_constraints": [],
 
         "matched_constraints_count":
         len(matched_constraints),
@@ -273,7 +324,6 @@ def check_constraints(
         len(missing_constraints)
 
     }
-
 
 def compare_labels(
     approval_path,
@@ -358,7 +408,7 @@ def compare_labels(
         approval_list[i]
         if i < len(approval_list)
         else ""
-        )
+    )
 
     sample_word = (
         sample_list[i]
@@ -377,10 +427,10 @@ def compare_labels(
 
     else:
         status = "different"
-        
+
         modified_items.append({
-            "approval":approval_word,
-            "sample":sample_word
+            "approval": approval_word,
+            "sample": sample_word
         })
 
     comparison_rows.append({
