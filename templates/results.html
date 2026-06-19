@@ -8,10 +8,7 @@
 <meta name="viewport"
 content="width=device-width, initial-scale=1.0">
 
-<title>Label QC Dashboard</title>
-
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<title>Label QC Comparison Dashboard</title>
 
 <style>
 
@@ -26,156 +23,223 @@ body{
     background:#f1f5f9;
     padding:20px;
 }
-
 .header{
     background:linear-gradient(
         135deg,
-        #2563eb,
-        #1d4ed8
+        #1e40af,
+        #2563eb
     );
+
     color:white;
+
     text-align:center;
+
     padding:30px;
+
     border-radius:15px;
+
     margin-bottom:20px;
 }
 
 .header h1{
-    font-size:36px;
+    font-size:38px;
 }
 
 .header p{
     margin-top:10px;
 }
-
 .card{
     background:white;
+
     border-radius:15px;
+
     padding:20px;
+
     margin-bottom:20px;
-    box-shadow:0 5px 20px rgba(0,0,0,0.08);
+
+    box-shadow:
+    0 5px 20px rgba(0,0,0,0.08);
 }
 
 .summary-card{
     background:white;
-    border-radius:15px;
-    padding:20px;
-    margin-bottom:20px;
-    box-shadow:0 5px 20px rgba(0,0,0,0.08);
-}
 
+    border-radius:15px;
+
+    padding:20px;
+
+    margin-bottom:20px;
+
+    box-shadow:
+    0 5px 20px rgba(0,0,0,0.08);
+}
 .stats{
     display:grid;
+
     grid-template-columns:
     repeat(auto-fit,minmax(180px,1fr));
+
     gap:15px;
-    margin-top:15px;
+
+    margin-top:20px;
 }
 
 .stat-box{
+
     background:#f8fafc;
-    padding:15px;
-    border-radius:10px;
+
     border-left:5px solid #2563eb;
+
+    padding:15px;
+
+    border-radius:10px;
 }
 
 .stat-box strong{
+
     font-size:22px;
 }
-
 .approved{
+
     background:#dcfce7;
+
     color:#166534;
+
     padding:15px;
+
     border-radius:10px;
+
     text-align:center;
+
     font-size:22px;
+
     font-weight:bold;
 }
 
 .rejected{
+
     background:#fee2e2;
+
     color:#991b1b;
+
     padding:15px;
+
     border-radius:10px;
+
     text-align:center;
+
     font-size:22px;
+
     font-weight:bold;
 }
+.compare-table{
 
-.word-box{
-    background:#f8fafc;
-    border:1px solid #ddd;
-    border-radius:10px;
-    padding:15px;
-    max-height:300px;
-    overflow:auto;
-}
-
-.match{
-    color:green;
-}
-
-.missing{
-    color:red;
-}
-
-.extra{
-    color:orange;
-}
-
-table{
     width:100%;
+
     border-collapse:collapse;
+
+    margin-top:20px;
 }
 
-th{
-    background:#2563eb;
+.compare-table th{
+
+    background:#1e40af;
+
     color:white;
+
+    padding:12px;
 }
 
-th,td{
+.compare-table td{
+
     border:1px solid #ddd;
-    padding:10px;
+
+    padding:12px;
+
+    vertical-align:top;
 }
 
+.green{
+
+    background:#dcfce7;
+
+    color:#166534;
+}
+
+.red{
+
+    background:#fee2e2;
+
+    color:#991b1b;
+}
+
+.yellow{
+
+    background:#fef3c7;
+
+    color:#92400e;
+}
 pre{
+
     background:#0f172a;
+
     color:white;
+
     padding:15px;
+
     border-radius:10px;
+
     max-height:400px;
+
     overflow:auto;
 }
-
-.section-title{
-    margin-top:20px;
-    margin-bottom:10px;
-}
-
 .btn{
+
     display:inline-block;
+
     background:#2563eb;
+
     color:white;
+
     padding:12px 20px;
+
     border-radius:8px;
+
     text-decoration:none;
 }
 
 .center{
+
     text-align:center;
+
     margin-top:20px;
+}
+
+.footer{
+
+    text-align:center;
+
+    margin-top:50px;
+
+    padding:20px;
+
+    color:#666;
+
+    font-size:16px;
+
+    border-top:1px solid #ddd;
 }
 
 </style>
 
 </head>
-
 <body>
 
 <div class="header">
 
-<h1>🏷️ Label QC Dashboard</h1>
+<h1>
+🏷️ Label QC Dashboard
+</h1>
 
 <p>
 OCR Based Label Verification & Constraint Validation
@@ -186,20 +250,30 @@ OCR Based Label Verification & Constraint Validation
 
 <div class="summary-card">
 
-<h2>📊 Comparison Summary</h2>
+<h2>
+📊 Comparison Summary
+</h2>
 
 <br>
 
-<table>
+<table class="compare-table">
 
 <tr>
-<th>Sample File</th>
+
+<th>Sample</th>
+
 <th>Similarity</th>
+
 <th>Logo</th>
+
 <th>Matched</th>
+
 <th>Missing</th>
+
 <th>Extra</th>
+
 <th>Verdict</th>
+
 </tr>
 
 {% for result in all_results %}
@@ -222,17 +296,15 @@ OCR Based Label Verification & Constraint Validation
 
 </tr>
 
-{% endfor %}
-
 </table>
 
-<div>
+</div>
 {% for result in all_results %}
 
 <div class="card">
 
 <h2>
-📄 Sample :
+📄 Sample Label :
 {{ result.sample_file }}
 </h2>
 
@@ -241,17 +313,13 @@ OCR Based Label Verification & Constraint Validation
 {% if result.verdict == "APPROVED" %}
 
 <div class="approved">
-
 ✅ LABEL APPROVED
-
 </div>
 
 {% else %}
 
 <div class="rejected">
-
 ❌ LABEL NOT APPROVED
-
 </div>
 
 {% endif %}
@@ -270,23 +338,21 @@ Logo Status
 </div>
 
 <div class="stat-box">
-Matched
+Matched Data
 <br>
 <strong>{{ result.matched_count }}</strong>
 </div>
 
 <div class="stat-box">
-Missing
+Missing Data
 <br>
 <strong>{{ result.missing_count }}</strong>
 </div>
 
 <div class="stat-box">
-Extra
+Extra Data
 <br>
 <strong>{{ result.extra_count }}</strong>
-
-
 </div>
 
 <div class="stat-box">
@@ -302,196 +368,103 @@ Missing Constraints
 </div>
 
 </div>
-<h2 class="section-title">
-
-✅ Matched Constraints
-
+<h2 style="margin-top:25px;">
+📋 Constraint Comparison
 </h2>
 
-<div class="word-box">
+<table class="compare-table">
+
+<tr>
+<th>Matched Constraints</th>
+<th>Missing Constraints</th>
+</tr>
+
+<tr>
+
+<td class="green">
 
 {% for item in result.matched_constraints %}
-
-<div class="match">
-
-✓ {{ item }}
-
-
-</div>
-
+✓ {{ item }}<br>
 {% endfor %}
-</div>
-<h2 class="section-title">
 
-❌ Missing Constraints
+</td>
 
-</h2>
-
-<div class="word-box">
+<td class="red">
 
 {% for item in result.missing_constraints %}
-
-<div class="missing">
-
-✗ {{ item }}
-
-</div>
-
+✗ {{ item }}<br>
 {% endfor %}
 
-</div>
-<h2 class="section-title">
+</td>
 
-➕ Extra Constraints
+</tr>
 
+</table>
+<h2 style="margin-top:25px;">
+📊 Label Data Comparison
 </h2>
 
-<div class="word-box">
+<table class="compare-table">
 
-{% for item in result.extra_constraints %}
+<tr>
+<th>Matched Data</th>
+<th>Missing Data</th>
+<th>Extra Data</th>
+</tr>
 
-<div class="extra">
+<tr>
 
-+ {{ item }}
-
-</div>
-
-{% endfor %}
-
-</div>
-<h2 class="section-title">
-✅ Matched Data
-</h2>
-
-<div class="word-box">
+<td class="green">
 
 {% for word in result.matched_words %}
-
-<div class="match">
-
-✓ {{ word }}
-
-</div>
-
+{{ word }}<br>
 {% endfor %}
 
-</div>
+</td>
 
-
-<h2 class="section-title">
-❌ Missing Data
-</h2>
-
-<div class="word-box">
+<td class="red">
 
 {% for word in result.missing_words %}
-
-<div class="missing">
-
-✗ {{ word }}
-
-</div>
-
+{{ word }}<br>
 {% endfor %}
 
-</div>
+</td>
 
-
-<h2 class="section-title">
-➕ Extra Data
-</h2>
-
-<div class="word-box">
+<td class="yellow">
 
 {% for word in result.extra_words %}
-
-<div class="extra">
-
-+ {{ word }}
-
-</div>
-
+{{ word }}<br>
 {% endfor %}
 
-</div>
-<h2 class="section-title">
-✅ Matched Data
+</td>
+
+</tr>
+
+</table>
+<h2 style="margin-top:25px;">
+📄 OCR Text Comparison
 </h2>
 
-<div class="word-box">
+<table class="compare-table">
 
-{% for word in result.matched_words %}
+<tr>
+<th>Approval Label OCR</th>
+<th>Sample Label OCR</th>
+</tr>
 
-<div class="match">
+<tr>
 
-✓ {{ word }}
+<td>
+<pre>{{ result.approval_text }}</pre>
+</td>
 
-</div>
+<td>
+<pre>{{ result.sample_text }}</pre>
+</td>
 
-{% endfor %}
+</tr>
 
-</div>
-
-
-<h2 class="section-title">
-❌ Missing Data
-</h2>
-
-<div class="word-box">
-
-{% for word in result.missing_words %}
-
-<div class="missing">
-
-✗ {{ word }}
-
-</div>
-
-{% endfor %}
-
-</div>
-
-
-<h2 class="section-title">
-➕ Extra Data
-</h2>
-
-<div class="word-box">
-
-{% for word in result.extra_words %}
-
-<div class="extra">
-
-+ {{ word }}
-
-</div>
-
-{% endfor %}
-
-</div>
-<h2 class="section-title">
-
-📄 Approval OCR Text
-
-</h2>
-
-<pre>
-
-{{ result.approval_text }}
-
-</pre>
-
-<h2 class="section-title">
-
-📄 Sample OCR Text
-
-</h2>
-
-<pre>
-
-{{ result.sample_text }}
-
-</pre>
+</table>
 
 </div>
 
@@ -509,17 +482,10 @@ Missing Constraints
 {% endif %}
 
 <div class="footer">
-    © 2026 Label QC Checker | Developed by MAHARAJAN
-</div>
 
-.footer {
-    text-align: center;
-    margin-top: 50px;
-    padding: 20px;
-    color: #666;
-    font-size: 16px;
-    border-top: 1px solid #ddd;
-}
+© 2026 Label QC Checker | Developed by <strong>MAHARAJAN</strong>
+
+</div>
 
 </body>
 
