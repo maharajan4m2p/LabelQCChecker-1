@@ -519,58 +519,62 @@ Missing Constraints
 
 </tr>
 
-</table>
-.<h2 class="section-title">
-📑 Approval vs Sample Label
+<h2 class="section-title">
+    Complete Label Comparison
 </h2>
 
 <table class="compare-table">
 
 <tr>
-<th width="50%">Approval Label</th>
-<th width="50%">Sample Label</th>
+    <th width="50%">Approval Label</th>
+    <th width="50%">Sample Label</th>
 </tr>
+
+{% for row in result.comparison_rows %}
 
 <tr>
 
 <td>
 
-{% for word in result.matched_words %}
-<div class="matched-item">
-✓ {{ word }}
-</div>
-{% endfor %}
+{% if row.status == "matched" %}
+<span class="matched-item">
+✓ {{ row.approval }}
+</span>
 
-{% for word in result.missing_words %}
-<div class="missing-item">
-✗ {{ word }}
-</div>
-{% endfor %}
+{% elif row.status == "missing" %}
+<span class="missing-item">
+✗ {{ row.approval }}
+</span>
+
+{% else %}
+{{ row.approval }}
+{% endif %}
 
 </td>
 
 <td>
 
-{% for word in result.matched_words %}
-<div class="matched-item">
-✓ {{ word }}
-</div>
-{% endfor %}
+{% if row.status == "matched" %}
+<span class="matched-item">
+✓ {{ row.sample }}
+</span>
 
-{% for word in result.extra_words %}
-<div class="extra-item">
-+ {{ word }}
-</div>
-{% endfor %}
+{% elif row.status == "extra" %}
+<span class="extra-item">
++ {{ row.sample }}
+</span>
+
+{% else %}
+{{ row.sample }}
+{% endif %}
 
 </td>
 
 </tr>
 
+{% endfor %}
+
 </table>
-<h2 class="section-title">
-📄 OCR Text Comparison
-</h2>
 
 <table class="compare-table">
 
@@ -592,10 +596,24 @@ Missing Constraints
 </tr>
 
 </table>
-<div class="footer">
-
-© 2026 Label QC Checker
-<br>
-Developed by <strong>MAHARAJAN</strong>
 
 </div>
+
+{% endfor %}
+
+<div class="center">
+    <a href="/" class="btn">
+        🔄 Compare Another Label
+    </a>
+</div>
+
+{% endif %}
+
+<div class="footer">
+    © 2026 Label QC Checker
+    <br>
+    Developed by <strong>MAHARAJAN</strong>
+</div>
+
+</body>
+</html>

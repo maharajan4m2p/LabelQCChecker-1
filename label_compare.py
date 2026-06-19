@@ -328,6 +328,102 @@ def compare_labels(
         approval_words
     )
 
+# ===============================
+# Side By Side Comparison Rows
+# ===============================
+
+    approval_list = approval_text.split()
+    sample_list = sample_text.split()
+
+    comparison_rows = []
+
+    max_len = max(
+    len(approval_list),
+    len(sample_list)
+)
+
+    for i in range(max_len):
+
+        approval_word = (
+        approval_list[i]
+        if i < len(approval_list)
+        else ""
+    )
+
+    sample_word = (
+        sample_list[i]
+        if i < len(sample_list)
+        else ""
+    )
+
+    if approval_word == sample_word:
+
+        status = "matched"
+
+    elif approval_word and not sample_word:
+
+        status = "missing"
+
+    elif sample_word and not approval_word:
+
+        status = "extra"
+
+    else:
+
+        status = "different"
+
+    comparison_rows.append({
+
+        "approval": approval_word,
+
+        "sample": sample_word,
+
+        "status": status
+
+    })
+    
+    comparison_rows = []
+
+    approval_list = approval_clean.split()
+    sample_list = sample_clean.split()
+
+    max_len = max(
+    len(approval_list),
+    len(sample_list)
+    )
+
+    for i in range(max_len):
+
+        approval_word = (
+        approval_list[i]
+        if i < len(approval_list)
+        else ""
+        )
+
+    sample_word = (
+        sample_list[i]
+        if i < len(sample_list)
+        else ""
+    )
+
+    if approval_word == sample_word:
+        status = "matched"
+
+    elif approval_word and not sample_word:
+        status = "missing"
+
+    elif sample_word and not approval_word:
+        status = "extra"
+
+    else:
+        status = "different"
+
+    comparison_rows.append({
+        "approval": approval_word,
+        "sample": sample_word,
+        "status": status
+    })
+
     logo_status = check_logo(
         approval_path,
         sample_path
@@ -404,10 +500,13 @@ def compare_labels(
         constraint_result[
             "missing_constraints_count"
         ],
+        
+        "comparison_rows":comparison_rows,
 
         "verdict":
         verdict
 
     }
 
+    
     return result
