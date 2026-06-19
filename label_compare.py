@@ -151,7 +151,6 @@ def clean_text(text):
 
     return text.strip()
 CONSTRAINTS = [
-    "f&f",
     "up to 1m",
     "56cm",
     "22in",
@@ -163,7 +162,9 @@ CONSTRAINTS = [
     "ce ean",
     "100%",
     "910-3758",
-    "made in bangladesh"
+    "polyester",
+    "100%",
+    "recycled"
 ]
 
 
