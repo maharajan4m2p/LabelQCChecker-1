@@ -91,10 +91,10 @@ def extract_text(file_path):
 
             image = cv2.imread(file_path)
 
-            if image is None:
+        if image is None:
                 return ""
 
-            image = cv2.resize(
+        image = cv2.resize(
                 image,
                 None,
                 fx=2,
@@ -102,25 +102,25 @@ def extract_text(file_path):
                 interpolation=cv2.INTER_CUBIC
             )
 
-            gray = cv2.cvtColor(
+        gray = cv2.cvtColor(
                 image,
                 cv2.COLOR_BGR2GRAY
             )
 
-            gray = cv2.GaussianBlur(
+        gray = cv2.GaussianBlur(
                 gray,
                 (3, 3),
                 0
             )
 
-            _, gray = cv2.threshold(
+        _, gray = cv2.threshold(
                 gray,
                 150,
                 255,
                 cv2.THRESH_BINARY
             )
 
-            return pytesseract.image_to_string(
+        return pytesseract.image_to_string(
                 gray,
                 lang="eng",
                 config="--oem 3 --psm 6"
@@ -134,7 +134,6 @@ def extract_text(file_path):
 
 
 def clean_text(text):
-
     text = text.lower()
 
     text = re.sub(
@@ -148,12 +147,34 @@ def clean_text(text):
         " ",
         text
     )
-
     return text.strip()
 
 def extract_constraints(text):
 
     constraints = []
+
+    keywords = [
+        "wash",
+        "iron",
+        "bleach",
+        "fire",
+        "dry",
+        "made in",
+        "style",
+        "batch",
+        "buyer",
+        "vendor",
+        "carton",
+        "po no",
+        "hs code",
+        "destination",
+        "measurement",
+        "size",
+        "qty",
+        "production",
+        "line",
+        "accept"
+    ]
 
     for line in text.splitlines():
 
@@ -161,60 +182,24 @@ def extract_constraints(text):
 
         if not line:
             continue
-        
-        if (not re.search(r'[0-9%]',line)
-        and not any(
-            word in line.lower()
-            for word in [
-                "wash",
-                "iron",
-                "bleach",
-                "fire",
-                "dry",
-                "made in"
-            ]    
-        )
+
+        line_lower = line.lower()
+
+        if (
+            any(word in line_lower for word in keywords)
+            or re.search(r"\d", line)
         ):
-            continue
-    
-        
-        score = 0
 
-        # numbers are important
-        if any(ch.isdigit() for ch in line):
-            score += 2
+            line = re.sub(
+                r"[^A-Za-z0-9\s:/.,%()-]",
+                "",
+                line
+            )
 
-        # percentages
-        if "%" in line:
-            score += 2
-
-        # measurements
-        if any(unit in line.lower() for unit in [
-            "cm", "mm", "kg", "g",
-            "lbs", "lb", "oz", "in"
-        ]):
-            score += 2
-
-        # warning / care text
-        if any(word in line.lower() for word in [
-            "wash",
-            "iron",
-            "bleach",
-            "fire",
-            "dry",
-            "made in"
-        ]):
-            score += 2
-
-        # product code style
-        if "-" in line:
-            score += 1
-
-        if score >= 2 and len(line)>3 and len(line)<80:
-            constraints.append(line)
+            if len(line) > 3:
+                constraints.append(line)
 
     return list(set(constraints))
-
 
 def check_logo(approval_path, sample_path):
 
@@ -280,6 +265,24 @@ def check_logo(approval_path, sample_path):
     except Exception as e:
         return f"FAILED ({str(e)})"
     
+def normalize_constraint(text):
+
+    text = text.lower()
+
+    text = re.sub(
+        r'[^a-z0-9\s]',
+        ' ',
+        text
+    )
+
+    text = re.sub(
+        r'\s+',
+        ' ',
+        text
+    )
+
+    return text.strip()
+    
 def check_constraints(
     approval_text,
     sample_text
@@ -298,32 +301,100 @@ def check_constraints(
     
 
     for item in approval_constraints:
-
-        if item.lower() in sample_text_lower:
         
-            matched_constraints.append(item)
-
+        best_score=0
+        
+        for sample_line in sample_text.splitlines():
+            
+            score=SequenceMatcher(
+                None,
+                normalize_constraint(item),
+                normalize_constraint(sample_line)
+            ).ratio()
+            
+            if score > best_score:
+                best_score =score
+                best_match_line = sample_line            
+        if best_score>=0.55:
+            
+            matched_constraints.append({
+                "approval":item,
+                "sample": best_match_line,
+                "score":round(best_score*100,2)
+            })
+            
         else:
+            
+            missing_constraints.append({
+                "approval":item,
+                "sample":best_match_line,
+                "extra_constraints":[]
+                
+                })
 
-            missing_constraints.append(item)
-
+            
     return {
+    "matched_constraints": matched_constraints,
+    "missing_constraints": missing_constraints,
+    "extra_constraints": [],
 
-        "matched_constraints":
-        matched_constraints,
+    "matched_constraints_count": len(matched_constraints),
+    "missing_constraints_count": len(missing_constraints),
+    "extra_constraints_count": 0
+}
 
-        "missing_constraints":
-        missing_constraints,
+    
+def get_text_boxes(image_path):
 
-        "extra_constraints": [],
+    image = cv2.imread(image_path)
 
-        "matched_constraints_count":
-        len(matched_constraints),
+    data = pytesseract.image_to_data(
+        image,
+        output_type=pytesseract.Output.DICT
+    )
 
-        "missing_constraints_count":
-        len(missing_constraints)
+    return image, data
 
-    }
+def highlight_missing_text(
+    image_path,
+    words_to_highlight,
+    output_path,
+    color=(0,0,255)
+):
+
+    image, data = get_text_boxes(image_path)
+
+    n = len(data["text"])
+
+    for i in range(n):
+
+        word = data["text"][i].strip()
+
+        if word.lower() in [
+            w.lower()
+            for w in words_to_highlight
+        ]:
+
+            x = data["left"][i]
+            y = data["top"][i]
+            w = data["width"][i]
+            h = data["height"][i]
+
+            cv2.rectangle(
+                image,
+                (x,y),
+                (x+w,y+h),
+                color,
+                2
+            )
+
+    cv2.imwrite(
+        output_path,
+        image
+    )
+
+    return output_path
+
 
 def compare_labels(
     approval_path,
@@ -338,7 +409,7 @@ def compare_labels(
         sample_path
     )
 
-    approval_clean = clean_text(
+    approval_clean =clean_text(
         approval_text
     )
 
@@ -448,17 +519,36 @@ def compare_labels(
         approval_text,
         sample_text
     )
+    
+    print("CONSTRAINT RESULT =",constraint_result)
 
     if (
-        constraint_result[
-            "missing_constraints_count"
-        ] == 0
+        constraint_result["missing_constraints_count"] == 0
         and similarity >= 90
     ):
         verdict = "APPROVED"
     else:
         verdict = "NOT APPROVED"
-
+        
+    approval_highlight = highlight_missing_text(
+    approval_path,
+    missing_words,
+    "uploads/approval_highlight.jpg",
+    (0,0,255)
+    
+    )
+    
+    print("APPROVAL IMAGE:",approval_highlight)
+    
+    sample_highlight = highlight_missing_text(
+    sample_path,
+    extra_words,
+    "uploads/sample_highlight.jpg",
+    (255,0,0)
+    )
+    
+    print("SAMPLE IMAGE:",sample_highlight)
+    
     result = {
 
         "similarity":
@@ -467,12 +557,12 @@ def compare_labels(
         "logo_status":
         logo_status,
 
-        "approval_text":
-        approval_text,
+        "approval_highlight":
+        approval_highlight,
 
-        "sample_text":
-        sample_text,
-
+        "sample_highlight":
+        sample_highlight,
+        
         "matched_words":
         matched_words,
 
@@ -482,6 +572,7 @@ def compare_labels(
         "extra_words":
         extra_words,
         
+
         "modified_items":modified_items,
 
         "matched_count":

@@ -3,7 +3,8 @@ import os
 from flask import (
     Flask,
     render_template,
-    request
+    request,
+    send_from_directory
 )
 
 from werkzeug.utils import secure_filename
@@ -13,6 +14,12 @@ from label_compare import (
 )
 
 app = Flask(__name__)
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    return send_from_directory(
+        app.config['UPLOAD_FOLDER'],
+        filename
+    )
 
 UPLOAD_FOLDER = "uploads"
 
