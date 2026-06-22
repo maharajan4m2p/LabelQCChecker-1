@@ -303,6 +303,7 @@ def check_constraints(
 
     for item in approval_constraints:
         
+        best_match = None
         best_score=0
         
         for sample_line in sample_text.splitlines():
@@ -315,7 +316,8 @@ def check_constraints(
             
             if score > best_score:
                 best_score =score
-                best_match_line = sample_line            
+                best_match_line = sample_line  
+                          
         if best_score>=0.85:
             
             matched_constraints.append({
@@ -518,78 +520,40 @@ def compare_labels(
         sample_word
     )
 
-    # ADD THIS BLOCK HERE
-        if any(
-        keyword in approval_word.lower()
-        for keyword in [
-            "ean",
-            "po",
-            "hs code",
-            "batch",
-            "style",
-            "qty",
-            "weight",
-            "height",
-            "waist",
-            "size"
-        ]
-        ):
 
-            if approval_word.strip() != sample_word.strip():
 
-                status = "modified"
+        if approval_word.strip() != sample_word.strip():
+
+            status= "modified"
 
             modified_items.append({
-                "approval": approval_word,
-                "sample": sample_word
-            })
+            "approval": approval_word,
+            "sample": sample_word
+        })
 
-            comparison_rows.append({
-                
-                "approval": approval_word,
-                "sample": sample_word,
-                "status": status
-                
-            })
-        
-    
-            if numbers1 != numbers2:
-
-                status = "modified"
-
-            modified_items.append({
-                "approval": approval_word,
-                "sample": sample_word
-            })
-            
-            comparison_rows.append({
-                "approval": approval_word,
-                "sample": sample_word,
-                "status": status
-            })
-        
         else:
 
             score = SequenceMatcher(
-                None,
-                approval_word.lower(),
-                sample_word.lower()
-            ).ratio()
+            None,
+            approval_word.lower(),
+            sample_word.lower()
+        ).ratio()
 
-            if score >= 0.98:
-                status = "matched"
-            else:
-                status = "modified"
+        if score >= 0.90:
+            status = "matched"
+        else:
+            status = "modified"
 
-                modified_items.append({
-                    "approval": approval_word,
-                    "sample": sample_word
-                })
-                comparison_rows.append({
-                "approval": approval_word,
-                "sample": sample_word,
-                "status": status
-            })
+            modified_items.append({
+            "approval": approval_word,
+            "sample": sample_word
+        })
+
+    comparison_rows.append({
+    "approval": approval_word,
+    "sample": sample_word,
+    "status": status
+    })
 
     logo_status = check_logo(
         approval_path,
@@ -602,6 +566,11 @@ def compare_labels(
     )
     
     print("CONSTRAINT RESULT =",constraint_result)
+    print("SIMILARITY =", similarity)
+    print("MODIFIED ITEMS =", len(modified_items))
+    print("MODIFIED DATA =", modified_items)
+    print("MISSING WORDS =", missing_words)
+    print("EXTRA WORDS =", extra_words)
 
     if (
         constraint_result["missing_constraints_count"] == 0
