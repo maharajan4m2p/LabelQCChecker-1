@@ -123,7 +123,7 @@ def extract_text(file_path):
         return pytesseract.image_to_string(
                 gray,
                 lang="eng",
-                config="--oem 3 --psm 6"
+                config="--oem 3 --psm 6 -c preserve_interword_spaces=1"
             )
 
         return ""
@@ -218,7 +218,7 @@ def check_logo(approval_path, sample_path):
         if img1 is None or img2 is None:
             return "LOGO NOT FOUND"
 
-        orb = cv2.ORB_create(500)
+        orb = cv2.ORB_create(200)
 
         kp1, des1 = orb.detectAndCompute(
             img1,
