@@ -270,19 +270,9 @@ def normalize_constraint(text):
 
     text = text.lower()
 
-    text = re.sub(
-        r'[^a-z0-9\s]',
-        ' ',
-        text
-    )
+    text = re.sub(r'[^a-z0-9\s]','',text)
 
-    text = re.sub(
-        r'\s+',
-        ' ',
-        text
-    )
-
-    return text.strip()
+    return text
     
 def check_constraints(
     approval_text,
@@ -317,8 +307,14 @@ def check_constraints(
             if score > best_score:
                 best_score =score
                 best_match_line = sample_line  
+            
+            print("APPROVAL:", item,"\nBEST MATCH:", 
+                  best_match_line,
+                 "\nSCORE:", round(best_score * 100, 2),
+                 "\n--------------------"
+)
                           
-        if best_score>=0.85:
+        if best_score>=0.65:
             
             matched_constraints.append({
                 "approval":item,
@@ -490,8 +486,10 @@ def compare_labels(
         approval_word,
         sample_list,
         n=1,
-        cutoff=0.95
+        cutoff=0.70
     )
+        print("APPROVAL =",approval_word)
+        print("BEST MATCH =",best_match)
 
         sample_word = best_match[0] if best_match else ""
 
