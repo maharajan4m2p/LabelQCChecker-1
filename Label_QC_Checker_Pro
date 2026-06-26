@@ -1,0 +1,35 @@
+Label_QC_Checker_Pro/
+
+│
+├── app.py
+├── config.py
+├── requirements.txt
+├── README.md
+│
+├── engine/
+│   ├── __init__.py
+│   ├── ocr_engine.py
+│   ├── label_detector.py
+│   ├── constraint_detector.py
+│   ├── comparison_engine.py
+│   ├── image_highlighter.py
+│   ├── logo_checker.py
+│   ├── barcode_checker.py
+│   └── utils.py
+│
+├── templates/
+│   ├── index.html
+│   └── results.html
+│
+├── static/
+│   ├── css/
+│   │      style.css
+│   │
+│   ├── js/
+│   │      script.js
+│   │
+│   └── output/
+│
+├── uploads/
+│
+└── reports/

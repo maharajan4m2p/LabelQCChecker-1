@@ -1,0 +1,129 @@
+import cv2
+import numpy as np 
+class ImagePreprocessor:
+
+    def __init__(self):
+        pass
+    def read(self, image_path):
+
+        image = cv2.imread(image_path)
+
+        if image is None:
+            raise Exception(f"Cannot read image : {image_path}")
+
+        return image
+    def gray(self, image):
+
+        return cv2.cvtColor(
+            image,
+            cv2.COLOR_BGR2GRAY
+        )
+    
+    def resize(
+        self,
+        image,
+        scale=2
+    ):
+
+        return cv2.resize(
+            image,
+            None,
+            fx=scale,
+            fy=scale,
+            interpolation=cv2.INTER_CUBIC
+        )
+    def gaussian_blur(
+        self,
+        image
+    ):
+
+        return cv2.GaussianBlur(
+            image,
+            (5, 5),
+            0
+        )
+    def median_blur(
+        self,
+        image
+    ):
+
+        return cv2.medianBlur(
+            image,
+            3
+        )
+    def denoise(
+        self,
+        image
+    ):
+
+        return cv2.fastNlMeansDenoising(
+            image,
+            None,
+            20,
+            7,
+            21
+        )
+    def remove_noise(
+        self,
+        image
+    ):
+
+        image = self.gaussian_blur(image)
+
+        image = self.median_blur(image)
+
+        image = self.denoise(image)
+
+        return image
+    def adaptive_threshold(
+        self,
+        image
+    ):
+
+        return cv2.adaptiveThreshold(
+            image,
+            255,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY,
+            31,
+            15
+        )
+    def otsu_threshold(
+        self,
+        image
+    ):
+
+        _, thresh = cv2.threshold(
+            image,
+            0,
+            255,
+            cv2.THRESH_BINARY + cv2.THRESH_OTSU
+        )
+
+        return thresh
+    def binarize(
+        self,
+        image
+    ):
+
+        image = self.adaptive_threshold(image)
+
+        image = self.otsu_threshold(image)
+
+        return image
+    def save_debug(
+        self,
+        image,
+        filename
+    ):
+
+        cv2.imwrite(
+            filename,
+            image
+        )
+        preprocessor.save_debug(
+        image,
+        "output/preprocessed.png"
+    )
+    
+preprocessor = ImagePreprocessor()

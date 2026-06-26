@@ -1,672 +1,207 @@
-import os
-import re
-import cv2
-import difflib
-import platform
-import pytesseract
-import pdfplumber
-import pandas as pd
+"""
+=========================================================
+Label QC Checker Pro
+Main Label Comparison Engine
+Version 2.0
+=========================================================
+"""
+from config import*
 
-from docx import Document
-from difflib import SequenceMatcher
+from engine.ocr_engine import ocr_engine
 
+from engine.label_detector import label_detector
 
-if platform.system() == "Windows":
-    pytesseract.pytesseract.tesseract_cmd = r"C:\Users\Maharajan\AppData\Local\Programs\Tesseract-OCR\tesseract.exe"
+from engine.constraint_detector import constraint_detector
 
+from engine.comparison_engine import comparison_engine
 
-def extract_text(file_path):
+from engine.logo_checker import logo_checker
 
-    ext = os.path.splitext(file_path)[1].lower()
+from engine.barcode_checker import barcode_checker
 
-    try:
+from engine.image_highlighter import image_highlighter
 
-        if ext == ".txt":
+from engine.report_generator import report_generator
 
-            with open(
-                file_path,
-                "r",
-                encoding="utf-8",
-                errors="ignore"
-            ) as f:
+class LabelCompare:
 
-                return f.read()
+    def __init__(self):
 
-        elif ext == ".csv":
+        self.ocr = ocr_engine
 
-            df = pd.read_csv(
-                file_path,
-                dtype=str,
-                keep_default_na=False
-            )
+        self.detector = label_detector
 
-            return df.to_string(index=False)
+        self.constraint = constraint_detector
 
-        elif ext in [".xls", ".xlsx"]:
+        self.comparison = comparison_engine
 
-            df = pd.read_excel(
-                file_path,
-                dtype=str
-            )
+        self.logo = logo_checker
 
-            return df.to_string(index=False)
+        self.barcode = barcode_checker
 
-        elif ext == ".docx":
+        self.highlight = image_highlighter
 
-            doc = Document(file_path)
+        self.report = report_generator
+        
+    def compare(
 
-            text = []
+        self,
 
-            for para in doc.paragraphs:
+        approval_path,
 
-                if para.text.strip():
-                    text.append(para.text.strip())
+        sample_path
 
-            return "\n".join(text)
+    ):
 
-        elif ext == ".pdf":
+        result = {}
 
-            text = ""
+        approval_ocr = self.ocr.read(
 
-            with pdfplumber.open(file_path) as pdf:
+            approval_path
 
-                for page in pdf.pages:
+        )
 
-                    page_text = page.extract_text()
+        sample_ocr = self.ocr.read(
 
-                    if page_text:
-                        text += page_text + "\n"
+            sample_path
 
-            return text
+        )
 
-        elif ext in [
-            ".png",
-            ".jpg",
-            ".jpeg",
-            ".bmp",
-            ".tif",
-            ".tiff",
-            ".webp"
-        ]:
+        result["approval_ocr"] = approval_ocr
 
-            image = cv2.imread(file_path)
+        result["sample_ocr"] = sample_ocr
+        
+        approval_label = self.detector.detect(
 
-        if image is None:
-                return ""
+            approval_path
 
-        image = cv2.resize(
-                image,
-                None,
-                fx=2,
-                fy=2,
-                interpolation=cv2.INTER_CUBIC
-            )
+        )
 
-        gray = cv2.cvtColor(
-                image,
-                cv2.COLOR_BGR2GRAY
-            )
+        sample_label = self.detector.detect(
 
-        gray = cv2.GaussianBlur(
-                gray,
-                (3, 3),
-                0
-            )
+            sample_path
 
-        _, gray = cv2.threshold(
-                gray,
-                150,
-                255,
-                cv2.THRESH_BINARY
-            )
+        )
 
-        return pytesseract.image_to_string(
-                gray,
-                lang="eng",
-                config="--oem 3 --psm 6 -c preserve_interword_spaces=1"
-            )
+        result["approval_label"] = approval_label
 
-        return ""
+        result["sample_label"] = sample_label
+        
+        approval_constraints = self.constraint.get_constraints(
 
-    except Exception as e:
+            approval_ocr["text"]
 
-        return f"ERROR: {str(e)}"
+        )
 
+        sample_constraints = self.constraint.get_constraints(
 
-def clean_text(text):
-    text = text.lower()
+        sample_ocr["text"]
 
-    text = re.sub(
-        r"[^a-z0-9\s]",
-        " ",
-        text
-    )
+        )
 
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    )
-    return text.strip()
+        result["approval_constraints"] = approval_constraints
 
-def extract_constraints(text):
+        result["sample_constraints"] = sample_constraints
+        
+        comparison = self.comparison.compare(
 
-    constraints = []
+            approval_constraints,
 
-    keywords = [
-        "wash",
-        "iron",
-        "bleach",
-        "fire",
-        "dry",
-        "made in",
-        "style",
-        "batch",
-        "buyer",
-        "vendor",
-        "carton",
-        "po no",
-        "hs code",
-        "destination",
-        "measurement",
-        "size",
-        "qty",
-        "production",
-        "line",
-        "accept"
-    ]
+            sample_constraints
 
-    for line in text.splitlines():
+        )
 
-        line = line.strip()
+        result["comparison"] = comparison
 
-        if not line:
-            continue
+        result["summary"] = comparison["summary"]
+        
+        logo_result = self.logo.verify(
 
-        line_lower = line.lower()
-
-        if (
-            any(word in line_lower for word in keywords)
-            or re.search(r"\d", line)
-            or len(line.split())>=2
-        ):
-
-            line = re.sub(
-                r"[^A-Za-z0-9\s:/.,%()-]",
-                "",
-                line
-            )
-
-            if len(line) > 3:
-                constraints.append(line)
-
-    return list(set(constraints))
-
-def check_logo(approval_path, sample_path):
-
-    try:
-
-        img1 = cv2.imread(
             approval_path,
-            cv2.IMREAD_GRAYSCALE
+
+            sample_path
+
         )
 
-        img2 = cv2.imread(
+        result["logo"] = logo_result
+        
+        barcode_result = self.barcode.compare(
+
+            approval_path,
+
+            sample_path
+
+        )
+
+        result["barcode"] = barcode_result
+        
+        approval_highlight = self.highlight.generate(
+
+            approval_path,
+
+            approval_ocr["words"],
+
+            "APPROVAL",
+
+            GREEN,
+
+            "uploads/approval_highlight.png"
+
+        )
+
+        result["approval_highlight"] = approval_highlight
+        
+        sample_highlight = self.highlight.generate(
+
             sample_path,
-            cv2.IMREAD_GRAYSCALE
+
+            sample_ocr["words"],
+
+            "SAMPLE",
+
+            BLUE,
+
+            "uploads/sample_highlight.png"
+
         )
 
-        if img1 is None or img2 is None:
-            return "LOGO NOT FOUND"
-
-        orb = cv2.ORB_create(200)
-
-        kp1, des1 = orb.detectAndCompute(
-            img1,
-            None
-        )
-
-        kp2, des2 = orb.detectAndCompute(
-            img2,
-            None
-        )
-
-        if des1 is None or des2 is None:
-            return "LOGO NOT DETECTED"
-
-        bf = cv2.BFMatcher(
-            cv2.NORM_HAMMING,
-            crossCheck=True
-        )
-
-        matches = bf.match(
-            des1,
-            des2
-        )
-
-        good_matches = [
-            m for m in matches
-            if m.distance < 60
-        ]
-
-        similarity = round(
-            (
-                len(good_matches)
-                /
-                max(len(kp1), len(kp2))
-            ) * 100,
-            2
-        )
-
-        if similarity >= 40:
-            return f"MATCH ({similarity}%)"
-
-        return f"MISMATCH ({similarity}%)"
-
-    except Exception as e:
-        return f"FAILED ({str(e)})"
+        result["sample_highlight"] = sample_highlight
     
-def normalize_constraint(text):
+        report = self.report.generate(
 
-    text = text.lower()
+            comparison,
 
-    text = re.sub(r'[^a-z0-9\s]','',text)
+            logo_result,
 
-    return text
-    
-def check_constraints(
-    approval_text,
-    sample_text
-):
+            barcode_result
 
-    approval_constraints = extract_constraints(
-        approval_text
-    )
-    
-    print("AUTO CONSTRAINTS:",approval_constraints)
+        )
 
-    sample_text_lower = sample_text.lower()
+        result["report"] = report
 
-    matched_constraints = []
-    missing_constraints = []
-    
-
-    for item in approval_constraints:
+        result["summary"] = report["summary"]
         
-        best_match = None
-        best_score=0
-        
-        for sample_line in sample_text.splitlines():
-            
-            score=SequenceMatcher(
-                None,
-                normalize_constraint(item),
-                normalize_constraint(sample_line)
-            ).ratio()
-            
-            if score > best_score:
-                best_score =score
-                best_match_line = sample_line  
-            
-            print("APPROVAL:", item,"\nBEST MATCH:", 
-                  best_match_line,
-                 "\nSCORE:", round(best_score * 100, 2),
-                 "\n--------------------"
-)
-                          
-        if best_score>=0.65:
-            
-            matched_constraints.append({
-                "approval":item,
-                "sample": best_match_line,
-                "score":round(best_score*100,2)
-            })
-            
-        else:
-            
-            missing_constraints.append({
-                "approval":item,
-                "sample":best_match_line,
-                "extra_constraints":[]
-                
-                })
+        return result
 
-            
-    return {
-    "matched_constraints": matched_constraints,
-    "missing_constraints": missing_constraints,
-    "extra_constraints": [],
+label_compare = LabelCompare()
 
-    "matched_constraints_count": len(matched_constraints),
-    "missing_constraints_count": len(missing_constraints),
-    "extra_constraints_count": 0
-}
 
-    
-def get_text_boxes(image_path):
-
-    image = cv2.imread(image_path)
-
-    data = pytesseract.image_to_data(
-        image,
-        output_type=pytesseract.Output.DICT
-    )
-
-    return image, data
-
-def highlight_missing_text(
-    image_path,
-    words_to_highlight,
-    output_path,
-    color=(0,0,255)
-):
-
-    image, data = get_text_boxes(image_path)
-
-    n = len(data["text"])
-
-    for i in range(n):
-
-        word = data["text"][i].strip()
-
-        if word.lower() in [
-            w.lower()
-            for w in words_to_highlight
-        ]:
-
-            x = data["left"][i]
-            y = data["top"][i]
-            w = data["width"][i]
-            h = data["height"][i]
-
-            cv2.rectangle(
-                image,
-                (x,y),
-                (x+w,y+h),
-                color,
-                2
-            )
-
-    cv2.imwrite(
-        output_path,
-        image
-    )
-
-    return output_path
-
+# ---------------------------------------------------------
+# Public Function
+# ---------------------------------------------------------
 
 def compare_labels(
+
     approval_path,
+
     sample_path
+
 ):
 
-    approval_text = extract_text(
-        approval_path
-    )
+    return label_compare.compare(
 
-    sample_text = extract_text(
-        sample_path
-    )
-
-    approval_clean =clean_text(
-        approval_text
-    )
-
-    sample_clean = clean_text(
-        sample_text
-    )
-
-    similarity = round(
-        SequenceMatcher(
-            None,
-            approval_clean,
-            sample_clean
-        ).ratio() * 100,
-        2
-    )
-
-    approval_words = set(
-        approval_clean.split()
-    )
-
-    sample_words = set(
-        sample_clean.split()
-    )
-
-    matched_words = sorted(
-        approval_words &
-        sample_words
-    )
-
-    missing_words = sorted(
-        approval_words -
-        sample_words
-    )
-
-    extra_words = sorted(
-        sample_words -
-        approval_words
-    )
-
-# ===============================
-# Side By Side Comparison Rows
-# ===============================
-
-    approval_list = [
-        line.strip()
-        for line in approval_text.splitlines()
-        if line.strip()
-    ]
-    
-    sample_list = [
-        line.strip()
-        for line in sample_text.splitlines()
-        if line.strip()
-    ]
-    
-    modified_items =[]
-    comparison_rows =[]
-
-    max_len = max(
-    len(approval_list),
-    len(sample_list)
-    )
-
-    for i in range(max_len):
-
-        approval_word = (
-        approval_list[i]
-        if i < len(approval_list)
-        else ""
-    )
-    
-    if approval_word:
-
-        best_match = difflib.get_close_matches(
-        approval_word,
-        sample_list,
-        n=1,
-        cutoff=0.70
-    )
-        print("APPROVAL =",approval_word)
-        print("BEST MATCH =",best_match)
-
-        sample_word = best_match[0] if best_match else ""
-
-    else:
-        sample_word = ""
-
-
-    if approval_word == sample_word:
-        status = "matched"
-
-    elif approval_word and not sample_word:
-        status = "missing"
-
-    elif sample_word and not approval_word:
-        status = "extra"
-
-    else:
-
-        numbers1 = re.findall(
-        r'\d+(?:\.\d+)?',
-        approval_word
-    )
-
-        numbers2 = re.findall(
-        r'\d+(?:\.\d+)?',
-        sample_word
-    )
-
-
-
-        if approval_word.strip() != sample_word.strip():
-
-            status= "modified"
-
-            modified_items.append({
-            "approval": approval_word,
-            "sample": sample_word
-        })
-
-        else:
-
-            score = SequenceMatcher(
-            None,
-            approval_word.lower(),
-            sample_word.lower()
-        ).ratio()
-
-        if score >= 0.90:
-            status = "matched"
-        else:
-            status = "modified"
-
-            modified_items.append({
-            "approval": approval_word,
-            "sample": sample_word
-        })
-
-    comparison_rows.append({
-    "approval": approval_word,
-    "sample": sample_word,
-    "status": status
-    })
-
-    logo_status = check_logo(
         approval_path,
+
         sample_path
+
     )
-
-    constraint_result = check_constraints(
-        approval_text,
-        sample_text
-    )
-    
-    print("CONSTRAINT RESULT =",constraint_result)
-    print("SIMILARITY =", similarity)
-    print("MODIFIED ITEMS =", len(modified_items))
-    print("MODIFIED DATA =", modified_items)
-    print("MISSING WORDS =", missing_words)
-    print("EXTRA WORDS =", extra_words)
-
-    if (
-        constraint_result["missing_constraints_count"] == 0
-        and similarity >= 90
-        and len(modified_items)==0
-    ):
-        verdict = "APPROVED"
-    else:
-        verdict = "NOT APPROVED"
-        
-    approval_highlight = highlight_missing_text(
-    approval_path,
-    missing_words,
-    "uploads/approval_highlight.jpg",
-    (0,0,255)
-    
-    )
-    
-    print("APPROVAL IMAGE:",approval_highlight)
-    
-    sample_highlight = highlight_missing_text(
-    sample_path,
-    extra_words,
-    "uploads/sample_highlight.jpg",
-    (255,0,0)
-    )
-    
-    print("SAMPLE IMAGE:",sample_highlight)
-    
-    result = {
-
-        "similarity":
-        similarity,
-
-        "logo_status":
-        logo_status,
-
-        "approval_highlight":
-        approval_highlight,
-
-        "sample_highlight":
-        sample_highlight,
-        
-        "matched_words":
-        matched_words,
-
-        "missing_words":
-        missing_words,
-
-        "extra_words":
-        extra_words,
-        
-
-        "modified_items":modified_items,
-
-        "matched_count":
-        len(matched_words),
-
-        "missing_count":
-        len(missing_words),
-
-        "extra_count":
-        len(extra_words),
-
-        "matched_constraints":
-        constraint_result[
-            "matched_constraints"
-        ],
-
-        "missing_constraints":
-        constraint_result[
-            "missing_constraints"
-        ],
-
-        "extra_constraints":
-        constraint_result[
-            "extra_constraints"
-        ],
-
-        "matched_constraints_count":
-        constraint_result[
-            "matched_constraints_count"
-        ],
-
-        "missing_constraints_count":
-        constraint_result[
-            "missing_constraints_count"
-        ],
-        
-        "modified_count":len(modified_items),
-        
-        "modified_items":modified_items,
-        
-        "comparison_rows":comparison_rows,
-
-        "verdict":verdict
-
-    }
-
-    
-    return result

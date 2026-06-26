@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-.Python
+.Python 
 *.egg
 *.egg-info/
 dist/

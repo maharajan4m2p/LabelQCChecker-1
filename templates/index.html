@@ -8,13 +8,18 @@
 <meta name="viewport"
 content="width=device-width, initial-scale=1.0">
 
-<title>Label QC Checker</title>
+<title>Label QC Checker Pro</title>
+
 <style>
 
 *{
+
     margin:0;
+
     padding:0;
+
     box-sizing:border-box;
+
 }
 
 body{
@@ -30,17 +35,15 @@ body{
 
     min-height:100vh;
 
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
     padding:30px;
+
 }
+
 .container{
 
-    width:100%;
+    max-width:1100px;
 
-    max-width:900px;
+    margin:auto;
 
     background:white;
 
@@ -48,9 +51,10 @@ body{
 
     overflow:hidden;
 
-    box-shadow:
-    0 15px 40px rgba(0,0,0,0.3);
+    box-shadow:0 20px 50px rgba(0,0,0,.25);
+
 }
+
 .header{
 
     background:linear-gradient(
@@ -64,40 +68,48 @@ body{
     text-align:center;
 
     padding:40px;
+
 }
 
 .header h1{
 
-    font-size:42px;
+    font-size:46px;
 
-    margin-bottom:10px;
 }
 
 .header p{
 
+    margin-top:10px;
+
     font-size:18px;
 
-    opacity:0.9;
 }
+
 .content{
 
-    padding:40px;
+    padding:35px;
+
 }
 
 .section{
 
     margin-bottom:30px;
+
 }
 
-.section h2{
+.section-title{
+
+    font-size:28px;
+
+    margin-bottom:15px;
 
     color:#1e293b;
 
-    margin-bottom:15px;
 }
+
 .upload-box{
 
-    border:3px dashed #2563eb;
+    border:3px dashed #3b82f6;
 
     border-radius:15px;
 
@@ -107,27 +119,14 @@ body{
 
     background:#f8fafc;
 
-    transition:0.3s;
 }
 
 .upload-box:hover{
 
     background:#eff6ff;
+
 }
 
-.upload-icon{
-
-    font-size:60px;
-
-    margin-bottom:15px;
-}
-
-.upload-box p{
-
-    color:#475569;
-
-    margin-bottom:15px;
-}
 input[type=file]{
 
     width:100%;
@@ -139,54 +138,52 @@ input[type=file]{
     border-radius:8px;
 
     background:white;
+
 }
+
 .btn{
 
     width:100%;
 
-    padding:16px;
+    padding:18px;
+
+    background:#2563eb;
+
+    color:white;
 
     border:none;
 
     border-radius:10px;
 
-    background:linear-gradient(
-        135deg,
-        #2563eb,
-        #1d4ed8
-    );
-
-    color:white;
-
-    font-size:18px;
+    font-size:20px;
 
     font-weight:bold;
 
     cursor:pointer;
 
-    transition:0.3s;
 }
 
 .btn:hover{
 
-    transform:translateY(-2px);
+    background:#1d4ed8;
 
-    box-shadow:
-    0 10px 20px rgba(37,99,235,0.4);
-}.loader{
+}
+
+.loader{
 
     display:none;
 
     text-align:center;
 
-    margin-top:20px;
+    margin-top:25px;
+
 }
 
 .spinner{
 
-    width:45px;
+    width:50px;
 
-    height:45px;
+    height:50px;
 
     border:5px solid #ddd;
 
@@ -197,55 +194,20 @@ input[type=file]{
     margin:auto;
 
     animation:spin 1s linear infinite;
+
 }
 
 @keyframes spin{
 
-    100%{
-        transform:rotate(360deg);
-    }
-}
-.footer{
+100%{
 
-    background:#f8fafc;
+transform:rotate(360deg);
 
-    text-align:center;
-
-    padding:25px;
 }
 
-.footer p{
-
-    color:#475569;
-
-    font-size:16px;
 }
-
-.author{
-
-    color:#2563eb;
-
-    font-weight:bold;
-
-    font-size:20px;
-}
-@media(max-width:768px){
-
-    .header h1{
-
-        font-size:30px;
-    }
-
-    .content{
-
-        padding:20px;
-    }
-}
-
 
 </style>
-
-
 
 </head>
 
@@ -256,16 +218,20 @@ input[type=file]{
 <div class="header">
 
 <h1>
-🏷️ Label QC Checker
+
+🏷️ Label QC Checker Pro
+
 </h1>
 
 <p>
-OCR Based Label Comparison & Constraint Validation System
+
+OCR • Logo • Barcode • Constraint Validation
+
 </p>
 
 </div>
-<div class="content">
 
+<div class="content">
 <form
 
 action="/compare"
@@ -277,116 +243,152 @@ enctype="multipart/form-data"
 onsubmit="showLoader()"
 
 >
+
 <div class="section">
 
-<h2>
+<h2 class="section-title">
+
 📄 Approval Label
+
 </h2>
 
 <div class="upload-box">
 
-<div class="upload-icon">
-📋
-</div>
-
 <p>
+
 Upload Approved Label
+
 </p>
 
 <input
+
 type="file"
+
 name="approval_file"
+
 required
+
 >
 
-
 </div>
-
-
 
 </div>
 
 <div class="section">
 
-<h2>
+<h2 class="section-title">
+
 📂 Sample Labels
+
 </h2>
 
 <div class="upload-box">
 
-<div class="upload-icon">
-📁
-</div>
-
 <p>
-Upload One or Multiple Sample Labels
+
+Upload One Or Multiple Sample Labels
+
 </p>
 
 <input
+
 type="file"
+
 name="samples_file"
+
 multiple
+
 required
+
 >
 
 </div>
 
-
-
 </div>
+
 <button
+
 type="submit"
+
 class="btn"
+
 >
 
-🔍 Start Comparison
+🔍 Start Label Comparison
 
 </button>
+
 <div
+
 id="loader"
+
 class="loader"
+
 >
 
 <div class="spinner"></div>
 
-<p style="margin-top:10px;">
+<p style="margin-top:20px;">
 
-Processing OCR & Comparing Labels...
+Running OCR...<br>
+
+Checking Constraints...<br>
+
+Comparing Logos...<br>
+
+Reading Barcodes...<br>
+
+Generating QC Report...
 
 </p>
 
 </div>
 
 </form>
-
-</div>
-<div class="footer">
-
-<p>
-
-🏷️ Made By 
-
-<span class="author">
-
-    MAHARAJAN
-
-
-</span>
-
-</p>
-
 </div>
 
+<div style="
+
+text-align:center;
+
+padding:25px;
+
+border-top:1px solid #e2e8f0;
+
+color:#64748b;
+
+">
+
+🏷️ Label QC Checker Pro
+
+<br><br>
+
+Developed by
+
+<strong style="color:#2563eb;">
+
+MAHARAJAN
+
+</strong>
+
 </div>
+
+</div>
+
 <script>
 
 function showLoader(){
 
-    document
-    .getElementById("loader")
-    .style.display = "block";
+    document.getElementById(
+
+        "loader"
+
+    ).style.display = "block";
+
 }
 
 </script>
+
 </body>
+
 </html>

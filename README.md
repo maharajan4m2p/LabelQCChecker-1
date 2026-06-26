@@ -1,24 +1,31 @@
-# LabelQCChecker
+Label QC Checker Pro
 
-A web app to compare garment labels using OCR.
+Features
 
-## Live Demo
-(https://labelqcchecker-1.onrender.com/)
+✔ Automatic Label Type Detection
 
-## What It Does
-- Upload Approval Label and Sample Label
-- OCR reads both images
-- Compares fields automatically
-- Shows Match or Mismatch with accuracy score
+✔ Automatic Constraint Detection
 
-## Built With
-- Python, Flask, Tesseract OCR, Docker, Render
+✔ OCR Confidence
 
-## Run Locally
-1. Clone: git clone https://github.com/maharajan4m2p/LabelQCChecker.git
-2. Install: pip install -r requirements.txt
-3. Run: python app.py
-4. Open: http://localhost:5000
+✔ Dynamic Comparison
 
-## Author
-maharajan4m2p
+✔ Side by Side Images
+
+✔ Highlight Matched Fields
+
+✔ Highlight Missing Fields
+
+✔ Highlight Modified Fields
+
+✔ Highlight Extra Fields
+
+✔ Logo Verification
+
+✔ Barcode Verification
+
+✔ PDF Report
+
+✔ Excel Report
+
+✔ Professional Dashboard
