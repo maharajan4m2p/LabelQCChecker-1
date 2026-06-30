@@ -2,26 +2,24 @@
 =========================================================
 Label QC Checker Pro
 Main Label Comparison Engine
-Version 2.0
+Version 4.0
 =========================================================
 """
-from config import*
+
+import os
+import uuid
+
+from config import *
 
 from engine.ocr_engine import ocr_engine
-
 from engine.label_detector import label_detector
-
 from engine.constraint_detector import constraint_detector
-
 from engine.comparison_engine import comparison_engine
-
 from engine.logo_checker import logo_checker
-
 from engine.barcode_checker import barcode_checker
-
 from engine.image_highlighter import image_highlighter
-
 from engine.report_generator import report_generator
+
 
 class LabelCompare:
 
@@ -42,7 +40,13 @@ class LabelCompare:
         self.highlight = image_highlighter
 
         self.report = report_generator
-        
+
+        os.makedirs("uploads", exist_ok=True)
+
+    # ---------------------------------------------------------
+    # Compare Labels
+    # ---------------------------------------------------------
+
     def compare(
 
         self,
@@ -54,6 +58,10 @@ class LabelCompare:
     ):
 
         result = {}
+
+        # ---------------------------------------------------------
+        # OCR
+        # ---------------------------------------------------------
 
         approval_ocr = self.ocr.read(
 
@@ -70,7 +78,11 @@ class LabelCompare:
         result["approval_ocr"] = approval_ocr
 
         result["sample_ocr"] = sample_ocr
-        
+
+        # ---------------------------------------------------------
+        # Label Detection
+        # ---------------------------------------------------------
+
         approval_label = self.detector.detect(
 
             approval_path
@@ -86,7 +98,11 @@ class LabelCompare:
         result["approval_label"] = approval_label
 
         result["sample_label"] = sample_label
-        
+
+        # ---------------------------------------------------------
+        # Constraint Detection
+        # ---------------------------------------------------------
+
         approval_constraints = self.constraint.get_constraints(
 
             approval_ocr["text"]
@@ -95,26 +111,38 @@ class LabelCompare:
 
         sample_constraints = self.constraint.get_constraints(
 
-        sample_ocr["text"]
+            sample_ocr["text"]
 
         )
 
         result["approval_constraints"] = approval_constraints
 
         result["sample_constraints"] = sample_constraints
-        
+
+        # ---------------------------------------------------------
+        # Comparison
+        # ---------------------------------------------------------
+
         comparison = self.comparison.compare(
 
             approval_constraints,
 
-            sample_constraints
+            sample_constraints,
+
+            approval_ocr["words"],
+
+            sample_ocr["words"]
 
         )
 
         result["comparison"] = comparison
 
         result["summary"] = comparison["summary"]
-        
+
+        # ---------------------------------------------------------
+        # Logo Check
+        # ---------------------------------------------------------
+
         logo_result = self.logo.verify(
 
             approval_path,
@@ -124,7 +152,11 @@ class LabelCompare:
         )
 
         result["logo"] = logo_result
-        
+
+        # ---------------------------------------------------------
+        # Barcode Check
+        # ---------------------------------------------------------
+
         barcode_result = self.barcode.compare(
 
             approval_path,
@@ -134,39 +166,75 @@ class LabelCompare:
         )
 
         result["barcode"] = barcode_result
-        
-        approval_highlight = self.highlight.generate(
+
+        # ---------------------------------------------------------
+        # Approval Highlight
+        # ---------------------------------------------------------
+
+        approval_name = f"approval_{uuid.uuid4().hex}.png"
+
+        approval_output = os.path.join(
+
+            "uploads",
+
+            approval_name
+
+        )
+
+        self.highlight.generate(
 
             approval_path,
 
-            approval_ocr["words"],
+            comparison["matched"],
 
-            "APPROVAL",
+            comparison["missing"],
 
-            GREEN,
+            comparison["modified"],
 
-            "uploads/approval_highlight.png"
+            comparison["extra"],
+
+            approval_output
 
         )
 
-        result["approval_highlight"] = approval_highlight
-        
-        sample_highlight = self.highlight.generate(
+        result["approval_highlight"] = approval_name
+
+        # ---------------------------------------------------------
+        # Sample Highlight
+        # ---------------------------------------------------------
+
+        sample_name = f"sample_{uuid.uuid4().hex}.png"
+
+        sample_output = os.path.join(
+
+            "uploads",
+
+            sample_name
+
+        )
+
+        self.highlight.generate(
 
             sample_path,
 
-            sample_ocr["words"],
+            comparison["matched"],
 
-            "SAMPLE",
+            comparison["missing"],
 
-            BLUE,
+            comparison["modified"],
 
-            "uploads/sample_highlight.png"
+            comparison["extra"],
+
+            sample_output
 
         )
 
-        result["sample_highlight"] = sample_highlight
-    
+        result["sample_highlight"] = sample_name
+
+        # ---------------------------------------------------------
+        # Report
+        # ---------------------------------------------------------
+
         report = self.report.generate(
 
             comparison,
@@ -180,8 +248,13 @@ class LabelCompare:
         result["report"] = report
 
         result["summary"] = report["summary"]
-        
+
         return result
+
+
+# ---------------------------------------------------------
+# Singleton
+# ---------------------------------------------------------
 
 label_compare = LabelCompare()
 

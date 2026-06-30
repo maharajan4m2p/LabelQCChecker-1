@@ -1,54 +1,56 @@
 """
 =========================================================
 Label QC Checker Pro
-Configuration
+Configuration File
+Version 4.0
 =========================================================
 """
 
 import os
 
 # ---------------------------------------------------------
-# Project Folders
+# Project Paths
 # ---------------------------------------------------------
 
-BASE_DIR = os.path.dirname(
-    os.path.abspath(__file__)
-)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-UPLOAD_FOLDER = os.path.join(
-    BASE_DIR,
-    "uploads"
-)
-
-OUTPUT_FOLDER = os.path.join(
-    BASE_DIR,
-    "output"
-)
-
-REPORT_FOLDER = os.path.join(
-    BASE_DIR,
-    "reports"
-)
-
-# Create folders automatically
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+REPORT_FOLDER = os.path.join(BASE_DIR, "reports")
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 os.makedirs(REPORT_FOLDER, exist_ok=True)
 
 # ---------------------------------------------------------
 # OCR Settings
 # ---------------------------------------------------------
 
-OCR_DPI = 300
+OCR_LANGUAGE = ["en"]
 
-OCR_SCALE = 3
+OCR_GPU = False
 
-OCR_LANGUAGE = "eng"
+OCR_WIDTH = 2200
+
+OCR_HEIGHT = 2200
 
 OCR_PSM = 6
 
 OCR_OEM = 3
+
+# ---------------------------------------------------------
+# Image Processing
+# ---------------------------------------------------------
+
+RESIZE_WIDTH = 2200
+
+CLAHE_CLIP = 2.5
+
+CLAHE_GRID = (8, 8)
+
+BLUR_KERNEL = (3, 3)
+
+THRESH_BLOCKSIZE = 31
+
+THRESH_C = 15
 
 # ---------------------------------------------------------
 # Similarity Thresholds
@@ -56,78 +58,42 @@ OCR_OEM = 3
 
 WORD_MATCH = 95
 
-WORD_MODIFIED = 80
+WORD_MODIFIED = 75
 
-LOGO_MATCH_THERSHOLD=90
+FIELD_MATCH = 90
 
-LOGO_PASS = 90
+LOGO_MATCH = 90
 
-BARCODE_PASS = True
+BARCODE_MATCH = True
 
-OVERALL_PASS = 95
-
-# ---------------------------------------------------------
-# Supported Files
-# ---------------------------------------------------------
-
-ALLOWED_EXTENSIONS = {
-
-    "png",
-
-    "jpg",
-
-    "jpeg",
-
-    "bmp",
-
-    "tif",
-
-    "tiff",
-
-    "pdf"
-
-}
+OVERALL_PASS = 90
 
 # ---------------------------------------------------------
-# Label Types
-# ---------------------------------------------------------
-
-LABEL_TYPES = [
-
-    "CARE_LABEL",
-
-    "CARTON_LABEL",
-
-    "PRICE_TAG",
-
-    "HANG_TAG",
-
-    "POLYBAG_LABEL",
-
-    "SHIPPING_LABEL"
-
-]
-
-# ---------------------------------------------------------
-# Colors
+# Highlight Colors (BGR)
 # ---------------------------------------------------------
 
 GREEN = (0, 255, 0)
 
 RED = (0, 0, 255)
 
-YELLOW = (0, 255, 255)
+ORANGE = (0, 165, 255)
 
 BLUE = (255, 0, 0)
+
+BLACK = (0, 0, 0)
 
 WHITE = (255, 255, 255)
 
 # ---------------------------------------------------------
-# Report
+# Supported Image Types
 # ---------------------------------------------------------
 
-COMPANY_NAME = "Label QC Checker Pro"
-
-REPORT_AUTHOR = "MAHARAJAN"
-
-REPORT_VERSION = "2.0"
+ALLOWED_EXTENSIONS = {
+    "png",
+    "jpg",
+    "jpeg",
+    "bmp",
+    "tif",
+    "tiff",
+    "webp"
+}

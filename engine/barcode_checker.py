@@ -2,249 +2,156 @@
 =========================================================
 Label QC Checker Pro
 Barcode Checker
-Version 2.0
+Version 4.0
 =========================================================
 """
 
-import cv2
-import numpy as np
+import re
 
-from config import *
-
-try:
-    from pyzbar.pyzbar import decode
-    PYZBAR_AVAILABLE = True
-except ImportError:
-    PYZBAR_AVAILABLE = False
+from rapidfuzz import fuzz
 
 
 class BarcodeChecker:
 
     def __init__(self):
 
-        self.available = PYZBAR_AVAILABLE
-        # ---------------------------------------------------------
-# Load Image
+        pass
+
+# ---------------------------------------------------------
+# Extract Barcode Numbers
 # ---------------------------------------------------------
 
-    def load_image(
+    def extract(self, text):
+
+        if text is None:
+
+            return []
+
+        text = str(text)
+
+        barcodes = re.findall(
+
+            r"\b\d{8,20}\b",
+
+            text
+
+        )
+
+        return list(set(barcodes))
+
+# ---------------------------------------------------------
+# Compare Barcode Lists
+# ---------------------------------------------------------
+
+    def compare_list(
 
         self,
 
-        image_path
+        approval_codes,
+
+        sample_codes
 
     ):
 
-        image = cv2.imread(
+        matched = []
 
-            image_path
+        missing = []
 
-        )
+        extra = []
 
-        if image is None:
+        sample_copy = sample_codes.copy()
 
-            raise Exception(
+        for code in approval_codes:
 
-            f"Cannot load image : {image_path}"
+            if code in sample_copy:
 
-        )
-            
-        return image
+                matched.append(code)
+
+                sample_copy.remove(code)
+
+            else:
+
+                missing.append(code)
+
+        extra.extend(sample_copy)
+
+        return {
+
+            "matched": matched,
+
+            "missing": missing,
+
+            "extra": extra
+
+        }
+
 # ---------------------------------------------------------
-# Convert To Gray
-# ---------------------------------------------------------
-
-    def gray(
-
-        self,
-
-        image
-
-)   :
-
-        return cv2.cvtColor(
-
-            image,
-
-            cv2.COLOR_BGR2GRAY
-
-        )
-        
-    # ---------------------------------------------------------
-# Barcode Preprocess
-# ---------------------------------------------------------
-
-    def preprocess(
-
-        self,
-
-        image
-
-    ):
-
-        gray = self.gray(
-
-            image
-
-        )
-
-        gray = cv2.GaussianBlur(
-
-            gray,
-
-            (3, 3),
-
-            0
-
-        )
-
-        return gray
-    # ---------------------------------------------------------
-# Decode Barcode
-# ---------------------------------------------------------
-
-    def decode_barcode(
-
-        self,
-
-        image
-
-    ):
-
-        if not self.available:
-
-            return None
-
-        processed = self.preprocess(
-
-            image
-
-        )
-
-        results = decode(
-
-            processed
-
-        )
-
-        if len(results) == 0:
-
-            return None
-
-        return results[0].data.decode(
-
-            "utf-8"
-
-        
-        )
-        # ---------------------------------------------------------
-# Compare Barcodes
+# Compare OCR Results
 # ---------------------------------------------------------
 
     def compare(
 
         self,
 
-        approval_image,
+        approval_path,
 
-        sample_image
-
-    ):
-
-        approval = self.load_image(
-
-            approval_image
-
-        )
-
-        sample = self.load_image(
-
-            sample_image
-
-        )
-
-        approval_barcode = self.decode_barcode(
-
-            approval
-
-        )
-
-        sample_barcode = self.decode_barcode(
-
-            sample
-
-        )
-
-        if approval_barcode is None or sample_barcode is None:
-
-            return {
-
-                "approval": approval_barcode,
-
-                "sample": sample_barcode,
-
-                "status": "NOT FOUND"
-
-            }
-
-        status = "PASS"
-
-        if approval_barcode != sample_barcode:
-
-            status = "FAIL"
-
-        return {
-
-            "approval": approval_barcode,
-
-            "sample": sample_barcode,
-
-            "status": status
-
-        }
-        # ---------------------------------------------------------
-# Print Result
-# ---------------------------------------------------------
-
-    def print_result(
-
-        self,
-
-        result
+        sample_path
 
     ):
 
-        print()
+        from engine.ocr_engine import ocr_engine
 
-        print("=" * 70)
+        approval = ocr_engine.read(
 
-        print("BARCODE CHECK")
-
-        print("=" * 70)
-
-        print(
-
-            "Approval :",
-
-            result["approval"]
+            approval_path
 
         )
 
-        print(
+        sample = ocr_engine.read(
 
-            "Sample :",
-
-            result["sample"]
+            sample_path
 
         )
 
-        print(
+        approval_codes = self.extract(
 
-            "Status :",
-
-            result["status"]
+            approval["text"]
 
         )
 
-        print("=" * 70)
+        sample_codes = self.extract(
+
+            sample["text"]
+
+        )
+
+        result = self.compare_list(
+
+            approval_codes,
+
+            sample_codes
+
+        )
+
+        result["status"] = (
+
+            "PASS"
+
+            if
+
+            len(result["missing"]) == 0
+
+            and
+
+            len(result["extra"]) == 0
+
+            else
+
+            "FAIL"
+
+        )
+
+        return result
+
+
 barcode_checker = BarcodeChecker()

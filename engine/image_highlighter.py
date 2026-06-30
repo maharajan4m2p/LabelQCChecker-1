@@ -2,12 +2,11 @@
 =========================================================
 Label QC Checker Pro
 Image Highlighter
-Version 2.0
+Version 4.0
 =========================================================
 """
 
 import cv2
-import numpy as np
 
 from config import *
 
@@ -15,39 +14,24 @@ from config import *
 class ImageHighlighter:
 
     def __init__(self):
-
         pass
+
     # ---------------------------------------------------------
-# Load Image
-# ---------------------------------------------------------
+    # Load Image
+    # ---------------------------------------------------------
 
-    def load_image(
+    def load_image(self, image_path):
 
-        self,
-
-        image_path
-
-    ):
-
-        image = cv2.imread(
-
-            image_path
-
-        )
+        image = cv2.imread(image_path)
 
         if image is None:
-
-            raise Exception(
-
-                f"Cannot load image : {image_path}"
-
-            )
+            raise Exception(f"Cannot load image : {image_path}")
 
         return image
-    
-# ---------------------------------------------------------
-# Draw Bounding Box
-# ---------------------------------------------------------
+
+    # ---------------------------------------------------------
+    # Draw Box
+    # ---------------------------------------------------------
 
     def draw_box(
 
@@ -55,13 +39,21 @@ class ImageHighlighter:
 
         image,
 
-        x,y,w,h,
+        bbox,
 
         color,
 
-        text
+        label
 
     ):
+
+        if bbox is None:
+            return image
+
+        x = int(bbox["x"])
+        y = int(bbox["y"])
+        w = int(bbox["width"])
+        h = int(bbox["height"])
 
         cv2.rectangle(
 
@@ -81,9 +73,9 @@ class ImageHighlighter:
 
             image,
 
-            text,
+            label,
 
-            (x, y - 5),
+            (x, max(20, y - 5)),
 
             cv2.FONT_HERSHEY_SIMPLEX,
 
@@ -96,75 +88,10 @@ class ImageHighlighter:
         )
 
         return image
-# ---------------------------------------------------------
-# Highlight OCR Results
-# ---------------------------------------------------------
 
-    def highlight(
-
-        self,
-
-        image,
-
-        words,
-
-        status,
-
-        color
-
-    ):
-
-        output = image.copy()
-
-        for word in words:
-
-            output = self.draw_box(
-
-                output,
-
-                word["x"],
-
-                word["y"],
-
-                word["width"],
-
-                word["height"],
-
-                color,
-
-                status
-
-            )
-
-        return output
     # ---------------------------------------------------------
-# Save Highlighted Image
-# ---------------------------------------------------------
-
-    def save(
-
-        self,
-
-        image,
-
-        output_path
-
-    ):
-
-        cv2.imwrite(
-
-            output_path,
-
-            image
-
-        )
-
-        return output_path
-
-# ---------------------------------------------------------
-# Highlight Complete Result
-# ---------------------------------------------------------
-
+    # Generate Highlighted Image
+    # ---------------------------------------------------------
 
     def generate(
 
@@ -172,41 +99,112 @@ class ImageHighlighter:
 
         image_path,
 
-        words,
+        matched,
 
-        status,
+        missing,
 
-        color,
+        modified,
+
+        extra,
 
         output_path
 
     ):
 
-        image = self.load_image(
+        image = self.load_image(image_path)
 
-            image_path
+        highlighted = image.copy()
 
-        )
+        # -----------------------------
+        # MATCH (GREEN)
+        # -----------------------------
 
-        highlighted = self.highlight(
+        for item in matched:
 
-            image,
+            highlighted = self.draw_box(
 
-            words,
+                highlighted,
 
-            status,
+                item.get("bbox"),
 
-            color
+                GREEN,
 
-        )
+                "MATCH"
 
-        self.save(
+            )
 
-            highlighted,
+        # -----------------------------
+        # MISSING (RED)
+        # -----------------------------
 
-            output_path
+        for item in missing:
+
+            highlighted = self.draw_box(
+
+                highlighted,
+
+                item.get("bbox"),
+
+                RED,
+
+                "MISSING"
+
+            )
+
+        # -----------------------------
+        # MODIFIED (ORANGE)
+        # -----------------------------
+
+        for item in modified:
+
+            bbox = item.get("bbox1")
+
+            if bbox is None:
+                bbox = item.get("bbox")
+
+            highlighted = self.draw_box(
+
+                highlighted,
+
+                bbox,
+
+                ORANGE,
+
+                "MODIFIED"
+
+            )
+
+        # -----------------------------
+        # EXTRA (BLUE)
+        # -----------------------------
+
+        for item in extra:
+
+            highlighted = self.draw_box(
+
+                highlighted,
+
+                item.get("bbox"),
+
+                BLUE,
+
+                "EXTRA"
+
+            )
+
+        cv2.imwrite(
+
+            output_path,
+
+            highlighted
+
         )
 
         return output_path
-    
+
+
+# ---------------------------------------------------------
+# Singleton
+# ---------------------------------------------------------
+
 image_highlighter = ImageHighlighter()

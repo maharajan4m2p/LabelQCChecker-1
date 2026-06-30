@@ -2,91 +2,19 @@
 =========================================================
 Label QC Checker Pro
 Report Generator
-Version 2.0
+Version 4.0
 =========================================================
 """
-
-from config import *
 
 
 class ReportGenerator:
 
     def __init__(self):
-
         pass
-# ---------------------------------------------------------
-# Generate QC Summary
-# ---------------------------------------------------------
 
-    def generate_summary(
-
-        self,
-
-        comparison,
-
-        logo,
-
-        barcode
-
-    ):
-
-        summary = {
-
-            "similarity": comparison["summary"]["similarity"],
-
-            "qc_score": comparison["summary"]["qc_score"],
-
-            "matched": comparison["summary"]["matched"],
-
-            "modified": comparison["summary"]["modified"],
-
-            "missing": comparison["summary"]["missing"],
-
-            "extra": comparison["summary"]["extra"],
-
-            "logo_status": logo["status"],
-
-            "barcode_status": barcode["status"]
-
-        }
-
-        return summary
-# ---------------------------------------------------------
-# Final Verdict
-# ---------------------------------------------------------
-
-    def generate_verdict(
-
-        self,
-
-        summary
-
-    ):
-
-        verdict = "PASS"
-
-        if summary["logo_status"] != "PASS":
-
-            verdict = "FAIL"
-
-        elif summary["barcode_status"] != "PASS":
-
-            verdict = "FAIL"
-
-        elif summary["missing"] > 0:
-
-            verdict = "FAIL"
-
-        elif summary["similarity"] < OVERALL_PASS:
-
-            verdict = "FAIL"
-
-        summary["verdict"] = verdict
-
-        return summary
-# ---------------------------------------------------------
-# Generate Complete Report
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # Generate Final Report
+    # ---------------------------------------------------------
 
     def generate(
 
@@ -94,42 +22,63 @@ class ReportGenerator:
 
         comparison,
 
-        logo,
+        logo_result,
 
-        barcode
+        barcode_result
 
     ):
 
-        summary = self.generate_summary(
+        summary = comparison["summary"]
 
-            comparison,
+        report = {
 
-            logo,
+            "summary": {
 
-            barcode
+                "similarity": summary["similarity"],
 
-        )
+                "qc_score": summary["qc_score"],
 
-        summary = self.generate_verdict(
+                "verdict": summary["verdict"],
 
-            summary
+                "matched": summary["matched"],
 
-        )
+                "modified": summary["modified"],
 
-        return {
+                "missing": summary["missing"],
 
-            "summary": summary,
+                "extra": summary["extra"],
 
-            "comparison": comparison,
+                "total": summary["total"],
 
-            "logo": logo,
+                "logo_status": logo_result["status"],
 
-            "barcode": barcode
+                "logo_similarity": logo_result["similarity"],
+
+                "barcode_status": barcode_result["status"]
+
+            },
+
+            "results": comparison["results"],
+
+            "matched": comparison["matched"],
+
+            "modified": comparison["modified"],
+
+            "missing": comparison["missing"],
+
+            "extra": comparison["extra"],
+
+            "logo": logo_result,
+
+            "barcode": barcode_result
 
         }
-# ---------------------------------------------------------
-# Print Report
-# ---------------------------------------------------------
+
+        return report
+
+    # ---------------------------------------------------------
+    # Print Report
+    # ---------------------------------------------------------
 
     def print_report(
 
@@ -139,17 +88,37 @@ class ReportGenerator:
 
     ):
 
+        summary = report["summary"]
+
+        print("=" * 80)
+
+        print("LABEL QC REPORT")
+
+        print("=" * 80)
+
+        print("Similarity :", summary["similarity"])
+
+        print("QC Score   :", summary["qc_score"])
+
+        print("Verdict    :", summary["verdict"])
+
         print()
 
+        print("Matched    :", summary["matched"])
+
+        print("Modified   :", summary["modified"])
+
+        print("Missing    :", summary["missing"])
+
+        print("Extra      :", summary["extra"])
+
+        print()
+
+        print("Logo       :", summary["logo_status"])
+
+        print("Barcode    :", summary["barcode_status"])
+
         print("=" * 80)
 
-        print("QC REPORT")
 
-        print("=" * 80)
-
-        for key, value in report["summary"].items():
-
-            print(f"{key:20} : {value}")
-
-        print("=" * 80)
 report_generator = ReportGenerator()

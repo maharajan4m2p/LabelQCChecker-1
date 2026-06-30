@@ -2,12 +2,11 @@
 =========================================================
 Label QC Checker Pro
 Logo Checker
-Version 2.0
+Version 4.0
 =========================================================
 """
 
 import cv2
-import numpy as np
 
 from config import *
 
@@ -16,19 +15,13 @@ class LogoChecker:
 
     def __init__(self):
 
-        self.threshold = LOGO_MATCH_THRESHOLD =90
+        self.threshold = LOGO_MATCH
 
     # ---------------------------------------------------------
     # Load Image
     # ---------------------------------------------------------
 
-    def load_image(
-
-        self,
-
-        image_path
-
-    ):
+    def load(self, image_path):
 
         image = cv2.imread(image_path)
 
@@ -41,196 +34,71 @@ class LogoChecker:
             )
 
         return image
-    # ---------------------------------------------------------
-# Convert To Gray
-# ---------------------------------------------------------
 
-    def gray(
+    # ---------------------------------------------------------
+    # Crop Logo Region
+    # ---------------------------------------------------------
+
+    def crop_logo(self, image):
+
+        h, w = image.shape[:2]
+
+        logo = image[
+            0:int(h * 0.20),
+            0:int(w * 0.30)
+        ]
+
+        return logo
+
+    # ---------------------------------------------------------
+    # Compare Logo
+    # ---------------------------------------------------------
+
+    def compare_logo(
 
         self,
 
-        image
+        logo1,
+
+        logo2
 
     ):
 
-        return cv2.cvtColor(
+        gray1 = cv2.cvtColor(
 
-            image,
+            logo1,
 
             cv2.COLOR_BGR2GRAY
 
         )
 
-
-# ---------------------------------------------------------
-# Resize Logo
-# ---------------------------------------------------------
-
-    def resize(
-
-        self,
-
-        image,
-
-        width=200,
-
-        height=200
-
-    ):
-
-        return cv2.resize(
-
-            image,
-
-            (width, height),
-
-            interpolation=cv2.INTER_AREA
-
-        )
-
-
-# ---------------------------------------------------------
-# Preprocess Logo
-# ---------------------------------------------------------
-
-    def preprocess(
-
-        self,
-
-        image
-
-    ):
-
-        gray = self.gray(
-
-            image
-
-        )
-
-        gray = self.resize(
-
-            gray
-
-        )
-
-        return gray
-    # ---------------------------------------------------------
-# Extract Logo Region
-# ---------------------------------------------------------
-
-    def extract_logo(
-
-        self,
-
-        image,
-
-        x=0,
-
-        y=0,
-
-        width=250,
-
-        height=250
-
-    ):
-
-        h, w = image.shape[:2]
-
-        x = max(0, min(x, w))
-
-        y = max(0, min(y, h))
-
-        width = min(width, w - x)
-
-        height = min(height, h - y)
-
-        logo = image[
-
-            y:y+height,
-
-            x:x+width
-
-        ]
-
-        return logo
-
-
-# ---------------------------------------------------------
-# Load And Extract Logo
-# ---------------------------------------------------------
-
-    def get_logo(
-
-        self,
-
-        image_path
-
-    ):
-
-        image = self.load_image(
-
-            image_path
-
-        )
-
-        logo = self.extract_logo(
-
-            image
-
-        )
-
-        logo = self.preprocess(
-
-            logo
-
-        )
-
-        return logo
-    # ---------------------------------------------------------
-# Compare Two Logos
-# ---------------------------------------------------------
-
-    def compare_logos(
-
-    self,
-
-        image1,
-
-        image2
-
-    ):
-
-        logo1 = self.get_logo(
-
-            image1
-
-        )
-
-        logo2 = self.get_logo(
-
-            image2
-
-        )
-
-        logo2 = cv2.resize(
+        gray2 = cv2.cvtColor(
 
             logo2,
+
+            cv2.COLOR_BGR2GRAY
+
+        )
+
+        gray2 = cv2.resize(
+
+            gray2,
 
             (
 
-                logo1.shape[1],
+                gray1.shape[1],
 
-                logo1.shape[0]
+                gray1.shape[0]
 
             )
 
-        )   
+        )
 
         score = cv2.matchTemplate(
 
-            logo1,
+            gray1,
 
-            logo2,
+            gray2,
 
             cv2.TM_CCOEFF_NORMED
 
@@ -238,42 +106,69 @@ class LogoChecker:
 
         similarity = round(
 
-            float(score) * 100,
+            score * 100,
 
             2
 
         )
 
         return similarity
+
     # ---------------------------------------------------------
-# Verify Logo
-# ---------------------------------------------------------
+    # Verify Logo
+    # ---------------------------------------------------------
 
     def verify(
 
         self,
 
-        approval_image,
+        approval_path,
 
-        sample_image
+        sample_path
 
     ):
 
-        similarity = self.compare_logos(
+        approval = self.load(
 
-            approval_image,
-
-            sample_image
+            approval_path
 
         )
 
-        if similarity >= self.threshold:
+        sample = self.load(
 
-            status = "PASS"
+            sample_path
 
-        else:
+        )
 
-            status = "FAIL"
+        logo1 = self.crop_logo(
+
+            approval
+
+        )
+
+        logo2 = self.crop_logo(
+
+            sample
+
+        )
+
+        similarity = self.compare_logo(
+
+            logo1,
+
+            logo2
+
+        )
+
+        status = (
+
+            "PASS"
+
+            if similarity >= self.threshold
+
+            else "FAIL"
+
+        )
 
         return {
 
@@ -282,47 +177,6 @@ class LogoChecker:
             "status": status
 
         }
-
-
-# ---------------------------------------------------------
-# Print Logo Result
-# ---------------------------------------------------------
-
-    def print_result(
-
-        self,
-
-        result
-
-    ):
-
-        print()
-
-        print("=" * 70)
-
-        print("LOGO VERIFICATION")
-
-        print("=" * 70)
-
-        print(
-
-            "Similarity :",
-
-            result["similarity"],
-
-            "%"
-
-        )
-
-        print(
-
-            "Status :",
-
-            result["status"]
-
-        )
-
-        print("=" * 70)
 
 
 logo_checker = LogoChecker()

@@ -2,7 +2,7 @@
 =========================================================
 Label QC Checker Pro
 Constraint Detector
-Version 2.0
+Version 4.0
 =========================================================
 """
 
@@ -15,8 +15,6 @@ from config import *
 class ConstraintDetector:
 
     def __init__(self):
-
-        # Standard Constraint Fields
 
         self.fields = [
 
@@ -51,93 +49,91 @@ class ConstraintDetector:
 
         ]
 
-        # Regex Patterns
-
         self.patterns = {
 
             "BUYER":
-            r"BUYER\s*[:\-]?\s*(.+)",
+            r"BUYER\s*[:\-]?\s*([^\n\r]+)",
 
             "BUYER CODE":
-            r"BUYER\s*CODE\s*[:\-]?\s*(.+)",
+            r"BUYER\s*CODE\s*[:\-]?\s*([^\n\r]+)",
 
             "VENDOR":
-            r"VENDOR\s*[:\-]?\s*(.+)",
+            r"VENDOR\s*[:\-]?\s*([^\n\r]+)",
 
             "VENDOR CODE":
-            r"VENDOR\s*CODE\s*[:\-]?\s*(.+)",
+            r"VENDOR\s*CODE\s*[:\-]?\s*([^\n\r]+)",
 
             "PO NO":
-            r"P\.?\s*O\.?\s*NO\.?\s*[:\-]?\s*(.+)",
+            r"P\.?\s*O\.?\s*NO\.?\s*[:\-]?\s*([^\n\r]+)",
 
             "STYLE NO":
-            r"STYLE\s*NO\.?\s*[:\-]?\s*(.+)",
+            r"STYLE\s*NO\.?\s*[:\-]?\s*([^\n\r]+)",
 
             "DESCRIPTION":
-            r"DESCRIPTION\s*[:\-]?\s*(.+)",
+            r"DESCRIPTION\s*[:\-]?\s*([^\n\r]+)",
 
             "COLOR":
-            r"COLOR\s*[:\-]?\s*(.+)",
+            r"COLOR\s*[:\-]?\s*([^\n\r]+)",
 
             "SIZE":
-            r"SIZE\s*[:\-]?\s*(.+)",
+            r"SIZE\s*[:\-]?\s*([^\n\r]+)",
 
             "SIZE ASSORTMENT":
-            r"SIZE\s*ASSORTMENT\s*[:\-]?\s*(.+)",
+            r"SIZE\s*ASSORTMENT\s*[:\-]?\s*([^\n\r]+)",
 
             "TOTAL QTY":
-            r"TOTAL\s*QTY\.?\s*[:\-]?\s*(.+)",
+            r"TOTAL\s*QTY\.?\s*[:\-]?\s*([^\n\r]+)",
 
             "MEASUREMENT":
-            r"MEASUREMENT\s*[:\-]?\s*(.+)",
+            r"MEASUREMENT\s*[:\-]?\s*([^\n\r]+)",
 
             "VOLUME":
-            r"VOLUME\s*[:\-]?\s*(.+)",
+            r"VOLUME\s*[:\-]?\s*([^\n\r]+)",
 
             "CARTON NO":
-            r"CARTON\s*NO\.?\s*[:\-]?\s*(.+)",
+            r"CARTON\s*NO\.?\s*[:\-]?\s*([^\n\r]+)",
 
             "CARTON TYPE":
-            r"CARTON\s*TYPE\s*[:\-]?\s*(.+)",
+            r"CARTON\s*TYPE\s*[:\-]?\s*([^\n\r]+)",
 
             "NET WEIGHT":
-            r"NET\s*WEIGHT\s*[:\-]?\s*(.+)",
+            r"NET\s*WEIGHT\s*[:\-]?\s*([^\n\r]+)",
 
             "GROSS WEIGHT":
-            r"GROSS\s*WEIGHT\s*[:\-]?\s*(.+)",
+            r"GROSS\s*WEIGHT\s*[:\-]?\s*([^\n\r]+)",
 
             "DESTINATION":
-            r"DESTINATION\s*[:\-]?\s*(.+)",
+            r"DESTINATION\s*[:\-]?\s*([^\n\r]+)",
 
             "SHIP DATE":
-            r"SHIP\s*DATE\s*[:\-]?\s*(.+)",
+            r"SHIP\s*DATE\s*[:\-]?\s*([^\n\r]+)",
 
             "SEASON":
-            r"SEASON\s*[:\-]?\s*(.+)",
+            r"SEASON\s*[:\-]?\s*([^\n\r]+)",
 
             "ITEM NO":
-            r"ITEM\s*NO\.?\s*[:\-]?\s*(.+)",
+            r"ITEM\s*NO\.?\s*[:\-]?\s*([^\n\r]+)",
 
             "BARCODE":
-            r"BARCODE\s*[:\-]?\s*(.+)",
+            r"BARCODE\s*[:\-]?\s*([^\n\r]+)",
 
             "UPC":
-            r"UPC\s*[:\-]?\s*(.+)",
+            r"UPC\s*[:\-]?\s*([^\n\r]+)",
 
             "EAN":
-            r"EAN\s*[:\-]?\s*(.+)",
+            r"EAN\s*[:\-]?\s*([^\n\r]+)",
 
             "SKU":
-            r"SKU\s*[:\-]?\s*(.+)",
+            r"SKU\s*[:\-]?\s*([^\n\r]+)",
 
             "CUSTOMER":
-            r"CUSTOMER\s*[:\-]?\s*(.+)",
+            r"CUSTOMER\s*[:\-]?\s*([^\n\r]+)",
 
             "COUNTRY OF ORIGIN":
-            r"COUNTRY\s*OF\s*ORIGIN\s*[:\-]?\s*(.+)",
+            r"COUNTRY\s*OF\s*ORIGIN\s*[:\-]?\s*([^\n\r]+)",
 
             "MADE IN":
-            r"MADE\s*IN\s*[:\-]?\s*(.+)"
+            r"MADE\s*IN\s*[:\-]?\s*([^\n\r]+)"
 
         }
         # ---------------------------------------------------------
@@ -155,13 +151,21 @@ class ConstraintDetector:
 
         text = text.replace("\r", "")
 
-        text = re.sub(r"\s+", " ", text)
+        lines = []
 
-        return text.strip()
+        for line in text.split("\n"):
+
+            line = re.sub(r"\s+", " ", line).strip()
+
+            if line:
+
+                lines.append(line)
+
+        return "\n".join(lines)
 
 
 # ---------------------------------------------------------
-# Clean Extracted Value
+# Clean Value
 # ---------------------------------------------------------
 
     def clean(self, value):
@@ -170,6 +174,8 @@ class ConstraintDetector:
             return ""
 
         value = str(value)
+
+        value = value.replace("\r", "")
 
         value = value.replace("\n", " ")
 
@@ -202,7 +208,7 @@ class ConstraintDetector:
 
 
 # ---------------------------------------------------------
-# Extract Constraints Using Regex
+# Extract Constraints
 # ---------------------------------------------------------
 
     def extract_constraints(
@@ -216,6 +222,12 @@ class ConstraintDetector:
         text = self.normalize(text)
 
         constraints = {}
+
+        print("=" * 80)
+        print("OCR TEXT")
+        print("=" * 80)
+        print(text)
+        print("=" * 80)
 
         for field, pattern in self.patterns.items():
 
@@ -231,15 +243,19 @@ class ConstraintDetector:
 
             if match:
 
-                constraints[field] = self.clean(
+                value = self.clean(
 
                     match.group(1)
 
                 )
 
+                constraints[field] = value
+
+                print(f"{field:25} -> {value}")
+
         return constraints
     # ---------------------------------------------------------
-# Dynamic Key-Value Detection
+# Dynamic Key : Value Detection
 # ---------------------------------------------------------
 
     def detect_dynamic_constraints(
@@ -252,53 +268,48 @@ class ConstraintDetector:
 
         text = self.normalize(text)
 
-        lines = text.splitlines()
+        lines = text.split("\n")
 
-        dynamic = {}
+        constraints = {}
 
         for line in lines:
 
             line = line.strip()
 
             if len(line) < 3:
-
                 continue
 
-            # KEY : VALUE
+        # KEY : VALUE
 
             if ":" in line:
 
-                key, value = line.split(":", 1)
+                parts = line.split(":", 1)
 
-                key = self.clean(key)
-
-                value = self.clean(value)
-
-                if key and value:
-
-                    dynamic[key] = value
-
-            # KEY - VALUE
+        # KEY - VALUE
 
             elif "-" in line:
 
                 parts = line.split("-", 1)
 
-                if len(parts) == 2:
+            else:
+                continue
 
-                    key = self.clean(parts[0])
+            if len(parts) != 2:
+                continue
 
-                    value = self.clean(parts[1])
+            key = self.clean(parts[0])
 
-                    if key and value:
+            value = self.clean(parts[1])
 
-                        dynamic[key] = value
+            if key != "" and value != "":
 
-        return dynamic
+                constraints[key] = value
+
+        return constraints
 
 
 # ---------------------------------------------------------
-# Merge Regex + Dynamic Constraints
+# Merge Standard + Dynamic Constraints
 # ---------------------------------------------------------
 
     def get_basic_constraints(
@@ -309,7 +320,7 @@ class ConstraintDetector:
 
     ):
 
-        constraints = self.extract_constraints(
+        standard = self.extract_constraints(
 
             text
 
@@ -323,85 +334,29 @@ class ConstraintDetector:
 
         for key, value in dynamic.items():
 
-            if key not in constraints:
+            if key not in standard:
 
-                constraints[key] = value
+                standard[key] = value
 
-        return constraints
+        return standard
     # ---------------------------------------------------------
 # Barcode Detection
 # ---------------------------------------------------------
 
-    def extract_barcodes(
-
-        self,
-
-        text
-
-    ):
+    def extract_barcodes(self, text):
 
         text = self.normalize(text)
 
-        barcodes = re.findall(
-
-            r"\b\d{8,20}\b",
-
-            text
-
-        )
-
-        return list(set(barcodes))
-
-
-# ---------------------------------------------------------
-# Country Detection
-# ---------------------------------------------------------
-
-    def extract_country(
-
-        self,
-
-        text
-
-    ):
-
-        countries = [
-
-            "BANGLADESH",
-            "INDIA",
-            "CHINA",
-            "VIETNAM",
-            "PAKISTAN",
-            "CAMBODIA",
-            "INDONESIA",
-            "SRI LANKA",
-            "MYANMAR",
-            "TURKEY"
-
-        ]
-
-        text = self.normalize(text)
-
-        for country in countries:
-
-            if country in text:
-
-                return country
-
-        return ""
+        return list(set(
+            re.findall(r"\b\d{8,20}\b", text)
+        ))
 
 
 # ---------------------------------------------------------
 # Date Detection
 # ---------------------------------------------------------
 
-    def extract_dates(
-
-        self,
-
-        text
-
-    ):
+    def extract_dates(self, text):
 
         text = self.normalize(text)
 
@@ -421,13 +376,7 @@ class ConstraintDetector:
 
             dates.extend(
 
-                re.findall(
-
-                    pattern,
-
-                    text
-
-                )
+                re.findall(pattern, text)
 
             )
 
@@ -435,170 +384,137 @@ class ConstraintDetector:
 
 
 # ---------------------------------------------------------
-# Quantity Detection
+# Country Detection
 # ---------------------------------------------------------
 
-    def extract_quantities(
+    def extract_country(self, text):
 
-        self,
+        countries = [
 
-        text
+            "INDIA",
+            "BANGLADESH",
+            "CHINA",
+            "VIETNAM",
+            "PAKISTAN",
+            "SRI LANKA",
+            "CAMBODIA",
+            "INDONESIA",
+            "MYANMAR",
+            "TURKEY"
 
-    ):
+        ]
 
         text = self.normalize(text)
 
-        quantities = re.findall(
+        for country in countries:
+
+            if country in text:
+
+                return country
+
+        return ""
+    # ---------------------------------------------------------
+# Quantity Detection
+# ---------------------------------------------------------
+
+    def extract_quantities(self, text):
+
+        text = self.normalize(text)
+
+        return re.findall(
 
             r"\b\d+\b",
 
             text
 
-        )
-
-        return quantities
+    )
 
 
 # ---------------------------------------------------------
 # Weight Detection
 # ---------------------------------------------------------
 
-    def extract_weights(
-
-        self,
-
-        text
-
-    ):
+    def extract_weights(self, text):
 
         text = self.normalize(text)
 
-        weights = re.findall(
+        return re.findall(
 
-            r"\d+(?:\.\d+)?\s*(?:KG|KGS|G|GRAM|GRAMS|LB|LBS)",
+            r"\d+(?:\.\d+)?\s*(?:KG|KGS|GRAM|GRAMS|LB|LBS|G)",
 
-            text
+        text
 
         )
-
-        return weights
 
 
 # ---------------------------------------------------------
 # Size Detection
 # ---------------------------------------------------------
 
-    def extract_sizes(
-
-        self,
-
-        text
-
-    ):
+    def extract_sizes(self, text):
 
         text = self.normalize(text)
 
-        sizes = re.findall(
+        return list(set(
 
-            r"\b(XXS|XS|S|M|L|XL|XXL|XXXL)\b",
+            re.findall(
+
+                r"\b(XXS|XS|S|M|L|XL|XXL|XXXL)\b",
 
             text
 
         )
 
-        return list(set(sizes))
-    # ---------------------------------------------------------
+    ))
+        # ---------------------------------------------------------
 # Get All Constraints
 # ---------------------------------------------------------
 
-    def get_constraints(
+    def get_constraints(self, text):
 
-        self,
+        constraints = self.get_basic_constraints(text)
 
-        text
-
-    ):
-
-        constraints = self.get_basic_constraints(
-
-            text
-
-        )
-
-        country = self.extract_country(
-
-            text
-
-        )
+        country = self.extract_country(text)
 
         if country:
 
             constraints["COUNTRY"] = country
 
-        barcodes = self.extract_barcodes(
-
-            text
-
-        )
+        barcodes = self.extract_barcodes(text)
 
         if barcodes:
 
             constraints["BARCODES"] = barcodes
 
-        dates = self.extract_dates(
-
-            text
-
-        )
+        dates = self.extract_dates(text)
 
         if dates:
 
             constraints["DATES"] = dates
 
-        quantities = self.extract_quantities(
-
-            text
-
-        )
+        quantities = self.extract_quantities(text)
 
         if quantities:
 
             constraints["QUANTITIES"] = quantities
 
-        weights = self.extract_weights(
-
-            text
-
-        )
+        weights = self.extract_weights(text)
 
         if weights:
 
             constraints["WEIGHTS"] = weights
 
-        sizes = self.extract_sizes(
-
-            text
-
-        )
+        sizes = self.extract_sizes(text)
 
         if sizes:
 
             constraints["SIZES"] = sizes
 
-        return constraints
-
-
-# ---------------------------------------------------------
+        return constraints# ---------------------------------------------------------
 # Print Constraints
 # ---------------------------------------------------------
 
-    def print_constraints(
-
-        self,
-
-        constraints
-
-    ):
+    def print_constraints(self, constraints):
 
         print()
 
@@ -622,7 +538,7 @@ class ConstraintDetector:
 
 
 # ---------------------------------------------------------
-# Singleton Object
+# Singleton
 # ---------------------------------------------------------
 
 constraint_detector = ConstraintDetector()
