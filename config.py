@@ -26,7 +26,7 @@ os.makedirs(TEMP_FOLDER, exist_ok=True)
 # Upload Settings
 # ---------------------------------------------------------
 
-MAX_UPLOAD_SIZE = 20 * 1024 * 1024      # 20 MB
+MAX_UPLOAD_SIZE = 15 * 1024 * 1024      # 15 MB
 
 MAX_SAMPLE_FILES = 100
 

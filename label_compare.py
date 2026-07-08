@@ -18,13 +18,12 @@ from config import *
 
 from engine.pdf_processor import PDFProcessor
 from engine.excel_processor import ExcelProcessor
-
 from engine.ocr_engine import ocr_engine
+from engine.logo_checker import logo_checker
+from engine.barcode_checker import barcode_checker
 from engine.label_detector import label_detector
 from engine.constraint_detector import constraint_detector
 from engine.comparison_engine import comparison_engine
-from engine.logo_checker import logo_checker
-from engine.barcode_checker import barcode_checker
 from engine.image_highlighter import image_highlighter
 from engine.report_generator import report_generator
 
@@ -122,6 +121,9 @@ def prepare_file(file_path):
 # ---------------------------------------------------------
 
 class LabelCompare:
+
+            
+            
 
     def __init__(self):
 

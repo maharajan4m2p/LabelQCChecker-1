@@ -60,4 +60,4 @@ HEALTHCHECK --interval=30s \
             --retries=3 \
 CMD sh -c "curl --fail http://localhost:$PORT/health || exit 1"
 
-CMD ["sh", "-c", "gunicorn --workers 2 --threads 2 --timeout 300 --bind 0.0.0.0:$PORT app:app"]
+CMD ["gunicorn","--workers","1","--threads","1","--preload","--timeout","300","--bind","0.0.0.0:$PORT","app:app"]

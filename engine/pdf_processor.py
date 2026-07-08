@@ -1,4 +1,5 @@
 import fitz  # PyMuPDF
+import gc
 from PIL import Image
 
 
@@ -35,10 +36,10 @@ class PDFProcessor:
             )
 
             images.append(img)
-
+            del img
             del pix
             del page
-
+            gc.collect()
         doc.close()
 
         return images
