@@ -3,103 +3,180 @@
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1">
 
-    <title>Label QC Report</title>
+<title>Label QC Report</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet">
 
-    <style>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet">
 
-        body{
+<style>
 
-            background:#f5f7fb;
+body{
 
-        }
+    background:#f4f7fb;
 
-        .card{
+}
 
-            margin-top:20px;
+.card{
 
-            border-radius:12px;
+    border-radius:12px;
 
-        }
+    margin-top:20px;
 
-        .table th{
+    box-shadow:0 3px 12px rgba(0,0,0,.08);
 
-            background:#0d6efd;
+}
 
-            color:white;
+.card-header{
 
-        }
+    font-weight:bold;
 
-        img{
+}
 
-            width:100%;
+.table th{
 
-            border:1px solid #ddd;
+    background:#0d6efd;
 
-            border-radius:8px;
+    color:white;
 
-        }
+}
 
-        .pass{
+img{
 
-            color:green;
+    width:100%;
 
-            font-weight:bold;
+    border-radius:10px;
 
-        }
+    border:1px solid #ddd;
 
-        .fail{
+}
 
-            color:red;
+.pass{
 
-            font-weight:bold;
+    color:#198754;
 
-        }
+    font-weight:bold;
 
-    </style>
+}
+
+.fail{
+
+    color:#dc3545;
+
+    font-weight:bold;
+
+}
+
+.review{
+
+    color:#fd7e14;
+
+    font-weight:bold;
+
+}
+
+.summary-card{
+
+    text-align:center;
+
+    padding:15px;
+
+    border-radius:10px;
+
+    color:white;
+
+}
+
+.summary-card h3{
+
+    margin-bottom:0;
+
+}
+
+.summary-card p{
+
+    margin-bottom:0;
+
+}
+
+</style>
 
 </head>
 
 <body>
 
-<div class="container mt-4">
+<div class="container py-4">
 
-<!-- ================================================= -->
-<!-- Approval Label -->
-<!-- ================================================= -->
+<div class="text-center mb-4">
 
-<div class="card mb-4">
+<h1>
 
-    <div class="card-header bg-dark text-white">
+<i class="bi bi-patch-check-fill text-primary"></i>
 
-        <h3>Approval Label</h3>
+Label QC Checker Pro
 
-    </div>
+</h1>
 
-    <div class="card-body text-center">
+<p class="text-muted">
 
-        <img
-            src="{{ url_for('uploads', filename=approval_filename) }}"
-            class="img-fluid"
-            style="max-width:500px;">
+Image • PDF • Excel • CSV Comparison Report
 
-    </div>
+</p>
 
 </div>
 
 <!-- ================================================= -->
-<!-- Start Loop -->
+<!-- Approval File -->
 <!-- ================================================= -->
+
+<div class="card">
+
+<div class="card-header bg-dark text-white">
+
+Approval File
+
+</div>
+
+<div class="card-body text-center">
+
+{% if approval_filename.lower().endswith(('.png','.jpg','.jpeg','.bmp','.tif','.tiff','.webp')) %}
+
+<img
+
+src="{{ url_for('uploads', filename=approval_filename) }}"
+
+style="max-width:600px;"
+
+>
+
+{% else %}
+
+<div class="alert alert-info">
+
+<b>{{ approval_filename }}</b>
+
+<br>
+
+Preview not available for this file type.
+
+</div>
+
+{% endif %}
+
+</div>
+
+</div>
 
 {% for result in results %}
 
-<div class="card mb-5">
+<div class="card">
 
 <div class="card-header bg-primary text-white">
 
@@ -109,7 +186,7 @@ Sample {{ loop.index }}
 
 </h3>
 
-<p>
+<p class="mb-0">
 
 {{ result.sample_filename }}
 
@@ -119,19 +196,280 @@ Sample {{ loop.index }}
 
 <div class="card-body">
 
-<h2 class="text-center">
+<!-- ================================================= -->
+<!-- Summary Cards -->
+<!-- ================================================= -->
 
-Label QC Checker Pro
+<div class="row g-3">
 
-</h2>
+<div class="col-md-3">
 
-<hr>
+<div class="summary-card bg-success">
+
+<h3>
+
+{{ result.summary.similarity }}%
+
+</h3>
+
+<p>
+
+Similarity
+
+</p>
+
+</div>
+
+</div>
+
+<div class="col-md-3">
+
+<div class="summary-card bg-info">
+
+<h3>
+
+{{ result.summary.qc_score }}
+
+</h3>
+
+<p>
+
+QC Score
+
+</p>
+
+</div>
+
+</div>
+
+<div class="col-md-3">
+
+<div class="summary-card bg-warning text-dark">
+
+<h3>
+
+{{ result.summary.matched }}
+
+</h3>
+
+<p>
+
+Matched
+
+</p>
+
+</div>
+
+</div>
+
+<div class="col-md-3">
+
+<div class="summary-card bg-danger">
+
+<h3>
+
+{{ result.summary.missing }}
+
+</h3>
+
+<p>
+
+Missing
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+<br>
+
+<table class="table table-bordered">
+
+<tr>
+
+<th width="35%">
+
+Overall Verdict
+
+</th>
+
+<td>
+
+{% if result.summary.verdict=="PASS" %}
+
+<span class="pass">
+
+PASS
+
+</span>
+
+{% elif result.summary.verdict=="REVIEW" %}
+
+<span class="review">
+
+REVIEW
+
+</span>
+
+{% else %}
+
+<span class="fail">
+
+FAIL
+
+</span>
+
+{% endif %}
+
+</td>
+
+</tr>
+
+<tr>
+
+<th>
+
+Logo Check
+
+</th>
+
+<td>
+
+{{ result.logo.status }}
+
+</td>
+
+</tr>
+
+<tr>
+
+<th>
+
+Barcode Check
+
+</th>
+
+<td>
+
+{{ result.barcode.status }}
+
+</td>
+
+</tr>
+
+</table>
+<!-- ================================================= -->
+<!-- Highlighted Images -->
+<!-- ================================================= -->
+
+<div class="card mt-4">
+
+    <div class="card-header bg-dark text-white">
+
+        <i class="bi bi-images"></i>
+
+        Highlighted Comparison
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <!-- Approval -->
+
+            <div class="col-lg-6 mb-3">
+
+                <h5 class="text-center">
+
+                    Approval Highlight
+
+                </h5>
+
+                {% if result.approval_highlight %}
+
+                <img
+
+                    src="{{ url_for('uploads', filename=result.approval_highlight) }}"
+
+                    class="img-fluid"
+
+                >
+
+                {% else %}
+
+                <div class="alert alert-secondary text-center">
+
+                    No Highlight Available
+
+                    <br>
+
+                    (Excel / CSV File)
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+            <!-- Sample -->
+
+            <div class="col-lg-6 mb-3">
+
+                <h5 class="text-center">
+
+                    Sample Highlight
+
+                </h5>
+
+                {% if result.sample_highlight %}
+
+                <img
+
+                    src="{{ url_for('uploads', filename=result.sample_highlight) }}"
+
+                    class="img-fluid"
+
+                >
+
+                {% else %}
+
+                <div class="alert alert-secondary text-center">
+
+                    No Highlight Available
+
+                    <br>
+
+                    (Excel / CSV File)
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================================================= -->
+<!-- Logo & Barcode -->
+<!-- ================================================= -->
+
+<div class="row mt-4">
+
+<div class="col-md-6">
 
 <div class="card">
 
-<div class="card-header bg-primary text-white">
+<div class="card-header bg-success text-white">
 
-Overall QC Report
+Logo Verification
 
 </div>
 
@@ -141,57 +479,29 @@ Overall QC Report
 
 <tr>
 
-<th width="40%">
-
-OCR Similarity
-
-</th>
-
-<td>
-
-{{ result.summary.similarity }} %
-
-</td>
-
-</tr>
-
-<tr>
-
-<th>
-
-QC Score
-
-</th>
-
-<td>
-
-{{ result.summary.qc_score }} %
-
-</td>
-
-</tr>
-
-<tr>
-
-<th>
-
-Logo Status
-
-</th>
+<th>Status</th>
 
 <td>
 
 {% if result.logo.status=="PASS" %}
 
-<span class="pass">
+<span class="badge bg-success">
 
 PASS
 
 </span>
 
+{% elif result.logo.status=="Skipped" %}
+
+<span class="badge bg-secondary">
+
+Skipped
+
+</span>
+
 {% else %}
 
-<span class="fail">
+<span class="badge bg-danger">
 
 FAIL
 
@@ -205,115 +515,11 @@ FAIL
 
 <tr>
 
-<th>
-
-Barcode Status
-
-</th>
+<th>Similarity</th>
 
 <td>
 
-{% if result.barcode.status=="PASS" %}
-
-<span class="pass">
-
-PASS
-
-</span>
-
-{% else %}
-
-<span class="fail">
-
-FAIL
-
-</span>
-
-{% endif %}
-
-</td>
-
-</tr>
-
-<tr>
-
-<th>
-
-Matched Constraints
-
-</th>
-
-<td>
-
-{{ result.summary.matched }}
-
-</td>
-
-</tr>
-
-<tr>
-
-<th>
-
-Modified Constraints
-
-</th>
-
-<td>
-
-{{ result.summary.modified }}
-
-</td>
-
-</tr>
-
-<tr>
-
-<th>
-
-Missing Constraints
-
-</th>
-
-<td>
-
-{{ result.summary.missing }}
-
-</td>
-
-</tr>
-
-<tr>
-
-<th>
-
-Extra Constraints
-
-</th>
-
-<td>
-
-{{ result.summary.extra }}
-
-</td>
-
-</tr>
-
-<tr>
-
-<th>
-
-Final Verdict
-
-</th>
-
-<td>
-
-<b>
-
-{{ result.summary.verdict }}
-
-</b>
+{{ result.logo.score if result.logo.score is defined else result.logo.similarity }} %
 
 </td>
 
@@ -324,13 +530,121 @@ Final Verdict
 </div>
 
 </div>
-<!-- ===================================================== -->
+
+</div>
+
+<div class="col-md-6">
+
+<div class="card">
+
+<div class="card-header bg-info text-white">
+
+Barcode Verification
+
+</div>
+
+<div class="card-body">
+
+<table class="table table-bordered">
+
+<tr>
+
+<th>Status</th>
+
+<td>
+
+{% if result.barcode.status=="PASS" %}
+
+<span class="badge bg-success">
+
+PASS
+
+</span>
+
+{% elif result.barcode.status=="REVIEW" %}
+
+<span class="badge bg-warning text-dark">
+
+REVIEW
+
+</span>
+
+{% elif result.barcode.status=="Skipped" %}
+
+<span class="badge bg-secondary">
+
+Skipped
+
+</span>
+
+{% else %}
+
+<span class="badge bg-danger">
+
+FAIL
+
+</span>
+
+{% endif %}
+
+</td>
+
+</tr>
+
+<tr>
+
+<th>Matched</th>
+
+<td>
+
+{{ result.barcode.matched_count }}
+
+</td>
+
+</tr>
+
+<tr>
+
+<th>Missing</th>
+
+<td>
+
+{{ result.barcode.missing_count }}
+
+</td>
+
+</tr>
+
+<tr>
+
+<th>Extra</th>
+
+<td>
+
+{{ result.barcode.extra_count }}
+
+</td>
+
+</tr>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<!-- ================================================= -->
 <!-- Matched Constraints -->
-<!-- ===================================================== -->
+<!-- ================================================= -->
 
 <div class="card mt-4">
 
     <div class="card-header bg-success text-white">
+
+        <i class="bi bi-check-circle-fill"></i>
 
         Matched Constraints
 
@@ -338,13 +652,23 @@ Final Verdict
 
     <div class="card-body">
 
-        <table class="table table-bordered table-striped">
+        {% if result.report.matched|length == 0 %}
+
+        <div class="alert alert-light">
+
+            No matched constraints found.
+
+        </div>
+
+        {% else %}
+
+        <table class="table table-bordered table-striped table-hover">
 
             <thead>
 
                 <tr>
 
-                    <th>Field</th>
+                    <th width="25%">Field</th>
 
                     <th>Approval</th>
 
@@ -374,18 +698,21 @@ Final Verdict
 
         </table>
 
+        {% endif %}
+
     </div>
 
 </div>
 
-
-<!-- ===================================================== -->
+<!-- ================================================= -->
 <!-- Missing Constraints -->
-<!-- ===================================================== -->
+<!-- ================================================= -->
 
 <div class="card mt-4">
 
     <div class="card-header bg-danger text-white">
+
+        <i class="bi bi-x-circle-fill"></i>
 
         Missing Constraints
 
@@ -393,13 +720,23 @@ Final Verdict
 
     <div class="card-body">
 
-        <table class="table table-bordered table-striped">
+        {% if result.report.missing|length == 0 %}
+
+        <div class="alert alert-light">
+
+            No missing constraints.
+
+        </div>
+
+        {% else %}
+
+        <table class="table table-bordered table-striped table-hover">
 
             <thead>
 
                 <tr>
 
-                    <th>Field</th>
+                    <th width="30%">Field</th>
 
                     <th>Approval Value</th>
 
@@ -425,18 +762,21 @@ Final Verdict
 
         </table>
 
+        {% endif %}
+
     </div>
 
 </div>
 
-
-<!-- ===================================================== -->
+<!-- ================================================= -->
 <!-- Modified Constraints -->
-<!-- ===================================================== -->
+<!-- ================================================= -->
 
 <div class="card mt-4">
 
     <div class="card-header bg-warning">
+
+        <i class="bi bi-pencil-square"></i>
 
         Modified Constraints
 
@@ -444,13 +784,23 @@ Final Verdict
 
     <div class="card-body">
 
-        <table class="table table-bordered table-striped">
+        {% if result.report.modified|length == 0 %}
+
+        <div class="alert alert-light">
+
+            No modified constraints.
+
+        </div>
+
+        {% else %}
+
+        <table class="table table-bordered table-striped table-hover">
 
             <thead>
 
                 <tr>
 
-                    <th>Field</th>
+                    <th width="25%">Field</th>
 
                     <th>Approval</th>
 
@@ -480,18 +830,21 @@ Final Verdict
 
         </table>
 
+        {% endif %}
+
     </div>
 
 </div>
 
-
-<!-- ===================================================== -->
+<!-- ================================================= -->
 <!-- Extra Constraints -->
-<!-- ===================================================== -->
+<!-- ================================================= -->
 
 <div class="card mt-4">
 
     <div class="card-header bg-info text-white">
+
+        <i class="bi bi-plus-circle-fill"></i>
 
         Extra Constraints
 
@@ -499,13 +852,23 @@ Final Verdict
 
     <div class="card-body">
 
-        <table class="table table-bordered table-striped">
+        {% if result.report.extra|length == 0 %}
+
+        <div class="alert alert-light">
+
+            No extra constraints.
+
+        </div>
+
+        {% else %}
+
+        <table class="table table-bordered table-striped table-hover">
 
             <thead>
 
                 <tr>
 
-                    <th>Field</th>
+                    <th width="30%">Field</th>
 
                     <th>Sample Value</th>
 
@@ -521,7 +884,11 @@ Final Verdict
 
                     <td>{{ item.field }}</td>
 
-                    <td>{{ item.sample }}</td>
+                    <td>
+
+                        {{ item.value if item.value is defined else item.sample }}
+
+                    </td>
 
                 </tr>
 
@@ -531,74 +898,20 @@ Final Verdict
 
         </table>
 
-    </div>
-
-</div>
-<!-- ===================================================== -->
-<!-- Highlighted Images -->
-<!-- ===================================================== -->
-
-<div class="card mt-4">
-
-    <div class="card-header bg-dark text-white">
-
-        Highlighted Label Comparison
-
-    </div>
-
-    <div class="card-body">
-
-        <div class="row">
-
-            <div class="col-md-6">
-
-                <h5 class="text-center">
-
-                    Approval Label
-
-                </h5>
-
-                <img
-
-                    src="{{ url_for('uploads', filename=result.approval_highlight) }}"
-
-                    class="img-fluid border"
-
-                >
-
-            </div>
-
-            <div class="col-md-6">
-
-                <h5 class="text-center">
-
-                    Sample Label
-
-                </h5>
-
-                <img
-
-                    src="{{ url_for('uploads', filename=result.sample_highlight) }}"
-
-                    class="img-fluid border"
-
-                >
-
-            </div>
-
-        </div>
+        {% endif %}
 
     </div>
 
 </div>
-
-<!-- ===================================================== -->
+<!-- ================================================= -->
 <!-- Detailed Comparison -->
-<!-- ===================================================== -->
+<!-- ================================================= -->
 
 <div class="card mt-4">
 
     <div class="card-header bg-secondary text-white">
+
+        <i class="bi bi-table"></i>
 
         Detailed Comparison
 
@@ -606,7 +919,19 @@ Final Verdict
 
     <div class="card-body">
 
-        <table class="table table-bordered table-hover">
+        {% if result.comparison.results|length == 0 %}
+
+        <div class="alert alert-warning">
+
+            No comparison results available.
+
+        </div>
+
+        {% else %}
+
+        <div class="table-responsive">
+
+        <table class="table table-bordered table-hover align-middle">
 
             <thead>
 
@@ -628,15 +953,27 @@ Final Verdict
 
             <tbody>
 
-                {% for row in result.comparison.results %}
+            {% for row in result.comparison.results %}
 
                 <tr>
 
-                    <td>{{ row.field }}</td>
+                    <td>
 
-                    <td>{{ row.approval }}</td>
+                        {{ row.field }}
 
-                    <td>{{ row.sample }}</td>
+                    </td>
+
+                    <td>
+
+                        {{ row.approval }}
+
+                    </td>
+
+                    <td>
+
+                        {{ row.sample }}
+
+                    </td>
 
                     <td>
 
@@ -672,11 +1009,19 @@ Final Verdict
 
                         </span>
 
-                        {% else %}
+                        {% elif row.status=="FAIL" %}
 
                         <span class="badge bg-dark">
 
                             FAIL
+
+                        </span>
+
+                        {% else %}
+
+                        <span class="badge bg-secondary">
+
+                            {{ row.status }}
 
                         </span>
 
@@ -692,25 +1037,35 @@ Final Verdict
 
                 </tr>
 
-                {% endfor %}
+            {% endfor %}
 
             </tbody>
 
         </table>
 
+        </div>
+
+        {% endif %}
+
     </div>
 
 </div>
 
-<div class="text-center mt-4 mb-5">
+<!-- ================================================= -->
+<!-- Footer -->
+<!-- ================================================= -->
+
+<div class="text-center mt-5 mb-5">
 
     <a
 
         href="/"
 
-        class="btn btn-primary"
+        class="btn btn-primary btn-lg"
 
     >
+
+        <i class="bi bi-arrow-repeat"></i>
 
         Compare Another Label
 
@@ -722,7 +1077,7 @@ Final Verdict
 
 </div>
 
- {% endfor %}
+{% endfor %}
 
 </div>
 

@@ -1,8 +1,8 @@
 """
 =========================================================
 Label QC Checker Pro
-Comparison Engine
-Version 4.0
+Advanced Comparison Engine
+Version 5.0
 =========================================================
 """
 
@@ -18,9 +18,10 @@ class ComparisonEngine:
         self.match_threshold = WORD_MATCH
 
         self.modified_threshold = WORD_MODIFIED
-        # ---------------------------------------------------------
-# Normalize
-# ---------------------------------------------------------
+
+    # ---------------------------------------------------------
+    # Normalize
+    # ---------------------------------------------------------
 
     def normalize(self, value):
 
@@ -35,9 +36,10 @@ class ComparisonEngine:
         value = " ".join(value.split())
 
         return value.strip()
+
     # ---------------------------------------------------------
-# Similarity
-# ---------------------------------------------------------
+    # Similarity
+    # ---------------------------------------------------------
 
     def similarity(
 
@@ -53,22 +55,49 @@ class ComparisonEngine:
 
         sample = self.normalize(sample)
 
+        token = fuzz.token_sort_ratio(
+
+            approval,
+
+            sample
+
+        )
+
+        partial = fuzz.partial_ratio(
+
+            approval,
+
+            sample
+
+        )
+
+        ratio = fuzz.ratio(
+
+            approval,
+
+            sample
+
+        )
+
         return round(
 
-            fuzz.token_sort_ratio(
+            max(
 
-                approval,
+                token,
 
-                sample
+                partial,
+
+                ratio
 
             ),
 
             2
 
         )
-        # ---------------------------------------------------------
-# Find OCR Bounding Box
-# ---------------------------------------------------------
+
+    # ---------------------------------------------------------
+    # Find OCR Bounding Box
+    # ---------------------------------------------------------
 
     def find_bbox(
 
@@ -123,9 +152,95 @@ class ComparisonEngine:
             return best_box
 
         return None
+
     # ---------------------------------------------------------
-# Compare Constraints
-# ---------------------------------------------------------
+    # Compare One Field
+    # ---------------------------------------------------------
+
+    def compare_field(
+
+        self,
+
+        field,
+
+        approval_value,
+
+        sample_value,
+
+        approval_words,
+
+        sample_words
+
+    ):
+
+        approval_value = self.normalize(
+
+            approval_value
+
+        )
+
+        sample_value = self.normalize(
+
+            sample_value
+
+        )
+
+        approval_bbox = self.find_bbox(
+
+            approval_words,
+
+            approval_value
+
+        )
+
+        sample_bbox = self.find_bbox(
+
+            sample_words,
+
+            sample_value
+
+        )
+
+        score = self.similarity(
+
+            approval_value,
+
+            sample_value
+
+        )
+
+        if score >= self.match_threshold:
+
+            status = "MATCH"
+
+        elif score >= self.modified_threshold:
+
+            status = "MODIFIED"
+
+        else:
+
+            status = "FAIL"
+
+        return {
+
+            "field": field,
+
+            "approval": approval_value,
+
+            "sample": sample_value,
+
+            "score": score,
+
+            "status": status,
+
+            "approval_bbox": approval_bbox,
+
+            "sample_bbox": sample_bbox
+
+        }
+        # ---------------------------------------------------------
+    # Compare Constraints
+    # ---------------------------------------------------------
 
     def compare_constraints(
 
@@ -153,9 +268,17 @@ class ComparisonEngine:
 
         sample_copy = sample_constraints.copy()
 
+        # ---------------------------------------------------------
+        # Compare Approval Fields
+        # ---------------------------------------------------------
+
         for field, approval_value in approval_constraints.items():
 
-            approval_value = self.normalize(approval_value)
+            approval_value = self.normalize(
+
+                approval_value
+
+            )
 
             approval_bbox = self.find_bbox(
 
@@ -165,13 +288,13 @@ class ComparisonEngine:
 
             )
 
-            # -------------------------------
-            # Missing
-            # -------------------------------
+            # -------------------------
+            # Missing Field
+            # -------------------------
 
             if field not in sample_copy:
 
-                results.append({
+                row = {
 
                     "field": field,
 
@@ -179,11 +302,13 @@ class ComparisonEngine:
 
                     "sample": "",
 
-                    "status": "MISSING",
+                    "score": 0,
 
-                    "score": 0
+                    "status": "MISSING"
 
-                })
+                }
+
+                results.append(row)
 
                 missing.append({
 
@@ -199,35 +324,29 @@ class ComparisonEngine:
 
                 continue
 
-            sample_value = self.normalize(
+            sample_value = sample_copy[field]
 
-                sample_copy[field]
+            compare = self.compare_field(
 
-            )
-
-            sample_bbox = self.find_bbox(
-
-                sample_words,
-
-                sample_value
-
-            )
-
-            score = self.similarity(
+                field,
 
                 approval_value,
 
-                sample_value
+                sample_value,
+
+                approval_words,
+
+                sample_words
 
             )
 
-            # -------------------------------
-            # MATCH
-            # -------------------------------
+            results.append(compare)
 
-            if score >= self.match_threshold:
+            # -------------------------
+            # Match
+            # -------------------------
 
-                status = "MATCH"
+            if compare["status"] == "MATCH":
 
                 matched.append({
 
@@ -237,44 +356,18 @@ class ComparisonEngine:
 
                     "sample": sample_value,
 
-                    "bbox": approval_bbox,
+                    "bbox": compare["approval_bbox"],
 
                     "status": "MATCH"
 
                 })
 
-            # -------------------------------
-            # MODIFIED
-            # -------------------------------
-
-            elif score >= self.modified_threshold:
-
-                status = "MODIFIED"
-
-                modified.append({
-
-                    "field": field,
-
-                    "approval": approval_value,
-
-                    "sample": sample_value,
-
-                    "bbox1": approval_bbox,
-
-                    "bbox2": sample_bbox,
-
-                    "status": "MODIFIED"
-
-                })
-
-            # -------------------------------
-            # FAIL
-            # -------------------------------
+            # -------------------------
+            # Modified / Fail
+            # -------------------------
 
             else:
 
-                status = "FAIL"
-
                 modified.append({
 
                     "field": field,
@@ -283,36 +376,23 @@ class ComparisonEngine:
 
                     "sample": sample_value,
 
-                    "bbox1": approval_bbox,
+                    "bbox1": compare["approval_bbox"],
 
-                    "bbox2": sample_bbox,
+                    "bbox2": compare["sample_bbox"],
 
-                    "status": "FAIL"
+                    "status": compare["status"]
 
                 })
 
-            results.append({
-
-                "field": field,
-
-                "approval": approval_value,
-
-                "sample": sample_value,
-
-                "status": status,
-
-                "score": score
-
-            })
-
             sample_copy.pop(field)
-            # ---------------------------------------------------------
-# Extra Fields
-# ---------------------------------------------------------
+
+        # ---------------------------------------------------------
+        # Extra Fields
+        # ---------------------------------------------------------
 
         for field, value in sample_copy.items():
 
-            sample_bbox = self.find_bbox(
+            bbox = self.find_bbox(
 
                 sample_words,
 
@@ -328,9 +408,9 @@ class ComparisonEngine:
 
                 "sample": value,
 
-                "status": "EXTRA",
+                "score": 0,
 
-                "score": 0
+                "status": "EXTRA"
 
             })
 
@@ -340,7 +420,7 @@ class ComparisonEngine:
 
                 "value": value,
 
-                "bbox": sample_bbox,
+                "bbox": bbox,
 
                 "status": "EXTRA"
 
@@ -360,8 +440,8 @@ class ComparisonEngine:
 
         }
         # ---------------------------------------------------------
-# Calculate Overall Similarity
-# ---------------------------------------------------------
+    # Calculate Overall Similarity
+    # ---------------------------------------------------------
 
     def calculate_similarity(
 
@@ -387,18 +467,35 @@ class ComparisonEngine:
 
                 total += 100
 
-            else:
+            elif row["status"] == "MODIFIED":
 
                 total += row["score"]
 
+            elif row["status"] == "FAIL":
+
+                total += row["score"]
+
+            elif row["status"] == "MISSING":
+
+                total += 0
+
+            elif row["status"] == "EXTRA":
+
+                total += 0
+
             count += 1
 
-        return round(total / count, 2)
+        return round(
 
+            total / count,
 
-# ---------------------------------------------------------
-# Statistics
-# ---------------------------------------------------------
+            2
+
+        )
+
+    # ---------------------------------------------------------
+    # Statistics
+    # ---------------------------------------------------------
 
     def get_statistics(
 
@@ -422,10 +519,9 @@ class ComparisonEngine:
 
         }
 
-
-# ---------------------------------------------------------
-# QC Score
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # QC Score
+    # ---------------------------------------------------------
 
     def qc_score(
 
@@ -455,12 +551,19 @@ class ComparisonEngine:
 
         score -= stats["modified"] * 2
 
-        score = max(0, round(score, 2))
+        score = max(
+
+            0,
+
+            round(score, 2)
+
+        )
 
         return score
+
     # ---------------------------------------------------------
-# Generate Summary
-# ---------------------------------------------------------
+    # Generate Summary
+    # ---------------------------------------------------------
 
     def generate_summary(
 
@@ -514,6 +617,8 @@ class ComparisonEngine:
 
         return {
 
+            "overall_score": qc,
+
             "similarity": similarity,
 
             "qc_score": qc,
@@ -531,9 +636,10 @@ class ComparisonEngine:
             "verdict": verdict
 
         }
-        # ---------------------------------------------------------
-# Complete Comparison
-# ---------------------------------------------------------
+
+    # ---------------------------------------------------------
+    # Complete Comparison
+    # ---------------------------------------------------------
 
     def compare(
 

@@ -1,40 +1,38 @@
 """
 =========================================================
 Label QC Checker Pro
-Label Detector
-Version 2.0
+Advanced Label Detector
+Version 3.0
 =========================================================
 """
 
+import os
+import sys
 import cv2
 import numpy as np
 
-import os
-import sys
-
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(
+    os.path.dirname(
+        os.path.abspath(__file__)
+    )
+)
 
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from config import *
 
+
 class LabelDetector:
 
     def __init__(self):
-
         pass
+
     # ---------------------------------------------------------
-# Load Image
-# ---------------------------------------------------------
+    # Load Image
+    # ---------------------------------------------------------
 
-    def load_image(
-
-        self,
-
-        image_path
-
-    ):
+    def load_image(self, image_path):
 
         image = cv2.imread(image_path)
 
@@ -47,17 +45,40 @@ class LabelDetector:
             )
 
         return image
-# ---------------------------------------------------------
-# Convert To Gray
-# ---------------------------------------------------------
 
-    def gray(
+    # ---------------------------------------------------------
+    # Resize
+    # ---------------------------------------------------------
 
-        self,
+    def resize(self, image):
 
-        image
+        h, w = image.shape[:2]
 
-    ):
+        if w > 1800:
+
+            ratio = 1800 / w
+
+            image = cv2.resize(
+
+                image,
+
+                None,
+
+                fx=ratio,
+
+                fy=ratio,
+
+                interpolation=cv2.INTER_AREA
+
+            )
+
+        return image
+
+    # ---------------------------------------------------------
+    # Gray
+    # ---------------------------------------------------------
+
+    def gray(self, image):
 
         return cv2.cvtColor(
 
@@ -66,61 +87,123 @@ class LabelDetector:
             cv2.COLOR_BGR2GRAY
 
         )
-# ---------------------------------------------------------
-# Gaussian Blur
-# ---------------------------------------------------------
 
-    def blur(
+    # ---------------------------------------------------------
+    # CLAHE
+    # ---------------------------------------------------------
 
-        self,
+    def clahe(self, gray):
 
-        gray
+        clahe = cv2.createCLAHE(
 
-    ):
+            clipLimit=2.5,
+
+            tileGridSize=(8,8)
+
+        )
+
+        return clahe.apply(gray)
+
+    # ---------------------------------------------------------
+    # Blur
+    # ---------------------------------------------------------
+
+    def blur(self, gray):
 
         return cv2.GaussianBlur(
 
             gray,
 
-            (5, 5),
+            (5,5),
 
             0
 
         )
-# ---------------------------------------------------------
-# Edge Detection
-# ---------------------------------------------------------
 
-    def edges(
+    # ---------------------------------------------------------
+    # Threshold
+    # ---------------------------------------------------------
 
-        self,
+    def threshold(self, gray):
 
-        gray
+        return cv2.adaptiveThreshold(
 
-    ):
+            gray,
+
+            255,
+
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+
+            cv2.THRESH_BINARY,
+
+            31,
+
+            15
+
+        )
+
+    # ---------------------------------------------------------
+    # Morphology
+    # ---------------------------------------------------------
+
+    def morphology(self, image):
+
+        kernel = cv2.getStructuringElement(
+
+            cv2.MORPH_RECT,
+
+            (3,3)
+
+        )
+
+        image = cv2.morphologyEx(
+
+            image,
+
+            cv2.MORPH_CLOSE,
+
+            kernel,
+
+            iterations=2
+
+        )
+
+        image = cv2.morphologyEx(
+
+            image,
+
+            cv2.MORPH_OPEN,
+
+            kernel,
+
+            iterations=1
+
+        )
+
+        return image
+    # ---------------------------------------------------------
+    # Edge Detection
+    # ---------------------------------------------------------
+
+    def edges(self, image):
 
         return cv2.Canny(
 
-            gray,
+            image,
 
             50,
 
             150
 
         )
-# ---------------------------------------------------------
-# Find Contours
-# ---------------------------------------------------------
 
-    def find_contours(
+    # ---------------------------------------------------------
+    # Find Contours
+    # ---------------------------------------------------------
 
-        self,
+    def find_contours(self, edge_image):
 
-        edge_image
-
-    ):
-
-        contours,_ = cv2.findContours(
+        contours, _ = cv2.findContours(
 
             edge_image,
 
@@ -139,23 +222,24 @@ class LabelDetector:
             reverse=True
 
         )
-# ---------------------------------------------------------
-# Detect Label Contour
-# ---------------------------------------------------------
 
-    def detect_label(
+    # ---------------------------------------------------------
+    # Detect Label Contour
+    # ---------------------------------------------------------
 
-        self,
+    def detect_label(self, contours):
 
-        contours
-
-    ):
+        image_area = None
 
         for contour in contours:
 
             area = cv2.contourArea(contour)
 
-            if area < 5000:
+            if image_area is None:
+
+                image_area = area
+
+            if area < 3000:
 
                 continue
 
@@ -181,20 +265,17 @@ class LabelDetector:
 
                 return approx
 
+        if len(contours):
+
+            return contours[0]
+
         return None
-# ---------------------------------------------------------
-# Draw Label Boundary
-# ---------------------------------------------------------
 
-    def draw_label(
+    # ---------------------------------------------------------
+    # Draw Label
+    # ---------------------------------------------------------
 
-        self,
-
-        image,
-
-        contour
-
-    ):
+    def draw_label(self, image, contour):
 
         output = image.copy()
 
@@ -215,31 +296,24 @@ class LabelDetector:
             )
 
         return output
-# ---------------------------------------------------------
-# Crop Label
-# ---------------------------------------------------------
 
-    def crop_label(
+    # ---------------------------------------------------------
+    # Crop Label
+    # ---------------------------------------------------------
 
-        self,
-
-        image,
-
-        contour
-
-    ):
+    def crop_label(self, image, contour):
 
         if contour is None:
 
             return image
 
-        x,y,w,h = cv2.boundingRect(
+        x, y, w, h = cv2.boundingRect(
 
             contour
 
         )
 
-        cropped = image[
+        return image[
 
             y:y+h,
 
@@ -247,23 +321,21 @@ class LabelDetector:
 
         ]
 
-        return cropped
+    # ---------------------------------------------------------
+    # Order Points
+    # ---------------------------------------------------------
 
-# ---------------------------------------------------------
-# Order Corner Points
-# ---------------------------------------------------------
+    def order_points(self, pts):
 
-    def order_points(
+        pts = pts.reshape(4,2)
 
-        self,
+        rect = np.zeros(
 
-        pts
+            (4,2),
 
-    ):
+            dtype="float32"
 
-        pts = pts.reshape(4, 2)
-
-        rect = np.zeros((4, 2), dtype="float32")
+        )
 
         s = pts.sum(axis=1)
 
@@ -271,7 +343,13 @@ class LabelDetector:
 
         rect[2] = pts[np.argmax(s)]
 
-        diff = np.diff(pts, axis=1)
+        diff = np.diff(
+
+            pts,
+
+            axis=1
+
+        )
 
         rect[1] = pts[np.argmin(diff)]
 
@@ -279,51 +357,91 @@ class LabelDetector:
 
         return rect
 
-# ---------------------------------------------------------
-# Perspective Correction
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # Perspective Transform
+    # ---------------------------------------------------------
 
-    def four_point_transform(
-
-        self,
-
-        image,
-
-        contour
-
-    ):
+    def four_point_transform(self, image, contour):
 
         if contour is None:
 
             return image
 
-        rect = self.order_points(contour)
+        if len(contour) != 4:
+
+            return self.crop_label(
+
+                image,
+
+                contour
+
+            )
+
+        rect = self.order_points(
+
+            contour
+
+        )
 
         (tl, tr, br, bl) = rect
 
-        widthA = np.linalg.norm(br - bl)
+        widthA = np.linalg.norm(
 
-        widthB = np.linalg.norm(tr - tl)
+            br-bl
 
-        maxWidth = max(int(widthA), int(widthB))
+        )
 
-        heightA = np.linalg.norm(tr - br)
+        widthB = np.linalg.norm(
 
-        heightB = np.linalg.norm(tl - bl)
+            tr-tl
 
-        maxHeight = max(int(heightA), int(heightB))
+        )
 
-        dst = np.array([
+        maxWidth = max(
 
-            [0, 0],
+            int(widthA),
 
-            [maxWidth - 1, 0],
+            int(widthB)
 
-            [maxWidth - 1, maxHeight - 1],
+        )
 
-            [0, maxHeight - 1]
+        heightA = np.linalg.norm(
 
-        ], dtype="float32")
+            tr-br
+
+        )
+
+        heightB = np.linalg.norm(
+
+            tl-bl
+
+        )
+
+        maxHeight = max(
+
+            int(heightA),
+
+            int(heightB)
+
+        )
+
+        dst = np.array(
+
+            [
+
+                [0,0],
+
+                [maxWidth-1,0],
+
+                [maxWidth-1,maxHeight-1],
+
+                [0,maxHeight-1]
+
+            ],
+
+            dtype="float32"
+
+        )
 
         M = cv2.getPerspectiveTransform(
 
@@ -339,28 +457,26 @@ class LabelDetector:
 
             M,
 
-            (maxWidth, maxHeight)
+            (maxWidth,maxHeight)
 
         )
 
         return warped
+    # ---------------------------------------------------------
+    # Complete Label Detection
+    # ---------------------------------------------------------
 
-
-# ---------------------------------------------------------
-# Complete Label Detection
-# ---------------------------------------------------------
-
-    def detect(
-
-        self,
-
-        image_path
-
-    ):
+    def detect(self, image_path):
 
         image = self.load_image(
 
             image_path
+
+        )
+
+        image = self.resize(
+
+            image
 
         )
 
@@ -370,15 +486,33 @@ class LabelDetector:
 
         )
 
+        gray = self.clahe(
+
+            gray
+
+        )
+
         gray = self.blur(
 
             gray
 
         )
 
-        edge = self.edges(
+        binary = self.threshold(
 
             gray
+
+        )
+
+        binary = self.morphology(
+
+            binary
+
+        )
+
+        edge = self.edges(
+
+            binary
 
         )
 
@@ -410,6 +544,24 @@ class LabelDetector:
 
         )
 
+        x = y = w = h = 0
+
+        area = 0
+
+        if contour is not None:
+
+            x, y, w, h = cv2.boundingRect(
+
+                contour
+
+            )
+
+            area = cv2.contourArea(
+
+                contour
+
+            )
+
         return {
 
             "image": image,
@@ -418,18 +570,80 @@ class LabelDetector:
 
             "highlighted": highlighted,
 
-            "contour": contour
+            "contour": contour,
+
+            "bounding_box": {
+
+                "x": x,
+
+                "y": y,
+
+                "width": w,
+
+                "height": h
+
+            },
+
+            "area": area,
+
+            "found": contour is not None
 
         }
+
+
+# ---------------------------------------------------------
+# Singleton
+# ---------------------------------------------------------
+
 label_detector = LabelDetector()
+
+
+# ---------------------------------------------------------
+# Testing
+# ---------------------------------------------------------
 
 if __name__ == "__main__":
 
-    result = label_detector.detect("test.png")
+    test_image = "test.png"
 
-    cv2.imwrite("detected_label.png", result["highlighted"])
-    cv2.imwrite("cropped_label.png", result["cropped"])
+    if os.path.exists(test_image):
 
-    print("Images saved successfully.")
+        result = label_detector.detect(
 
-    
+            test_image
+
+        )
+
+        cv2.imwrite(
+
+            "detected_label.png",
+
+            result["highlighted"]
+
+        )
+
+        cv2.imwrite(
+
+            "cropped_label.png",
+
+            result["cropped"]
+
+        )
+
+        print("=" * 60)
+
+        print("Label Detection Completed")
+
+        print("=" * 60)
+
+        print("Label Found :", result["found"])
+
+        print("Area :", result["area"])
+
+        print("Bounding Box :", result["bounding_box"])
+
+        print("=" * 60)
+
+    else:
+
+        print(f"Test image '{test_image}' not found.")

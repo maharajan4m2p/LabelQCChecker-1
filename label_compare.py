@@ -2,7 +2,12 @@
 =========================================================
 Label QC Checker Pro
 Main Label Comparison Engine
-Version 4.0
+Version 6.1
+Supports:
+✓ Images
+✓ PDF
+✓ Excel
+✓ CSV
 =========================================================
 """
 
@@ -10,6 +15,9 @@ import os
 import uuid
 
 from config import *
+
+from engine.pdf_processor import PDFProcessor
+from engine.excel_processor import ExcelProcessor
 
 from engine.ocr_engine import ocr_engine
 from engine.label_detector import label_detector
@@ -20,6 +28,94 @@ from engine.barcode_checker import barcode_checker
 from engine.image_highlighter import image_highlighter
 from engine.report_generator import report_generator
 
+
+# ---------------------------------------------------------
+# File Type Detection
+# ---------------------------------------------------------
+
+def get_file_type(file_path):
+
+    extension = os.path.splitext(file_path)[1].lower()
+
+    image_extensions = [
+
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".bmp",
+        ".tif",
+        ".tiff",
+        ".webp"
+
+    ]
+
+    if extension in image_extensions:
+
+        return "image"
+
+    elif extension == ".pdf":
+
+        return "pdf"
+
+    elif extension in [
+
+        ".xls",
+        ".xlsx",
+        ".csv"
+
+    ]:
+
+        return "excel"
+
+    return "unknown"
+
+
+# ---------------------------------------------------------
+# Prepare File
+# ---------------------------------------------------------
+
+def prepare_file(file_path):
+
+    file_type = get_file_type(file_path)
+
+    if file_type == "image":
+
+        return file_path
+
+    elif file_type == "pdf":
+
+        pages = PDFProcessor.pdf_to_images(file_path)
+
+        if len(pages) == 0:
+
+            raise Exception("PDF contains no pages.")
+
+        output_image = os.path.join(
+
+            UPLOAD_FOLDER,
+
+            f"{uuid.uuid4().hex}.png"
+
+        )
+
+        pages[0].save(output_image)
+
+        return output_image
+
+    elif file_type == "excel":
+
+        return file_path
+
+    raise Exception(
+
+        f"Unsupported file type : {file_path}"
+
+    )
+
+
+# ---------------------------------------------------------
+# Main Class
+# ---------------------------------------------------------
 
 class LabelCompare:
 
@@ -41,9 +137,14 @@ class LabelCompare:
 
         self.report = report_generator
 
-        os.makedirs("uploads", exist_ok=True)
+        os.makedirs(
 
-    # ---------------------------------------------------------
+            UPLOAD_FOLDER,
+
+            exist_ok=True
+
+        )
+        # ---------------------------------------------------------
     # Compare Labels
     # ---------------------------------------------------------
 
@@ -60,20 +161,92 @@ class LabelCompare:
         result = {}
 
         # ---------------------------------------------------------
-        # OCR
+        # File Types
         # ---------------------------------------------------------
 
-        approval_ocr = self.ocr.read(
+        approval_type = get_file_type(
 
             approval_path
 
         )
 
-        sample_ocr = self.ocr.read(
+        sample_type = get_file_type(
 
             sample_path
 
         )
+
+        result["approval_type"] = approval_type
+
+        result["sample_type"] = sample_type
+
+        # ---------------------------------------------------------
+        # Prepare Files
+        # ---------------------------------------------------------
+
+        approval_input = prepare_file(
+
+            approval_path
+
+        )
+
+        sample_input = prepare_file(
+
+            sample_path
+
+        )
+
+        result["approval_input"] = approval_input
+
+        result["sample_input"] = sample_input
+
+        # ---------------------------------------------------------
+        # OCR
+        # ---------------------------------------------------------
+
+        if approval_type == "excel":
+
+            approval_ocr = {
+
+                "text": ExcelProcessor.read_excel(
+
+                    approval_path
+
+                ),
+
+                "words": []
+
+            }
+
+        else:
+
+            approval_ocr = self.ocr.read(
+
+                approval_input
+
+            )
+
+        if sample_type == "excel":
+
+            sample_ocr = {
+
+                "text": ExcelProcessor.read_excel(
+
+                    sample_path
+
+                ),
+
+                "words": []
+
+            }
+
+        else:
+
+            sample_ocr = self.ocr.read(
+
+                sample_input
+
+            )
 
         result["approval_ocr"] = approval_ocr
 
@@ -83,17 +256,29 @@ class LabelCompare:
         # Label Detection
         # ---------------------------------------------------------
 
-        approval_label = self.detector.detect(
+        if approval_type == "excel":
 
-            approval_path
+            approval_label = None
 
-        )
+        else:
 
-        sample_label = self.detector.detect(
+            approval_label = self.detector.detect(
 
-            sample_path
+                approval_input
 
-        )
+            )
+
+        if sample_type == "excel":
+
+            sample_label = None
+
+        else:
+
+            sample_label = self.detector.detect(
+
+                sample_input
+
+            )
 
         result["approval_label"] = approval_label
 
@@ -138,18 +323,31 @@ class LabelCompare:
         result["comparison"] = comparison
 
         result["summary"] = comparison["summary"]
-
         # ---------------------------------------------------------
         # Logo Check
         # ---------------------------------------------------------
 
-        logo_result = self.logo.verify(
+        if approval_type == "excel" or sample_type == "excel":
 
-            approval_path,
+            logo_result = {
 
-            sample_path
+                "status": "Skipped",
 
-        )
+                "similarity": 0,
+
+                "reason": "Excel file"
+
+            }
+
+        else:
+
+            logo_result = self.logo.verify(
+
+                approval_input,
+
+                sample_input
+
+            )
 
         result["logo"] = logo_result
 
@@ -157,82 +355,105 @@ class LabelCompare:
         # Barcode Check
         # ---------------------------------------------------------
 
-        barcode_result = self.barcode.compare(
+        if approval_type == "excel" or sample_type == "excel":
 
-            approval_path,
+            barcode_result = {
 
-            sample_path
+                "status": "Skipped",
 
-        )
+                "matched": False,
+
+                "reason": "Excel file"
+
+            }
+
+        else:
+
+            barcode_result = self.barcode.compare(
+
+                approval_input,
+
+                sample_input
+
+            )
 
         result["barcode"] = barcode_result
 
         # ---------------------------------------------------------
-        # Approval Highlight
+        # Generate Highlight Images
         # ---------------------------------------------------------
 
-        approval_name = f"approval_{uuid.uuid4().hex}.png"
+        if approval_type != "excel":
 
-        approval_output = os.path.join(
+            approval_highlight = f"approval_{uuid.uuid4().hex}.png"
 
-            "uploads",
+            approval_output = os.path.join(
 
-            approval_name
+                UPLOAD_FOLDER,
 
-        )
+                approval_highlight
 
-        self.highlight.generate(
+            )
 
-            approval_path,
+            self.highlight.generate(
 
-            comparison["matched"],
+                approval_input,
 
-            comparison["missing"],
+                comparison["matched"],
 
-            comparison["modified"],
+                comparison["missing"],
 
-            comparison["extra"],
+                comparison["modified"],
 
-            approval_output
+                comparison["extra"],
 
-        )
+                approval_output
 
-        result["approval_highlight"] = approval_name
+            )
+
+            result["approval_highlight"] = approval_highlight
+
+        else:
+
+            result["approval_highlight"] = None
+
+
+        if sample_type != "excel":
+
+            sample_highlight = f"sample_{uuid.uuid4().hex}.png"
+
+            sample_output = os.path.join(
+
+                UPLOAD_FOLDER,
+
+                sample_highlight
+
+            )
+
+            self.highlight.generate(
+
+                sample_input,
+
+                comparison["matched"],
+
+                comparison["missing"],
+
+                comparison["modified"],
+
+                comparison["extra"],
+
+                sample_output
+
+            )
+
+            result["sample_highlight"] = sample_highlight
+
+        else:
+
+            result["sample_highlight"] = None
 
         # ---------------------------------------------------------
-        # Sample Highlight
-        # ---------------------------------------------------------
-
-        sample_name = f"sample_{uuid.uuid4().hex}.png"
-
-        sample_output = os.path.join(
-
-            "uploads",
-
-            sample_name
-
-        )
-
-        self.highlight.generate(
-
-            sample_path,
-
-            comparison["matched"],
-
-            comparison["missing"],
-
-            comparison["modified"],
-
-            comparison["extra"],
-
-            sample_output
-
-        )
-
-        result["sample_highlight"] = sample_name
-
-        # ---------------------------------------------------------
-        # Report
+        # Report Generation
         # ---------------------------------------------------------
 
         report = self.report.generate(
@@ -247,13 +468,117 @@ class LabelCompare:
 
         result["report"] = report
 
-        result["summary"] = report["summary"]
+        result["summary"] = report.get(
+
+            "summary",
+
+            comparison.get("summary", {})
+
+        )
+        # ---------------------------------------------------------
+        # Cleanup Temporary Files
+        # ---------------------------------------------------------
+
+        try:
+
+            if (
+
+                approval_input != approval_path
+
+                and os.path.exists(approval_input)
+
+                and approval_input.endswith(".png")
+
+            ):
+
+                os.remove(approval_input)
+
+        except Exception:
+
+            pass
+
+
+        try:
+
+            if (
+
+                sample_input != sample_path
+
+                and os.path.exists(sample_input)
+
+                and sample_input.endswith(".png")
+
+            ):
+
+                os.remove(sample_input)
+
+        except Exception:
+
+            pass
+
+        # ---------------------------------------------------------
+        # Additional Information
+        # ---------------------------------------------------------
+
+        result["approval_file"] = os.path.basename(
+
+            approval_path
+
+        )
+
+        result["sample_file"] = os.path.basename(
+
+            sample_path
+
+        )
+
+        result["approval_type"] = approval_type
+
+        result["sample_type"] = sample_type
+
+        result["status"] = "Success"
+
+        # ---------------------------------------------------------
+        # Overall Score
+        # ---------------------------------------------------------
+
+        summary = result.get(
+
+            "summary",
+
+            {}
+
+        )
+
+        overall_score = summary.get(
+
+            "qc_score",
+
+            0
+
+        )
+
+        verdict = summary.get(
+
+            "verdict",
+
+            "FAIL"
+
+        )
+
+        result["overall_score"] = overall_score
+
+        result["overall_status"] = verdict
+
+        # ---------------------------------------------------------
+        # Return Result
+        # ---------------------------------------------------------
 
         return result
 
 
 # ---------------------------------------------------------
-# Singleton
+# Singleton Instance
 # ---------------------------------------------------------
 
 label_compare = LabelCompare()
@@ -271,10 +596,96 @@ def compare_labels(
 
 ):
 
-    return label_compare.compare(
+    try:
 
-        approval_path,
+        return label_compare.compare(
 
-        sample_path
+            approval_path,
 
-    )
+            sample_path
+
+        )
+
+    except Exception as e:
+
+        return {
+
+            "status": "Failed",
+
+            "error": str(e),
+
+            "approval_file": os.path.basename(
+
+                approval_path
+
+            ),
+
+            "sample_file": os.path.basename(
+
+                sample_path
+
+            ),
+
+            "comparison": {
+
+                "results": [],
+
+                "matched": [],
+
+                "missing": [],
+
+                "modified": [],
+
+                "extra": [],
+
+                "summary": {}
+
+            },
+
+            "logo": {
+
+                "status": "Skipped",
+
+                "similarity": 0
+
+            },
+
+            "barcode": {
+
+                "status": "Skipped",
+
+                "matched": [],
+
+                "missing": [],
+
+                "extra": []
+
+            },
+
+            "approval_highlight": None,
+
+            "sample_highlight": None,
+
+            "report": {},
+
+            "summary": {
+
+                "similarity": 0,
+
+                "qc_score": 0,
+
+                "matched": 0,
+
+                "modified": 0,
+
+                "missing": 0,
+
+                "extra": 0,
+
+                "total": 0,
+
+                "verdict": "FAIL"
+
+            }
+
+        }

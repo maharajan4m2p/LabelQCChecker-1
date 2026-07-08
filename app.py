@@ -2,11 +2,13 @@
 =========================================================
 Label QC Checker Pro
 Flask Web Application
-Version 5.0
+Version 6.1
 =========================================================
 """
 
 import os
+import uuid
+import traceback
 
 from flask import (
     Flask,
@@ -14,7 +16,8 @@ from flask import (
     request,
     redirect,
     send_from_directory,
-    flash
+    flash,
+    jsonify
 )
 
 from werkzeug.utils import secure_filename
@@ -23,6 +26,9 @@ from config import *
 
 from label_compare import compare_labels
 
+# ---------------------------------------------------------
+# Flask Application
+# ---------------------------------------------------------
 
 app = Flask(__name__)
 
@@ -30,120 +36,235 @@ app.secret_key = "labelqc"
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_SIZE
+
+os.makedirs(
+
+    UPLOAD_FOLDER,
+
+    exist_ok=True
+
+)
+
+# ---------------------------------------------------------
+# Allowed File Types
+# ---------------------------------------------------------
+
+def allowed_file(filename):
+
+    if "." not in filename:
+
+        return False
+
+    extension = filename.rsplit(".", 1)[1].lower()
+
+    return extension in ALLOWED_EXTENSIONS
 
 
 # ---------------------------------------------------------
-# Home
+# Generate Unique Filename
+# ---------------------------------------------------------
+
+def unique_filename(filename):
+
+    filename = secure_filename(filename)
+
+    extension = filename.rsplit(".", 1)[1]
+
+    unique = uuid.uuid4().hex
+
+    return f"{unique}.{extension}"
+
+
+# ---------------------------------------------------------
+# Home Page
 # ---------------------------------------------------------
 
 @app.route("/")
 def index():
 
-    return render_template("index.html")
+    return render_template(
 
+        "index.html"
 
-# ---------------------------------------------------------
+    )
+    # ---------------------------------------------------------
 # Compare Labels
 # ---------------------------------------------------------
 
 @app.route("/compare", methods=["POST"])
 def compare():
 
-    if "approval" not in request.files:
+    try:
 
-        flash("Approval label missing")
+        # -------------------------------------------------
+        # Validate Request
+        # -------------------------------------------------
 
-        return redirect("/")
+        if "approval" not in request.files:
 
-    if "sample" not in request.files:
+            flash("Approval label is missing.")
 
-        flash("Sample label missing")
+            return redirect("/")
 
-        return redirect("/")
+        if "sample" not in request.files:
 
-    approval = request.files["approval"]
+            flash("Sample label is missing.")
 
-    samples = request.files.getlist("sample")
+            return redirect("/")
 
-    if approval.filename == "":
+        approval = request.files["approval"]
 
-        flash("Please select approval label")
+        samples = request.files.getlist("sample")
 
-        return redirect("/")
+        if approval.filename == "":
 
-    if len(samples) == 0:
+            flash("Please select an approval label.")
 
-        flash("Please select sample labels")
+            return redirect("/")
 
-        return redirect("/")
+        if not allowed_file(approval.filename):
 
-    # -----------------------------------------
-    # Save Approval Label
-    # -----------------------------------------
+            flash("Unsupported approval file type.")
 
-    approval_name = secure_filename(
-        approval.filename
-    )
+            return redirect("/")
 
-    approval_path = os.path.join(
-        app.config["UPLOAD_FOLDER"],
-        approval_name
-    )
+        if len(samples) == 0:
 
-    approval.save(
-        approval_path
-    )
+            flash("Please select at least one sample label.")
 
-    # -----------------------------------------
-    # Compare With Multiple Samples
-    # -----------------------------------------
+            return redirect("/")
 
-    all_results = []
+        # -------------------------------------------------
+        # Save Approval File
+        # -------------------------------------------------
 
-    for sample in samples:
+        approval_filename = unique_filename(
 
-        if sample.filename == "":
-            continue
+            approval.filename
 
-        sample_name = secure_filename(
-            sample.filename
         )
 
-        sample_path = os.path.join(
+        approval_path = os.path.join(
+
             app.config["UPLOAD_FOLDER"],
-            sample_name
+
+            approval_filename
+
         )
 
-        sample.save(
-            sample_path
+        approval.save(
+
+            approval_path
+
         )
 
-        result = compare_labels(
-            approval_path,
-            sample_path
+        # -------------------------------------------------
+        # Compare Sample Files
+        # -------------------------------------------------
+
+        all_results = []
+
+        for sample in samples:
+
+            if sample.filename == "":
+
+                continue
+
+            if not allowed_file(sample.filename):
+
+                all_results.append({
+
+                    "sample_filename": sample.filename,
+
+                    "status": "Failed",
+
+                    "error": "Unsupported file type"
+
+                })
+
+                continue
+
+            sample_filename = unique_filename(
+
+                sample.filename
+
+            )
+
+            sample_path = os.path.join(
+
+                app.config["UPLOAD_FOLDER"],
+
+                sample_filename
+
+            )
+
+            sample.save(
+
+                sample_path
+
+            )
+
+            try:
+
+                result = compare_labels(
+
+                    approval_path,
+
+                    sample_path
+
+                )
+
+                result["sample_filename"] = sample.filename
+
+                result["sample_saved"] = sample_filename
+
+                result["status"] = "Success"
+
+            except Exception as e:
+
+                result = {
+
+                    "sample_filename": sample.filename,
+
+                    "status": "Failed",
+
+                    "error": str(e),
+
+                    "traceback": traceback.format_exc()
+
+                }
+
+            all_results.append(
+
+                result
+
+            )
+
+        return render_template(
+
+            "results.html",
+
+            approval_filename=approval_filename,
+
+            results=all_results
+
         )
 
-        result["sample_filename"] = sample_name
+    except Exception as e:
 
-        all_results.append(result)
+        flash(
 
-    return render_template(
+            f"Unexpected Error: {str(e)}"
 
-        "results.html",
+        )
 
-        approval_filename=approval_name,
-
-        results=all_results
-
-    )
-
-
+        return redirect("/")
+    # ---------------------------------------------------------
+# Uploaded Files
 # ---------------------------------------------------------
-# Upload Folder
-# ---------------------------------------------------------
 
-@app.route("/uploads/<filename>")
+@app.route("/uploads/<path:filename>")
 def uploads(filename):
 
     return send_from_directory(
@@ -156,12 +277,113 @@ def uploads(filename):
 
 
 # ---------------------------------------------------------
-# Run
+# Health Check
+# ---------------------------------------------------------
+
+@app.route("/health")
+def health():
+
+    return jsonify({
+
+        "status": "Running",
+
+        "application": APP_NAME,
+
+        "version": APP_VERSION
+
+    })
+
+
+# ---------------------------------------------------------
+# File Too Large
+# ---------------------------------------------------------
+
+@app.errorhandler(413)
+def file_too_large(error):
+
+    flash(
+
+        f"File is too large. Maximum allowed size is {MAX_UPLOAD_SIZE // (1024 * 1024)} MB."
+
+    )
+
+    return redirect("/")
+
+
+# ---------------------------------------------------------
+# Page Not Found
+# ---------------------------------------------------------
+
+@app.errorhandler(404)
+def page_not_found(error):
+
+    return render_template(
+
+        "404.html"
+
+    ), 404
+    # ---------------------------------------------------------
+# Internal Server Error
+# ---------------------------------------------------------
+
+@app.errorhandler(500)
+def internal_server_error(error):
+
+    traceback.print_exc()
+
+    try:
+
+        return render_template(
+
+            "500.html",
+
+            error=str(error)
+
+        ), 500
+
+    except Exception:
+
+        return (
+
+            f"Internal Server Error\n\n{str(error)}",
+
+            500
+
+        )
+
+
+# ---------------------------------------------------------
+# Startup Message
+# ---------------------------------------------------------
+
+def startup_message():
+
+    print("=" * 60)
+
+    print(APP_NAME)
+
+    print(f"Version : {APP_VERSION}")
+
+    print(f"Upload Folder : {UPLOAD_FOLDER}")
+
+    print(f"Report Folder : {REPORT_FOLDER}")
+
+    print("=" * 60)
+
+
+# ---------------------------------------------------------
+# Main
 # ---------------------------------------------------------
 
 if __name__ == "__main__":
 
+    startup_message()
+
     app.run(
+
+        host="0.0.0.0",
+
+        port=5000,
 
         debug=True
 

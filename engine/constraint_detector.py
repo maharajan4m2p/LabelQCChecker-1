@@ -1,8 +1,8 @@
 """
 =========================================================
 Label QC Checker Pro
-Constraint Detector
-Version 4.0
+Advanced Constraint Detector
+Version 5.0
 =========================================================
 """
 
@@ -45,109 +45,133 @@ class ConstraintDetector:
             "SKU",
             "CUSTOMER",
             "COUNTRY OF ORIGIN",
-            "MADE IN"
+            "MADE IN",
+            "LOT NO",
+            "BATCH NO",
+            "MFG DATE",
+            "EXP DATE",
+            "MRP",
+            "PRICE"
 
         ]
 
         self.patterns = {
 
             "BUYER":
-            r"BUYER\s*[:\-]?\s*([^\n\r]+)",
+            r"BUYER\s*[:\-]?\s*(.+)",
 
             "BUYER CODE":
-            r"BUYER\s*CODE\s*[:\-]?\s*([^\n\r]+)",
+            r"BUYER\s*CODE\s*[:\-]?\s*(.+)",
 
             "VENDOR":
-            r"VENDOR\s*[:\-]?\s*([^\n\r]+)",
+            r"VENDOR\s*[:\-]?\s*(.+)",
 
             "VENDOR CODE":
-            r"VENDOR\s*CODE\s*[:\-]?\s*([^\n\r]+)",
+            r"VENDOR\s*CODE\s*[:\-]?\s*(.+)",
 
             "PO NO":
-            r"P\.?\s*O\.?\s*NO\.?\s*[:\-]?\s*([^\n\r]+)",
+            r"P\.?\s*O\.?\s*NO\.?\s*[:\-]?\s*(.+)",
 
             "STYLE NO":
-            r"STYLE\s*NO\.?\s*[:\-]?\s*([^\n\r]+)",
+            r"STYLE\s*NO\.?\s*[:\-]?\s*(.+)",
 
             "DESCRIPTION":
-            r"DESCRIPTION\s*[:\-]?\s*([^\n\r]+)",
+            r"DESCRIPTION\s*[:\-]?\s*(.+)",
 
             "COLOR":
-            r"COLOR\s*[:\-]?\s*([^\n\r]+)",
+            r"COLOR\s*[:\-]?\s*(.+)",
 
             "SIZE":
-            r"SIZE\s*[:\-]?\s*([^\n\r]+)",
+            r"SIZE\s*[:\-]?\s*(.+)",
 
             "SIZE ASSORTMENT":
-            r"SIZE\s*ASSORTMENT\s*[:\-]?\s*([^\n\r]+)",
+            r"SIZE\s*ASSORTMENT\s*[:\-]?\s*(.+)",
 
             "TOTAL QTY":
-            r"TOTAL\s*QTY\.?\s*[:\-]?\s*([^\n\r]+)",
+            r"TOTAL\s*QTY\.?\s*[:\-]?\s*(.+)",
 
             "MEASUREMENT":
-            r"MEASUREMENT\s*[:\-]?\s*([^\n\r]+)",
+            r"MEASUREMENT\s*[:\-]?\s*(.+)",
 
             "VOLUME":
-            r"VOLUME\s*[:\-]?\s*([^\n\r]+)",
+            r"VOLUME\s*[:\-]?\s*(.+)",
 
             "CARTON NO":
-            r"CARTON\s*NO\.?\s*[:\-]?\s*([^\n\r]+)",
+            r"CARTON\s*NO\.?\s*[:\-]?\s*(.+)",
 
             "CARTON TYPE":
-            r"CARTON\s*TYPE\s*[:\-]?\s*([^\n\r]+)",
+            r"CARTON\s*TYPE\s*[:\-]?\s*(.+)",
 
             "NET WEIGHT":
-            r"NET\s*WEIGHT\s*[:\-]?\s*([^\n\r]+)",
+            r"NET\s*WEIGHT\s*[:\-]?\s*(.+)",
 
             "GROSS WEIGHT":
-            r"GROSS\s*WEIGHT\s*[:\-]?\s*([^\n\r]+)",
+            r"GROSS\s*WEIGHT\s*[:\-]?\s*(.+)",
 
             "DESTINATION":
-            r"DESTINATION\s*[:\-]?\s*([^\n\r]+)",
+            r"DESTINATION\s*[:\-]?\s*(.+)",
 
             "SHIP DATE":
-            r"SHIP\s*DATE\s*[:\-]?\s*([^\n\r]+)",
+            r"SHIP\s*DATE\s*[:\-]?\s*(.+)",
 
             "SEASON":
-            r"SEASON\s*[:\-]?\s*([^\n\r]+)",
+            r"SEASON\s*[:\-]?\s*(.+)",
 
             "ITEM NO":
-            r"ITEM\s*NO\.?\s*[:\-]?\s*([^\n\r]+)",
+            r"ITEM\s*NO\.?\s*[:\-]?\s*(.+)",
 
             "BARCODE":
-            r"BARCODE\s*[:\-]?\s*([^\n\r]+)",
+            r"BARCODE\s*[:\-]?\s*(.+)",
 
             "UPC":
-            r"UPC\s*[:\-]?\s*([^\n\r]+)",
+            r"UPC\s*[:\-]?\s*(.+)",
 
             "EAN":
-            r"EAN\s*[:\-]?\s*([^\n\r]+)",
+            r"EAN\s*[:\-]?\s*(.+)",
 
             "SKU":
-            r"SKU\s*[:\-]?\s*([^\n\r]+)",
+            r"SKU\s*[:\-]?\s*(.+)",
 
             "CUSTOMER":
-            r"CUSTOMER\s*[:\-]?\s*([^\n\r]+)",
+            r"CUSTOMER\s*[:\-]?\s*(.+)",
 
             "COUNTRY OF ORIGIN":
-            r"COUNTRY\s*OF\s*ORIGIN\s*[:\-]?\s*([^\n\r]+)",
+            r"COUNTRY\s*OF\s*ORIGIN\s*[:\-]?\s*(.+)",
 
             "MADE IN":
-            r"MADE\s*IN\s*[:\-]?\s*([^\n\r]+)"
+            r"MADE\s*IN\s*[:\-]?\s*(.+)",
+
+            "LOT NO":
+            r"LOT\s*NO\.?\s*[:\-]?\s*(.+)",
+
+            "BATCH NO":
+            r"BATCH\s*NO\.?\s*[:\-]?\s*(.+)",
+
+            "MFG DATE":
+            r"(?:MFG|MANUFACTURED)\s*DATE\s*[:\-]?\s*(.+)",
+
+            "EXP DATE":
+            r"(?:EXP|EXPIRY|EXPIRATION)\s*DATE\s*[:\-]?\s*(.+)",
+
+            "MRP":
+            r"MRP\s*[:\-]?\s*(.+)",
+
+            "PRICE":
+            r"PRICE\s*[:\-]?\s*(.+)"
 
         }
-        # ---------------------------------------------------------
-# Normalize Text
-# ---------------------------------------------------------
+
+    # ---------------------------------------------------------
+    # Normalize
+    # ---------------------------------------------------------
 
     def normalize(self, text):
 
         if text is None:
+
             return ""
 
-        text = str(text)
-
-        text = text.upper()
+        text = str(text).upper()
 
         text = text.replace("\r", "")
 
@@ -163,30 +187,28 @@ class ConstraintDetector:
 
         return "\n".join(lines)
 
-
-# ---------------------------------------------------------
-# Clean Value
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # Clean Value
+    # ---------------------------------------------------------
 
     def clean(self, value):
 
         if value is None:
+
             return ""
 
         value = str(value)
 
-        value = value.replace("\r", "")
-
         value = value.replace("\n", " ")
+
+        value = value.replace("\r", " ")
 
         value = re.sub(r"\s+", " ", value)
 
         return value.strip()
-
-
-# ---------------------------------------------------------
-# Fuzzy Similarity
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # Fuzzy Similarity
+    # ---------------------------------------------------------
 
     def similarity(
 
@@ -206,10 +228,9 @@ class ConstraintDetector:
 
         )
 
-
-# ---------------------------------------------------------
-# Extract Constraints
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # Extract Standard Constraints
+    # ---------------------------------------------------------
 
     def extract_constraints(
 
@@ -222,12 +243,6 @@ class ConstraintDetector:
         text = self.normalize(text)
 
         constraints = {}
-
-        print("=" * 80)
-        print("OCR TEXT")
-        print("=" * 80)
-        print(text)
-        print("=" * 80)
 
         for field, pattern in self.patterns.items():
 
@@ -249,14 +264,15 @@ class ConstraintDetector:
 
                 )
 
-                constraints[field] = value
+                if value != "":
 
-                print(f"{field:25} -> {value}")
+                    constraints[field] = value
 
         return constraints
+
     # ---------------------------------------------------------
-# Dynamic Key : Value Detection
-# ---------------------------------------------------------
+    # Dynamic Key : Value Detection
+    # ---------------------------------------------------------
 
     def detect_dynamic_constraints(
 
@@ -277,24 +293,23 @@ class ConstraintDetector:
             line = line.strip()
 
             if len(line) < 3:
-                continue
 
-        # KEY : VALUE
+                continue
 
             if ":" in line:
 
-                parts = line.split(":", 1)
-
-        # KEY - VALUE
+                parts = line.split(":",1)
 
             elif "-" in line:
 
-                parts = line.split("-", 1)
+                parts = line.split("-",1)
 
             else:
+
                 continue
 
             if len(parts) != 2:
+
                 continue
 
             key = self.clean(parts[0])
@@ -307,10 +322,9 @@ class ConstraintDetector:
 
         return constraints
 
-
-# ---------------------------------------------------------
-# Merge Standard + Dynamic Constraints
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # Merge Constraints
+    # ---------------------------------------------------------
 
     def get_basic_constraints(
 
@@ -339,24 +353,48 @@ class ConstraintDetector:
                 standard[key] = value
 
         return standard
-    # ---------------------------------------------------------
-# Barcode Detection
-# ---------------------------------------------------------
 
-    def extract_barcodes(self, text):
+    # ---------------------------------------------------------
+    # Barcode Detection
+    # ---------------------------------------------------------
+
+    def extract_barcodes(
+
+        self,
+
+        text
+
+    ):
 
         text = self.normalize(text)
 
-        return list(set(
-            re.findall(r"\b\d{8,20}\b", text)
-        ))
+        return list(
 
+            set(
 
-# ---------------------------------------------------------
-# Date Detection
-# ---------------------------------------------------------
+                re.findall(
 
-    def extract_dates(self, text):
+                    r"\b\d{8,20}\b",
+
+                    text
+
+                )
+
+            )
+
+        )
+
+    # ---------------------------------------------------------
+    # Date Detection
+    # ---------------------------------------------------------
+
+    def extract_dates(
+
+        self,
+
+        text
+
+    ):
 
         text = self.normalize(text)
 
@@ -366,7 +404,9 @@ class ConstraintDetector:
 
             r"\b\d{4}[/-]\d{2}[/-]\d{2}\b",
 
-            r"\b\d{2}-[A-Z]{3}-\d{4}\b"
+            r"\b\d{2}-[A-Z]{3}-\d{4}\b",
+
+            r"\b[A-Z]{3}\s+\d{2},\s+\d{4}\b"
 
         ]
 
@@ -376,16 +416,28 @@ class ConstraintDetector:
 
             dates.extend(
 
-                re.findall(pattern, text)
+                re.findall(
+
+                    pattern,
+
+                    text
+
+                )
 
             )
 
-        return list(set(dates))
+        return list(
 
+            set(
 
-# ---------------------------------------------------------
-# Country Detection
-# ---------------------------------------------------------
+                dates
+
+            )
+
+        )
+        # ---------------------------------------------------------
+    # Country Detection
+    # ---------------------------------------------------------
 
     def extract_country(self, text):
 
@@ -413,9 +465,10 @@ class ConstraintDetector:
                 return country
 
         return ""
+
     # ---------------------------------------------------------
-# Quantity Detection
-# ---------------------------------------------------------
+    # Quantity Detection
+    # ---------------------------------------------------------
 
     def extract_quantities(self, text):
 
@@ -427,12 +480,11 @@ class ConstraintDetector:
 
             text
 
-    )
+        )
 
-
-# ---------------------------------------------------------
-# Weight Detection
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # Weight Detection
+    # ---------------------------------------------------------
 
     def extract_weights(self, text):
 
@@ -440,35 +492,57 @@ class ConstraintDetector:
 
         return re.findall(
 
-            r"\d+(?:\.\d+)?\s*(?:KG|KGS|GRAM|GRAMS|LB|LBS|G)",
-
-        text
-
-        )
-
-
-# ---------------------------------------------------------
-# Size Detection
-# ---------------------------------------------------------
-
-    def extract_sizes(self, text):
-
-        text = self.normalize(text)
-
-        return list(set(
-
-            re.findall(
-
-                r"\b(XXS|XS|S|M|L|XL|XXL|XXXL)\b",
+            r"\d+(?:\.\d+)?\s*(?:KG|KGS|GRAM|GRAMS|G|LB|LBS)",
 
             text
 
         )
 
-    ))
-        # ---------------------------------------------------------
-# Get All Constraints
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # Size Detection
+    # ---------------------------------------------------------
+
+    def extract_sizes(self, text):
+
+        text = self.normalize(text)
+
+        return list(
+
+            set(
+
+                re.findall(
+
+                    r"\b(XXS|XS|S|M|L|XL|XXL|XXXL|FREE|OS)\b",
+
+                    text
+
+                )
+
+            )
+
+        )
+
+    # ---------------------------------------------------------
+    # Price / MRP Detection
+    # ---------------------------------------------------------
+
+    def extract_prices(self, text):
+
+        text = self.normalize(text)
+
+        prices = re.findall(
+
+            r"(?:RS\.?|INR|\$|€|£)?\s*\d+(?:\.\d{1,2})?",
+
+            text
+
+        )
+
+        return list(set(prices))
+
+    # ---------------------------------------------------------
+    # Get All Constraints
+    # ---------------------------------------------------------
 
     def get_constraints(self, text):
 
@@ -510,9 +584,17 @@ class ConstraintDetector:
 
             constraints["SIZES"] = sizes
 
-        return constraints# ---------------------------------------------------------
-# Print Constraints
-# ---------------------------------------------------------
+        prices = self.extract_prices(text)
+
+        if prices:
+
+            constraints["PRICES"] = prices
+
+        return constraints
+
+    # ---------------------------------------------------------
+    # Print Constraints
+    # ---------------------------------------------------------
 
     def print_constraints(self, constraints):
 
@@ -530,9 +612,9 @@ class ConstraintDetector:
 
         else:
 
-            for key, value in constraints.items():
+            for key in sorted(constraints.keys()):
 
-                print(f"{key:25} : {value}")
+                print(f"{key:25} : {constraints[key]}")
 
         print("=" * 80)
 

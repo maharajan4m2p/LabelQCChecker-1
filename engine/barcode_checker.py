@@ -1,8 +1,8 @@
 """
 =========================================================
 Label QC Checker Pro
-Barcode Checker
-Version 4.0
+Advanced Barcode Checker
+Version 5.0
 =========================================================
 """
 
@@ -15,11 +15,29 @@ class BarcodeChecker:
 
     def __init__(self):
 
-        pass
+        self.min_length = 8
 
-# ---------------------------------------------------------
-# Extract Barcode Numbers
-# ---------------------------------------------------------
+        self.max_length = 20
+
+    # ---------------------------------------------------------
+    # Normalize
+    # ---------------------------------------------------------
+
+    def normalize(self, value):
+
+        if value is None:
+
+            return ""
+
+        value = str(value)
+
+        value = value.strip()
+
+        return value
+
+    # ---------------------------------------------------------
+    # Extract Barcode Numbers
+    # ---------------------------------------------------------
 
     def extract(self, text):
 
@@ -27,9 +45,9 @@ class BarcodeChecker:
 
             return []
 
-        text = str(text)
+        text = self.normalize(text)
 
-        barcodes = re.findall(
+        codes = re.findall(
 
             r"\b\d{8,20}\b",
 
@@ -37,11 +55,47 @@ class BarcodeChecker:
 
         )
 
-        return list(set(barcodes))
+        unique = []
 
-# ---------------------------------------------------------
-# Compare Barcode Lists
-# ---------------------------------------------------------
+        for code in codes:
+
+            if code not in unique:
+
+                unique.append(code)
+
+        return unique
+
+    # ---------------------------------------------------------
+    # Barcode Similarity
+    # ---------------------------------------------------------
+
+    def similarity(
+
+        self,
+
+        code1,
+
+        code2
+
+    ):
+
+        return round(
+
+            fuzz.ratio(
+
+                self.normalize(code1),
+
+                self.normalize(code2)
+
+            ),
+
+            2
+
+        )
+
+    # ---------------------------------------------------------
+    # Compare Barcode Lists
+    # ---------------------------------------------------------
 
     def compare_list(
 
@@ -57,27 +111,84 @@ class BarcodeChecker:
 
         missing = []
 
+        modified = []
+
         extra = []
 
         sample_copy = sample_codes.copy()
 
-        for code in approval_codes:
+        for approval in approval_codes:
 
-            if code in sample_copy:
+            found = False
 
-                matched.append(code)
+            best_score = 0
 
-                sample_copy.remove(code)
+            best_code = None
 
-            else:
+            for sample in sample_copy:
 
-                missing.append(code)
+                score = self.similarity(
 
-        extra.extend(sample_copy)
+                    approval,
+
+                    sample
+
+                )
+
+                if score > best_score:
+
+                    best_score = score
+
+                    best_code = sample
+
+            if best_score == 100:
+
+                matched.append({
+
+                    "approval": approval,
+
+                    "sample": best_code,
+
+                    "score": 100
+
+                })
+
+                sample_copy.remove(best_code)
+
+                found = True
+
+            elif best_score >= 90:
+
+                modified.append({
+
+                    "approval": approval,
+
+                    "sample": best_code,
+
+                    "score": best_score
+
+                })
+
+                sample_copy.remove(best_code)
+
+                found = True
+
+            if not found:
+
+                missing.append(approval)
+                # ---------------------------------------------------------
+        # Extra Barcodes
+        # ---------------------------------------------------------
+
+        for code in sample_copy:
+
+            extra.append(code)
 
         return {
 
             "matched": matched,
+
+            "modified": modified,
 
             "missing": missing,
 
@@ -85,9 +196,27 @@ class BarcodeChecker:
 
         }
 
-# ---------------------------------------------------------
-# Compare OCR Results
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # Statistics
+    # ---------------------------------------------------------
+
+    def statistics(self, result):
+
+        return {
+
+            "matched": len(result["matched"]),
+
+            "modified": len(result["modified"]),
+
+            "missing": len(result["missing"]),
+
+            "extra": len(result["extra"])
+
+        }
+
+    # ---------------------------------------------------------
+    # Compare OCR Results
+    # ---------------------------------------------------------
 
     def compare(
 
@@ -133,25 +262,64 @@ class BarcodeChecker:
 
         )
 
-        result["status"] = (
+        stats = self.statistics(
 
-            "PASS"
+            result
 
-            if
+        )
 
-            len(result["missing"]) == 0
+        result["statistics"] = stats
+
+        if (
+
+            stats["missing"] == 0
 
             and
 
-            len(result["extra"]) == 0
+            stats["extra"] == 0
 
-            else
+            and
 
-            "FAIL"
+            stats["modified"] == 0
 
-        )
+        ):
+
+            result["status"] = "PASS"
+
+        elif (
+
+            stats["missing"] == 0
+
+            and
+
+            stats["extra"] == 0
+
+        ):
+
+            result["status"] = "REVIEW"
+
+        else:
+
+            result["status"] = "FAIL"
+
+        result["matched_count"] = stats["matched"]
+
+        result["missing_count"] = stats["missing"]
+
+        result["modified_count"] = stats["modified"]
+
+        result["extra_count"] = stats["extra"]
+
+        result["approval_codes"] = approval_codes
+
+        result["sample_codes"] = sample_codes
 
         return result
 
 
-barcode_checker = BarcodeChecker()
+# ---------------------------------------------------------
+# Singleton
+# ---------------------------------------------------------
+
+barcode_checker = BarcodeChecker()                
+        

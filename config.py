@@ -2,7 +2,7 @@
 =========================================================
 Label QC Checker Pro
 Configuration File
-Version 4.0
+Version 6.0
 =========================================================
 """
 
@@ -16,9 +16,19 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
 REPORT_FOLDER = os.path.join(BASE_DIR, "reports")
+TEMP_FOLDER = os.path.join(BASE_DIR, "temp")
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(REPORT_FOLDER, exist_ok=True)
+os.makedirs(TEMP_FOLDER, exist_ok=True)
+
+# ---------------------------------------------------------
+# Upload Settings
+# ---------------------------------------------------------
+
+MAX_UPLOAD_SIZE = 20 * 1024 * 1024      # 20 MB
+
+MAX_SAMPLE_FILES = 100
 
 # ---------------------------------------------------------
 # OCR Settings
@@ -53,6 +63,22 @@ THRESH_BLOCKSIZE = 31
 THRESH_C = 15
 
 # ---------------------------------------------------------
+# PDF Settings
+# ---------------------------------------------------------
+
+PDF_DPI = 300
+
+PDF_FIRST_PAGE_ONLY = True
+
+# ---------------------------------------------------------
+# Excel Settings
+# ---------------------------------------------------------
+
+EXCEL_SHEET = 0
+
+EXCEL_HEADER = None
+
+# ---------------------------------------------------------
 # Similarity Thresholds
 # ---------------------------------------------------------
 
@@ -85,15 +111,47 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 
 # ---------------------------------------------------------
-# Supported Image Types
+# Report Settings
+# ---------------------------------------------------------
+
+REPORT_FORMAT = "HTML"
+
+SAVE_HIGHLIGHT_IMAGES = True
+
+# ---------------------------------------------------------
+# Supported File Types
 # ---------------------------------------------------------
 
 ALLOWED_EXTENSIONS = {
+
     "png",
     "jpg",
     "jpeg",
     "bmp",
     "tif",
     "tiff",
-    "webp"
+    "webp",
+
+    "pdf",
+
+    "xls",
+    "xlsx",
+
+    "csv"
+
 }
+
+# ---------------------------------------------------------
+# Application Information
+# ---------------------------------------------------------
+
+APP_NAME = "Label QC Checker Pro"
+
+APP_VERSION = "6.0"
+
+AUTHOR = "Maharajan"
+
+DESCRIPTION = (
+    "OCR-based Label Quality Checker supporting "
+    "Images, PDF, Excel and CSV files."
+)

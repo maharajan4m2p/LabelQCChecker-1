@@ -1,8 +1,8 @@
 """
 =========================================================
 Label QC Checker Pro
-Image Highlighter
-Version 4.0
+Advanced Image Highlighter
+Version 5.0
 =========================================================
 """
 
@@ -14,23 +14,45 @@ from config import *
 class ImageHighlighter:
 
     def __init__(self):
-        pass
+
+        self.line_thickness = 2
+
+        self.font = cv2.FONT_HERSHEY_SIMPLEX
+
+        self.font_scale = 0.6
+
+        self.font_thickness = 2
 
     # ---------------------------------------------------------
     # Load Image
     # ---------------------------------------------------------
 
-    def load_image(self, image_path):
+    def load_image(
 
-        image = cv2.imread(image_path)
+        self,
+
+        image_path
+
+    ):
+
+        image = cv2.imread(
+
+            image_path
+
+        )
 
         if image is None:
-            raise Exception(f"Cannot load image : {image_path}")
+
+            raise Exception(
+
+                f"Cannot load image : {image_path}"
+
+            )
 
         return image
 
     # ---------------------------------------------------------
-    # Draw Box
+    # Draw Rectangle
     # ---------------------------------------------------------
 
     def draw_box(
@@ -48,11 +70,15 @@ class ImageHighlighter:
     ):
 
         if bbox is None:
+
             return image
 
         x = int(bbox["x"])
+
         y = int(bbox["y"])
+
         w = int(bbox["width"])
+
         h = int(bbox["height"])
 
         cv2.rectangle(
@@ -65,7 +91,39 @@ class ImageHighlighter:
 
             color,
 
-            2
+            self.line_thickness
+
+        )
+
+        text_size = cv2.getTextSize(
+
+            label,
+
+            self.font,
+
+            self.font_scale,
+
+            self.font_thickness
+
+        )[0]
+
+        cv2.rectangle(
+
+            image,
+
+            (x, max(0, y - 25)),
+
+            (
+
+                x + text_size[0] + 10,
+
+                y
+
+            ),
+
+            color,
+
+            -1
 
         )
 
@@ -75,17 +133,134 @@ class ImageHighlighter:
 
             label,
 
-            (x, max(20, y - 5)),
+            (
 
-            cv2.FONT_HERSHEY_SIMPLEX,
+                x + 5,
 
-            0.6,
+                y - 7
 
-            color,
+                if y > 25
 
-            2
+                else y + 18
+
+            ),
+
+            self.font,
+
+            self.font_scale,
+
+            WHITE,
+
+            self.font_thickness
 
         )
+
+        return image
+    # ---------------------------------------------------------
+    # Highlight Objects
+    # ---------------------------------------------------------
+
+    def highlight_items(
+
+        self,
+
+        image,
+
+        items,
+
+        color,
+
+        label,
+
+        bbox_key="bbox"
+
+    ):
+
+        for item in items:
+
+            bbox = item.get(bbox_key)
+
+            if bbox is None:
+
+                continue
+
+            image = self.draw_box(
+
+                image,
+
+                bbox,
+
+                color,
+
+                label
+
+            )
+
+        return image
+
+    # ---------------------------------------------------------
+    # Draw Legend
+    # ---------------------------------------------------------
+
+    def draw_legend(
+
+        self,
+
+        image
+
+    ):
+
+        legend = [
+
+            ("MATCH", GREEN),
+
+            ("MISSING", RED),
+
+            ("MODIFIED", ORANGE),
+
+            ("EXTRA", BLUE)
+
+        ]
+
+        x = 20
+
+        y = 30
+
+        for text, color in legend:
+
+            cv2.rectangle(
+
+                image,
+
+                (x, y - 15),
+
+                (x + 20, y + 5),
+
+                color,
+
+                -1
+
+            )
+
+            cv2.putText(
+
+                image,
+
+                text,
+
+                (x + 30, y),
+
+                self.font,
+
+                0.6,
+
+                BLACK,
+
+                2
+
+            )
+
+            y += 30
 
         return image
 
@@ -111,86 +286,69 @@ class ImageHighlighter:
 
     ):
 
-        image = self.load_image(image_path)
+        image = self.load_image(
+
+            image_path
+
+        )
 
         highlighted = image.copy()
 
-        # -----------------------------
-        # MATCH (GREEN)
-        # -----------------------------
+        highlighted = self.highlight_items(
 
-        for item in matched:
+            highlighted,
 
-            highlighted = self.draw_box(
+            matched,
 
-                highlighted,
+            GREEN,
 
-                item.get("bbox"),
+            "MATCH"
 
-                GREEN,
+        )
 
-                "MATCH"
+        highlighted = self.highlight_items(
 
-            )
+            highlighted,
 
-        # -----------------------------
-        # MISSING (RED)
-        # -----------------------------
+            missing,
 
-        for item in missing:
+            RED,
 
-            highlighted = self.draw_box(
+            "MISSING"
 
-                highlighted,
+        )
 
-                item.get("bbox"),
+        highlighted = self.highlight_items(
 
-                RED,
+            highlighted,
 
-                "MISSING"
+            modified,
 
-            )
+            ORANGE,
 
-        # -----------------------------
-        # MODIFIED (ORANGE)
-        # -----------------------------
+            "MODIFIED",
 
-        for item in modified:
+            "bbox1"
 
-            bbox = item.get("bbox1")
+        )
 
-            if bbox is None:
-                bbox = item.get("bbox")
+        highlighted = self.highlight_items(
 
-            highlighted = self.draw_box(
+            highlighted,
 
-                highlighted,
+            extra,
 
-                bbox,
+            BLUE,
 
-                ORANGE,
+            "EXTRA"
 
-                "MODIFIED"
+        )
 
-            )
+        highlighted = self.draw_legend(
 
-        # -----------------------------
-        # EXTRA (BLUE)
-        # -----------------------------
+            highlighted
 
-        for item in extra:
-
-            highlighted = self.draw_box(
-
-                highlighted,
-
-                item.get("bbox"),
-
-                BLUE,
-
-                "EXTRA"
-
-            )
+        )
 
         cv2.imwrite(
 

@@ -1,113 +1,344 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
 
-    <title>Label QC Checker Pro</title>
+<meta charset="UTF-8">
 
-    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
+<title>Label QC Checker Pro</title>
 
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet">
+<link
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+rel="stylesheet">
+
+<link
+href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+rel="stylesheet">
+
+<style>
+
+body{
+
+    background:#f5f7fb;
+
+}
+
+.card{
+
+    border-radius:15px;
+
+    margin-top:40px;
+
+    box-shadow:0 4px 20px rgba(0,0,0,.15);
+
+}
+
+.card-header{
+
+    border-radius:15px 15px 0 0 !important;
+
+}
+
+.upload-box{
+
+    border:2px dashed #0d6efd;
+
+    border-radius:10px;
+
+    padding:20px;
+
+    text-align:center;
+
+    background:#fafcff;
+
+}
+
+.upload-box:hover{
+
+    background:#eef5ff;
+
+}
+
+#loading{
+
+    display:none;
+
+}
+
+.file-info{
+
+    font-size:14px;
+
+    color:#666;
+
+}
+
+</style>
 
 </head>
 
-<body class="bg-light">
+<body>
 
-<div class="container mt-5">
+<div class="container">
 
-    <div class="card shadow">
+<div class="card">
 
-        <div class="card-header bg-primary text-white">
+<div class="card-header bg-primary text-white">
 
-            <h3 class="mb-0">
+<h2 class="mb-0">
 
-                Label QC Checker Pro
+<i class="bi bi-patch-check-fill"></i>
 
-            </h3>
+Label QC Checker Pro
 
-        </div>
-
-        <div class="card-body">
-
-            <form
-
-                action="/compare"
-
-                method="POST"
-
-                enctype="multipart/form-data"
-
-            >
-
-                <div class="mb-3">
-
-                    <label class="form-label">
-
-                        Approval Label
-
-                    </label>
-
-                    <input
-
-                        class="form-control"
-
-                        type="file"
-
-                        name="approval"
-
-                        required
-
-                    >
-
-                </div>
-
-                <div class="mb-3">
-
-                    <label class="form-label">
-
-                        Sample Label
-
-                    </label>
-
-                    <input
-
-                        class="form-control"
-
-                        type="file"
-
-                        name="sample"
-
-                        multiple
-                        required
-
-                    >
-
-                </div>
-
-                <button
-
-                    class="btn btn-success"
-
-                    type="submit"
-
-                >
-
-                    Compare Labels
-
-                </button>
-
-            </form>
-
-        </div>
-
-    </div>
+</h2>
 
 </div>
+
+<div class="card-body">
+
+<div class="alert alert-info">
+
+<b>Supported File Formats</b>
+
+<ul class="mb-0">
+
+<li>PNG</li>
+
+<li>JPG / JPEG</li>
+
+<li>BMP</li>
+
+<li>TIFF</li>
+
+<li>WEBP</li>
+
+<li>PDF</li>
+
+<li>XLS</li>
+
+<li>XLSX</li>
+
+<li>CSV</li>
+
+</ul>
+
+</div>
+
+<form
+
+action="/compare"
+
+method="POST"
+
+enctype="multipart/form-data"
+
+id="uploadForm"
+
+>
+
+<!-- Approval -->
+
+<div class="mb-4">
+
+<label class="form-label fw-bold">
+
+Approval Label
+
+</label>
+
+<div class="upload-box">
+
+<input
+
+class="form-control"
+
+type="file"
+
+name="approval"
+
+accept=".png,.jpg,.jpeg,.bmp,.tif,.tiff,.webp,.pdf,.xls,.xlsx,.csv"
+
+required
+
+>
+
+<p class="file-info mt-2">
+
+Upload one Approval Label
+
+</p>
+
+</div>
+
+</div>
+
+<!-- Sample -->
+
+<div class="mb-4">
+
+<label class="form-label fw-bold">
+
+Sample Label(s)
+
+</label>
+
+<div class="upload-box">
+
+<input
+
+class="form-control"
+
+type="file"
+
+name="sample"
+
+multiple
+
+accept=".png,.jpg,.jpeg,.bmp,.tif,.tiff,.webp,.pdf,.xls,.xlsx,.csv"
+
+required
+
+>
+
+<p class="file-info mt-2">
+
+Upload one or multiple Sample Labels
+
+</p>
+
+</div>
+
+</div>
+
+<div class="alert alert-warning">
+
+<b>Note</b>
+
+<ul class="mb-0">
+
+<li>Maximum Recommended File Size : 20 MB</li>
+
+<li>PDF First Page will be compared.</li>
+
+<li>Excel & CSV are compared using extracted text.</li>
+
+<li>Images support OCR, Logo and Barcode comparison.</li>
+
+</ul>
+
+</div>
+
+<div class="d-grid">
+
+<button
+
+type="submit"
+
+class="btn btn-success btn-lg"
+
+id="compareBtn"
+
+>
+
+<i class="bi bi-search"></i>
+
+Compare Labels
+
+</button>
+
+</div>
+
+<div
+
+class="text-center mt-4"
+
+id="loading"
+
+>
+
+<div
+
+class="spinner-border text-primary"
+
+role="status"
+
+>
+
+</div>
+
+<h5 class="mt-3">
+
+Comparing Labels...
+
+</h5>
+
+<p>
+
+Please wait while OCR and QC analysis is running.
+
+</p>
+
+</div>
+
+</form>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+document
+
+.getElementById(
+
+"uploadForm"
+
+)
+
+.addEventListener(
+
+"submit",
+
+function(){
+
+document.getElementById(
+
+"compareBtn"
+
+).disabled=true;
+
+document.getElementById(
+
+"loading"
+
+).style.display="block";
+
+document.getElementById(
+
+"compareBtn"
+
+).innerHTML=
+
+"Processing...";
+
+}
+
+);
+
+</script>
+
+<script
+
+src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+
+</script>
 
 </body>
 

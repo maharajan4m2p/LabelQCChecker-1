@@ -1,9 +1,35 @@
+# =========================================================
+# Label QC Checker Pro
+# Render Configuration
+# Version 6.1
+# =========================================================
+
 services:
+
   - type: web
+
     name: label-qc-checker
-    env: docker
+
+    runtime: docker
+
     plan: free
 
     autoDeploy: true
 
     dockerfilePath: ./Dockerfile
+
+    healthCheckPath: /health
+
+    envVars:
+
+      - key: PYTHONUNBUFFERED
+
+        value: "1"
+
+      - key: FLASK_ENV
+
+        value: production
+
+      - key: PYTHONDONTWRITEBYTECODE
+
+        value: "1"
