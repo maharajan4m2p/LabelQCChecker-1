@@ -1,33 +1,20 @@
 # =========================================================
 # Label QC Checker Pro
 # Dockerfile
-# Version 6.1
 # =========================================================
 
-# ---------------------------------------------------------
 # Base Image
-# ---------------------------------------------------------
-
 FROM python:3.11-slim
 
-# ---------------------------------------------------------
 # Environment Variables
-# ---------------------------------------------------------
-
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
 
-# ---------------------------------------------------------
 # Working Directory
-# ---------------------------------------------------------
-
 WORKDIR /app
 
-# ---------------------------------------------------------
-# Install System Packages
-# ---------------------------------------------------------
-
+# Install System Dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     gcc \
@@ -48,62 +35,30 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# ---------------------------------------------------------
-# Copy Requirements
-# ---------------------------------------------------------
-
+# Copy requirements
 COPY requirements.txt .
 
-# ---------------------------------------------------------
 # Upgrade pip
-# ---------------------------------------------------------
-
 RUN python -m pip install --upgrade pip setuptools wheel
 
-# ---------------------------------------------------------
-# Install Python Packages
-# ---------------------------------------------------------
+# Install Python packages
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN pip install -r requirements.txt
-
-# ---------------------------------------------------------
-# Copy Project Files
-# ---------------------------------------------------------
-
+# Copy project files
 COPY . .
 
-# ---------------------------------------------------------
-# Create Required Directories
-# ---------------------------------------------------------
+# Create required folders
+RUN mkdir -p uploads reports temp
 
-RUN mkdir -p \
-    uploads \
-    reports \
-    temp
-
-# ---------------------------------------------------------
-# Expose Application Port
-# ---------------------------------------------------------
-
+# Expose port
 EXPOSE 5000
 
-# ---------------------------------------------------------
 # Health Check
-# ---------------------------------------------------------
-
 HEALTHCHECK --interval=30s \
             --timeout=10s \
             --start-period=30s \
             --retries=3 \
 CMD curl --fail http://localhost:5000/health || exit 1
 
-# ---------------------------------------------------------
-# Start Application
-# ---------------------------------------------------------
-
-CMD gunicorn \
-    --workers 2 \
-    --threads 2 \
-    --timeout 300 \
-    --bind 0.0.0.0:5000 \
-    app:app
+# Start Gunicorn
+CMD ["gunicorn", "--workers", "2", "--threads", "2", "--timeout", "300", "--bind", "0.0.0.0:5000", "app:app"]
