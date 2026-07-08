@@ -84,7 +84,11 @@ def prepare_file(file_path):
 
     elif file_type == "pdf":
 
-        pages = PDFProcessor.pdf_to_images(file_path)
+        pages = PDFProcessor.pdf_to_images(
+            file_path,
+            first_page=1,
+            last_page=1
+        )
 
         if len(pages) == 0:
 

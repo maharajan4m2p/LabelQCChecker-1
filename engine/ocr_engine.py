@@ -10,6 +10,7 @@ Supports:
 =========================================================
 """
 
+import gc
 import os
 import cv2
 import easyocr
@@ -27,13 +28,7 @@ class OCREngine:
         print("Loading EasyOCR...")
         print("=" * 60)
 
-        self.reader = easyocr.Reader(
-
-            OCR_LANGUAGE,
-
-            gpu=OCR_GPU
-
-        )
+        self.reader = None
 
         print("EasyOCR Loaded Successfully")
 
@@ -76,6 +71,14 @@ class OCREngine:
             image
 
         )
+        if self.reader is None:
+
+            print("Loading EasyOCR...")
+
+            self.reader = easyocr.Reader(
+                OCR_LANGUAGE,
+                gpu=False
+            )
 
         results = self.reader.readtext(
 
@@ -85,9 +88,12 @@ class OCREngine:
 
             paragraph=False,
 
-            decoder="beamsearch"
+            decoder="greedy",
 
         )
+        del image
+        del processed
+        gc.collect()
 
         words = []
 
@@ -175,7 +181,6 @@ class OCREngine:
 
             full_text.append(text)
             # Build complete OCR text
-            full_text.append(text)
 
         # ---------------------------------------------
         # Remove duplicate empty lines
