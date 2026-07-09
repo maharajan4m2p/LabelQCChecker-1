@@ -24,8 +24,17 @@ class OCREngine:
 
     def __init__(self):
 
+        print("=" * 60)
+        print("Loading EasyOCR...")
+        print("=" * 60)
+
         self.reader = None
 
+        print("EasyOCR Loaded Successfully")
+
+    # ---------------------------------------------------------
+    # Load Image
+    # ---------------------------------------------------------
 
     def load_image(self, image_path):
 
@@ -45,6 +54,9 @@ class OCREngine:
 
         return image
 
+    # ---------------------------------------------------------
+    # OCR Read
+    # ---------------------------------------------------------
 
     def read(self, image_path):
 
@@ -59,12 +71,13 @@ class OCREngine:
             image
 
         )
-        
         if self.reader is None:
+
+            print("Loading EasyOCR...")
+
             self.reader = easyocr.Reader(
                 OCR_LANGUAGE,
-                gpu=False,
-                verbose=False
+                gpu=False
             )
 
         results = self.reader.readtext(
@@ -80,7 +93,6 @@ class OCREngine:
         )
         del image
         del processed
-        del results
         gc.collect()
 
         words = []

@@ -24,7 +24,7 @@ from werkzeug.utils import secure_filename
 
 from config import *
 
-from label_compare import compare_labels
+from label_compare import compare_labels,prepare_file
 
 # ---------------------------------------------------------
 # Flask Application
@@ -158,6 +158,14 @@ def compare():
             approval_path
 
         )
+        approval_preview = approval_filename
+
+        try:
+            approval_preview = os.path.basename(
+            prepare_file(approval_path)
+    )
+        except Exception:
+            approval_preview = approval_filename
 
         # -------------------------------------------------
         # Compare Sample Files
@@ -246,6 +254,8 @@ def compare():
             "results.html",
 
             approval_filename=approval_filename,
+            
+            approval_preview=approval_preview,
 
             results=all_results
 
@@ -379,8 +389,8 @@ if __name__ == "__main__":
 
     startup_message()
 
-app.run(
-    host="0.0.0.0",
-    port=int(os.environ.get("PORT", 5000)),
-    debug=False
-)
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000)),
+        debug=False
+    )

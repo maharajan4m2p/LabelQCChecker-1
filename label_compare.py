@@ -12,6 +12,7 @@ Supports:
 """
 
 import os
+import gc
 import uuid
 
 from config import *
@@ -102,6 +103,10 @@ def prepare_file(file_path):
         )
 
         pages[0].save(output_image)
+        
+        pages.clear()
+        
+        gc.collect()
 
         return output_image
 

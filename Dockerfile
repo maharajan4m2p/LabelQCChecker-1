@@ -53,11 +53,11 @@ RUN mkdir -p uploads reports temp
 # Expose port
 EXPOSE 5000
 
-# Health Check
-HEALTHCHECK --interval=30s \
-            --timeout=10s \
-            --start-period=30s \
-            --retries=3 \
-CMD sh -c "curl --fail http://localhost:$PORT/health || exit 1"
+# Expose port
+EXPOSE 5000
 
-CMD ["gunicorn","--workers","1","--threads","1","--preload","--timeout","300","--bind","0.0.0.0:$PORT","app:app"]
+# Health Check
+HEALTHCHECK CMD curl --fail http://localhost:5000/health || exit 1
+
+# Start Gunicorn
+CMD ["gunicorn", "--workers", "1", "--threads", "1", "--preload", "--timeout", "300", "--bind", "0.0.0.0:5000", "app:app"]

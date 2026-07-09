@@ -136,7 +136,7 @@ Image • PDF • Excel • CSV Comparison Report
 
 </p>
 
-<p class=""text-secondary">
+<p class="text-secondary">
     Support Image * PDF * Excel * CSV Comparison Report
 </p>
 </div>
@@ -155,15 +155,19 @@ Approval File
 
 <div class="card-body text-center">
 
-{% if approval_filename.lower().endswith(('.png','.jpg','.jpeg','.bmp','.tif','.tiff','.webp')) %}
+{% if approval_preview %}
 
 <img
+    src="{{ url_for('uploads', filename=approval_preview) }}"
+    class="img-fluid"
+    style="max-width:700px;">
 
-src="{{ url_for('uploads', filename=approval_filename) }}"
+{% elif approval_filename.lower().endswith(('.png','.jpg','.jpeg','.bmp','.tif','.tiff','.webp')) %}
 
-style="max-width:600px;"
-
->
+<img
+    src="{{ url_for('uploads', filename=approval_filename) }}"
+    class="img-fluid"
+    style="max-width:700px;">
 
 {% else %}
 
@@ -173,12 +177,11 @@ style="max-width:600px;"
 
 <br>
 
-Preview not available for this file type.
+Preview not available.
 
 </div>
 
 {% endif %}
-
 </div>
 
 </div>
